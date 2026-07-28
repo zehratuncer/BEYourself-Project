@@ -1,0 +1,259 @@
+<!DOCTYPE html><html lang="tr" style="width: 390px; height: 1416px; overflow: hidden; position: relative;"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Favorilerim - ComeBack</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "outline-variant": "#c1c7d3",
+                      "on-tertiary-fixed-variant": "#444749",
+                      "on-error-container": "#93000a",
+                      "tertiary-container": "#a0a3a5",
+                      "on-tertiary": "#ffffff",
+                      "tertiary-fixed": "#e0e3e5",
+                      "on-error": "#ffffff",
+                      "secondary": "#516072",
+                      "inverse-on-surface": "#ecf1ff",
+                      "error-container": "#ffdad6",
+                      "surface-container-high": "#dee8ff",
+                      "on-primary-fixed-variant": "#004883",
+                      "surface-container-low": "#f0f3ff",
+                      "surface-container": "#e7eeff",
+                      "primary-fixed-dim": "#a4c9ff",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed": "#191c1e",
+                      "surface-container-lowest": "#ffffff",
+                      "secondary-fixed-dim": "#b9c8de",
+                      "on-secondary-container": "#556477",
+                      "surface-variant": "#d8e3fb",
+                      "secondary-fixed": "#d4e4fa",
+                      "surface-tint": "#0060ac",
+                      "on-primary-fixed": "#001c39",
+                      "on-primary": "#ffffff",
+                      "inverse-primary": "#a4c9ff",
+                      "surface-dim": "#cfdaf2",
+                      "primary": "#0060ac",
+                      "background": "#f9f9ff",
+                      "on-secondary": "#ffffff",
+                      "on-surface-variant": "#414751",
+                      "on-surface": "#111c2d",
+                      "surface-container-highest": "#d8e3fb",
+                      "tertiary": "#5c5f61",
+                      "on-secondary-fixed-variant": "#39485a",
+                      "inverse-surface": "#263143",
+                      "on-primary-container": "#003a6b",
+                      "surface": "#f9f9ff",
+                      "outline": "#717783",
+                      "secondary-container": "#d2e1f7",
+                      "on-secondary-fixed": "#0d1c2d",
+                      "primary-container": "#60a5fa",
+                      "on-tertiary-container": "#36393b",
+                      "on-background": "#111c2d",
+                      "surface-bright": "#f9f9ff",
+                      "tertiary-fixed-dim": "#c4c7c9",
+                      "primary-fixed": "#d4e3ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-max": "1200px",
+                      "margin-desktop": "40px",
+                      "margin-mobile": "20px",
+                      "stack-sm": "12px",
+                      "gutter": "24px",
+                      "base": "8px",
+                      "stack-md": "24px",
+                      "stack-lg": "48px"
+              },
+              "fontFamily": {
+                      "label-sm": ["Geist"],
+                      "body-sm": ["Geist"],
+                      "body-lg": ["Geist"],
+                      "label-md": ["Geist"],
+                      "headline-md": ["Geist"],
+                      "headline-lg-mobile": ["Geist"],
+                      "body-md": ["Geist"],
+                      "headline-xl": ["Geist"],
+                      "headline-lg": ["Geist"]
+              },
+              "fontSize": {
+                      "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+                      "headline-lg-mobile": ["28px", {"lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        /* Ambient shadow utility for soft tonal layering */
+        .ambient-shadow {
+            box-shadow: 0 10px 40px -10px rgba(96, 165, 250, 0.08);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen pb-24 font-body-md antialiased md:max-w-container-max md:mx-auto md:px-margin-desktop md:pb-8">
+<!-- Top App Bar (Mobile Only for Shell Structure) -->
+
+<!-- Main Content Area -->
+<main class="px-margin-mobile md:px-0 pt-stack-sm md:pt-stack-lg">
+<!-- Page Header & Search -->
+<div class="flex flex-col gap-stack-md mb-stack-lg">
+<h1 class="text-headline-lg-mobile font-headline-lg-mobile md:text-headline-lg md:font-headline-lg text-primary">Favorilerim</h1>
+<div class="relative w-full max-w-2xl group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-tertiary">search</span>
+<input class="w-full bg-tertiary-fixed text-on-background rounded-full py-3 pl-12 pr-4 border-none focus:ring-0 focus:bg-surface-container-lowest focus:shadow-[0_0_15px_rgba(96,165,250,0.2)] transition-all outline-none font-body-md" placeholder="Favorilerimde ara..." type="text">
+</div>
+</div>
+<!-- Categories / Chips -->
+<div class="flex overflow-x-auto gap-3 pb-4 mb-stack-md hide-scrollbar">
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-primary-container/10 text-primary font-label-md text-label-md hover:bg-primary-container/20 transition-colors shrink-0">Tümü</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-tertiary-fixed text-on-surface-variant font-label-md text-label-md hover:bg-tertiary-fixed/80 transition-colors shrink-0">Motivasyon</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-tertiary-fixed text-on-surface-variant font-label-md text-label-md hover:bg-tertiary-fixed/80 transition-colors shrink-0">Psikoloji</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-tertiary-fixed text-on-surface-variant font-label-md text-label-md hover:bg-tertiary-fixed/80 transition-colors shrink-0">Kişisel Gelişim</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-tertiary-fixed text-on-surface-variant font-label-md text-label-md hover:bg-tertiary-fixed/80 transition-colors shrink-0">Felsefe</button>
+</div>
+<!-- Quote Cards Grid (Bento/Asymmetric feel on desktop, Stack on mobile) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-stack-md">
+<!-- Card 1 -->
+<article class="bg-surface-container-lowest rounded-xl p-6 ambient-shadow flex flex-col gap-4 relative group hover:shadow-[0_15px_50px_-10px_rgba(96,165,250,0.15)] transition-shadow duration-300">
+<button class="absolute top-6 right-6 text-primary hover:scale-110 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">favorite</span>
+</button>
+<div class="flex-grow pt-4 pr-8">
+<p class="text-body-lg font-body-lg text-on-background mb-4">"Başarı bir varış noktası değil, bir yolculuktur. Asıl önemli olan yolda kim olduğundur."</p>
+</div>
+<div class="flex items-center gap-3 mt-auto">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A softly lit, minimalist portrait of a thoughtful author in a bright, modern studio setting, wearing casual smart clothing, light mode aesthetic, gentle shadows." src="https://lh3.googleusercontent.com/aida-public/AB6AXuASjFN9AOxA-qmFHdURDBNdb82WhaRPfKQKkOhlQ9z1iXHMI91P93rksT-Zsqw4OsBjIfNkpkvQpcpZ4kLZXXIdKDzPqX3Y7SK7Li7XanZQ0e6X5LOWmbtJEbHcYcLHKAkj1s_kElIxXBBfTf5EdN7amFBntym3-wE0Tske8cQxSlMeJLNGVFt8QtDfpfmxKySLOdvqGNx8UvBIjqB5quxcZSAey_2DSNNVYpsR0Psga9yrrmrXApX1prPbOmf2t7j1fSfGzDMmgw">
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-background">Arthur Ashe</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Motivasyon</p>
+</div>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="bg-surface-container-lowest rounded-xl p-6 ambient-shadow flex flex-col gap-4 relative group hover:shadow-[0_15px_50px_-10px_rgba(96,165,250,0.15)] transition-shadow duration-300 md:col-span-2 lg:col-span-1 bg-gradient-to-br from-surface-container-lowest to-surface-container-low">
+<button class="absolute top-6 right-6 text-primary hover:scale-110 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">favorite</span>
+</button>
+<div class="flex-grow pt-4 pr-8">
+<p class="text-body-lg font-body-lg text-on-background mb-4">"Düşünceleriniz neyse hayatınız da odur. Hayatınızı değiştirmek istiyorsanız, önce düşüncelerinizi değiştirin."</p>
+</div>
+<div class="flex items-center gap-3 mt-auto">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A minimalist, high-key portrait of a philosopher, soft natural light, clean white background, conveying wisdom and calm, light mode style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvDaFMbiYEsTH6VF8BW3I3qiDsVv48Al5Nk7YxpQHbkpNTzzCkoNx5RAXopyliK7TcX7i_F5cNU2FvejSmmDul5TOY3Zy9_RWKjvVifE72g8NrOyTudzCvqGL5FDvK5LEexWXOycdybFe6gIaRV7lNkM5pBtHv16VjdHa0I7MW-2arwXG9Va7Lg9xmoSux5Lja4420_dEKWYlfmiiJmzJvQwcq4M4paDLo1oQkbWoJuFM-HOStiIVjoKRFm9KtPHHij8TITac1bQ">
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-background">Marcus Aurelius</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Felsefe</p>
+</div>
+</div>
+</article>
+<!-- Card 3 -->
+<article class="bg-surface-container-lowest rounded-xl p-6 ambient-shadow flex flex-col gap-4 relative group hover:shadow-[0_15px_50px_-10px_rgba(96,165,250,0.15)] transition-shadow duration-300">
+<button class="absolute top-6 right-6 text-primary hover:scale-110 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">favorite</span>
+</button>
+<div class="flex-grow pt-4 pr-8">
+<p class="text-body-lg font-body-lg text-on-background mb-4">"Karanlığı lanetlemektense bir mum yakmak daha iyidir."</p>
+</div>
+<div class="flex items-center gap-3 mt-auto">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed overflow-hidden flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-background">Konfüçyüs</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Kişisel Gelişim</p>
+</div>
+</div>
+</article>
+<!-- Card 4 -->
+<article class="bg-surface-container-lowest rounded-xl p-6 ambient-shadow flex flex-col gap-4 relative group hover:shadow-[0_15px_50px_-10px_rgba(96,165,250,0.15)] transition-shadow duration-300 md:col-span-1 lg:col-span-2">
+<button class="absolute top-6 right-6 text-primary hover:scale-110 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">favorite</span>
+</button>
+<div class="flex-grow pt-4 pr-8">
+<p class="text-headline-md font-headline-md text-on-background mb-4 leading-tight">"İnsanın en büyük zayıflığı pes etmesidir. Başarılı olmanın en kesin yolu her zaman bir kez daha denemektir."</p>
+</div>
+<div class="flex items-center gap-3 mt-auto">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A clean, modern portrait photo of an inventor, soft bright lighting, white and soft blue color palette, serene and professional look." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAJXgpfqMw1rVc-AYGMjnqbCpzY_XSCZHn9B2n_OMRNc4Z3TkhaFAx_Ban5JLQdZRPM9y4HRww2b4e2zRxoKPMohLKuTlOMVEnJEccqffzhxquyOpAtJRkFV0NHWyGqRXRz0oTrltT_UdfhSFBhjwKi3bv-yIgnw5RJSxwrkx2k4kiqeUOBZY81jQLbGMS99O9kMbbGWYS7Oj6YDL729qhmbG_ELORFp76iT4NFljC-CKfFK2RPG55rd3Bu0OopV8wF2aqOk8ZfQ">
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-background">Thomas Edison</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Motivasyon</p>
+</div>
+</div>
+</article>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-6 bg-surface-container-lowest shadow-[0_-4px_40px_rgba(0,0,0,0.03)] docked full-width rounded-t-xl md:hidden">
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-variant rounded-full group">
+<span class="material-symbols-outlined group-hover:scale-95 transition-transform duration-200">home</span>
+<span class="text-label-sm font-label-sm mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 scale-90 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">favorite</span>
+<span class="text-label-sm font-label-sm mt-1">Favorites</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-variant rounded-full group">
+<span class="material-symbols-outlined group-hover:scale-95 transition-transform duration-200">subscriptions</span>
+<span class="text-label-sm font-label-sm mt-1">Library</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-variant rounded-full group">
+<span class="material-symbols-outlined group-hover:scale-95 transition-transform duration-200">person</span>
+<span class="text-label-sm font-label-sm mt-1">Profile</span>
+</button>
+</nav>
+<!-- Desktop Side/Top Nav placeholder to satisfy fluid layout concept -->
+<aside class="hidden md:flex fixed top-0 left-0 h-screen w-20 flex-col items-center py-8 bg-surface-container-lowest shadow-[4px_0_40px_rgba(0,0,0,0.03)] z-50">
+<div class="mb-12 text-primary">
+<span class="material-symbols-outlined text-[32px]">spa</span>
+</div>
+<nav class="flex flex-col gap-8 w-full items-center">
+<button class="w-12 h-12 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-variant transition-colors group">
+<span class="material-symbols-outlined group-hover:scale-95 transition-transform">home</span>
+</button>
+<button class="w-12 h-12 rounded-full flex items-center justify-center bg-primary-container text-on-primary-container shadow-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">favorite</span>
+</button>
+<button class="w-12 h-12 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-variant transition-colors group">
+<span class="material-symbols-outlined group-hover:scale-95 transition-transform">subscriptions</span>
+</button>
+</nav>
+<div class="mt-auto">
+<button class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-on-surface-variant hover:opacity-80">
+<span class="material-symbols-outlined">person</span>
+</button>
+</div>
+</aside>
+
+
+<div id="snapdom-sandbox" data-snapdom-sandbox="true" aria-hidden="true" style="position: absolute; left: -9999px; top: -9999px; width: 0px; height: 0px; overflow: hidden;"></div></body></html>

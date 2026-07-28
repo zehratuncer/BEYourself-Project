@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+
+<html class="light" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Bildirim Ayarları - ComeBack</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-variant": "#d8e3fb",
+                        "primary-fixed": "#d4e3ff",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#d4e4fa",
+                        "on-surface-variant": "#414751",
+                        "tertiary-fixed-dim": "#c4c7c9",
+                        "tertiary-container": "#a0a3a5",
+                        "outline-variant": "#c1c7d3",
+                        "on-secondary-container": "#556477",
+                        "outline": "#717783",
+                        "on-tertiary-container": "#36393b",
+                        "secondary-fixed-dim": "#b9c8de",
+                        "surface-bright": "#f9f9ff",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#e0e3e5",
+                        "tertiary": "#5c5f61",
+                        "surface-tint": "#0060ac",
+                        "on-background": "#111c2d",
+                        "secondary": "#516072",
+                        "on-primary-fixed-variant": "#004883",
+                        "inverse-primary": "#a4c9ff",
+                        "surface": "#f9f9ff",
+                        "inverse-on-surface": "#ecf1ff",
+                        "surface-container-low": "#f0f3ff",
+                        "surface-container-high": "#dee8ff",
+                        "on-primary-fixed": "#001c39",
+                        "background": "#f9f9ff",
+                        "on-error": "#ffffff",
+                        "surface-container": "#e7eeff",
+                        "surface-container-highest": "#d8e3fb",
+                        "primary-fixed-dim": "#a4c9ff",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#60a5fa",
+                        "on-surface": "#111c2d",
+                        "on-tertiary-fixed": "#191c1e",
+                        "primary": "#0060ac",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#0d1c2d",
+                        "on-primary": "#ffffff",
+                        "inverse-surface": "#263143",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#d2e1f7",
+                        "on-primary-container": "#003a6b",
+                        "on-secondary-fixed-variant": "#39485a",
+                        "surface-dim": "#cfdaf2",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#444749"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "margin-desktop": "40px",
+                        "base": "8px",
+                        "stack-sm": "12px",
+                        "margin-mobile": "20px",
+                        "gutter": "24px",
+                        "stack-lg": "48px",
+                        "stack-md": "24px",
+                        "container-max": "1200px"
+                    },
+                    fontFamily: {
+                        "headline-xl": ["Geist"],
+                        "headline-md": ["Geist"],
+                        "body-lg": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "label-md": ["Geist"],
+                        "label-sm": ["Geist"],
+                        "body-sm": ["Geist"],
+                        "body-md": ["Geist"],
+                        "headline-lg-mobile": ["Geist"]
+                    },
+                    fontSize: {
+                        "headline-xl": ["40px", { lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "600" }],
+                        "headline-md": ["24px", { lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "500" }],
+                        "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
+                        "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "600" }],
+                        "label-md": ["14px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "label-sm": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "500" }],
+                        "body-sm": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "headline-lg-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.01em", fontWeight: "600" }]
+                    }
+                }
+            }
+        };
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+            /* Custom Toggle Styling */
+            .toggle-checkbox:checked {
+                @apply right-0 border-primary bg-primary;
+            }
+            .toggle-checkbox:checked + .toggle-label {
+                @apply bg-primary-container;
+            }
+            .toggle-checkbox {
+                @apply right-4 border-outline bg-surface-container-highest transition-all duration-300 ease-in-out;
+            }
+            .toggle-label {
+                @apply bg-surface-container transition-all duration-300 ease-in-out cursor-pointer;
+            }
+            
+            /* Soft Ambient Shadows */
+            .shadow-ambient {
+                box-shadow: 0 8px 30px rgba(96, 165, 250, 0.05);
+            }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky bg-surface dark:bg-background z-40 flat no shadows flex items-center justify-between px-margin-mobile h-16 w-full max-w-container-max mx-auto">
+<button aria-label="Go back" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors active:scale-95 duration-200 transition-transform text-primary dark:text-primary-fixed">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed flex-1 text-center truncate px-4">Bildirim Ayarları</h1>
+<button aria-label="More options" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors active:scale-95 duration-200 transition-transform text-primary dark:text-primary-fixed">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">more_vert</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-stack-md flex flex-col gap-stack-md pb-32">
+<!-- General Toggle Section -->
+<section class="bg-surface-bright rounded-xl p-6 shadow-ambient">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Bildirimleri Etkinleştir</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Uygulama içi ve anlık bildirimleri yönetin.</p>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-surface border-4 appearance-none cursor-pointer" id="general_toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-container cursor-pointer" for="general_toggle"></label>
+</div>
+</div>
+</section>
+<!-- Frequency & Timing Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+<!-- Frequency Slider -->
+<section class="bg-surface-bright rounded-xl p-6 shadow-ambient flex flex-col justify-center">
+<div class="flex justify-between items-end mb-4">
+<h3 class="font-body-lg text-body-lg font-semibold text-on-surface">Günlük Bildirim Sayısı</h3>
+<span class="font-headline-md text-headline-md text-primary" id="freq_val">3</span>
+</div>
+<div class="relative w-full py-4">
+<input class="w-full h-2 bg-surface-container-highest rounded-full appearance-none cursor-pointer accent-primary" id="freq_slider" max="10" min="1" oninput="document.getElementById('freq_val').innerText = this.value" type="range" value="3"/>
+<div class="flex justify-between mt-2 font-label-sm text-label-sm text-outline">
+<span>1</span>
+<span>10</span>
+</div>
+</div>
+</section>
+<!-- Timing List -->
+<section class="bg-surface-bright rounded-xl p-6 shadow-ambient">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-body-lg text-body-lg font-semibold text-on-surface">Bildirim Saatleri</h3>
+<button class="text-primary font-label-md text-label-md hover:opacity-80 transition-opacity flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">add</span> Ekle
+                    </button>
+</div>
+<ul class="flex flex-col gap-2">
+<li class="flex items-center justify-between p-3 bg-surface-container-lowest border border-surface-container rounded-lg">
+<span class="font-body-md text-body-md text-on-surface">08:00</span>
+<button aria-label="Remove time" class="text-outline hover:text-error transition-colors">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</li>
+<li class="flex items-center justify-between p-3 bg-surface-container-lowest border border-surface-container rounded-lg">
+<span class="font-body-md text-body-md text-on-surface">12:00</span>
+<button aria-label="Remove time" class="text-outline hover:text-error transition-colors">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</li>
+<li class="flex items-center justify-between p-3 bg-surface-container-lowest border border-surface-container rounded-lg">
+<span class="font-body-md text-body-md text-on-surface">20:00</span>
+<button aria-label="Remove time" class="text-outline hover:text-error transition-colors">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</li>
+</ul>
+</section>
+</div>
+<!-- Content Mode -->
+<section class="bg-tertiary-fixed-dim/20 rounded-xl p-6 shadow-ambient border border-surface-container">
+<div class="flex items-start justify-between">
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<div>
+<h3 class="font-body-lg text-body-lg font-semibold text-on-surface">Rastgele Alıntı Modu</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 max-w-sm">Sizin için seçtiğimiz sürpriz alıntıları alın.</p>
+</div>
+</div>
+<div class="relative inline-block w-12 mt-1 align-middle select-none transition duration-200 ease-in shrink-0">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-surface border-4 appearance-none cursor-pointer" id="random_toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-container cursor-pointer" for="random_toggle"></label>
+</div>
+</div>
+</section>
+<!-- Category Selection -->
+<section class="bg-surface-bright rounded-xl p-6 shadow-ambient">
+<h3 class="font-body-lg text-body-lg font-semibold text-on-surface mb-4">Kategorileri Seç</h3>
+<div class="flex flex-wrap gap-2">
+<button class="px-4 py-2 rounded-full font-label-md text-label-md bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">Motivasyon</button>
+<button class="px-4 py-2 rounded-full font-label-md text-label-md bg-surface-container text-on-surface-variant border border-transparent hover:bg-surface-container-high transition-colors">Psikoloji</button>
+<button class="px-4 py-2 rounded-full font-label-md text-label-md bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">Kitaplar</button>
+<button class="px-4 py-2 rounded-full font-label-md text-label-md bg-surface-container text-on-surface-variant border border-transparent hover:bg-surface-container-high transition-colors">Yaşam</button>
+<button class="px-4 py-2 rounded-full font-label-md text-label-md bg-surface-container text-on-surface-variant border border-transparent hover:bg-surface-container-high transition-colors">Aşk</button>
+</div>
+</section>
+<!-- Action -->
+<section class="mt-4 flex justify-center">
+<button class="bg-primary text-on-primary font-label-md text-label-md px-8 py-3 rounded-lg shadow-ambient hover:opacity-90 active:scale-95 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">notifications_active</span>
+                Bildirimi Önizle
+            </button>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full h-20 flex justify-around items-center px-4 pb-safe bg-surface dark:bg-surface-container shadow-[0_-4px_20px_0_rgba(0,96,172,0.08)] z-50">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:opacity-80 transition-opacity active:scale-90 duration-150 transition-all">
+<span class="material-symbols-outlined mb-1">today</span>
+<span class="font-label-sm text-label-sm">Daily</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:opacity-80 transition-opacity active:scale-90 duration-150 transition-all">
+<span class="material-symbols-outlined mb-1">search</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:opacity-80 transition-opacity active:scale-90 duration-150 transition-all">
+<span class="material-symbols-outlined mb-1">bookmark</span>
+<span class="font-label-sm text-label-sm">Saved</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary rounded-xl px-4 py-1 hover:opacity-80 transition-opacity active:scale-90 duration-150 transition-all">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span class="font-label-sm text-label-sm">Settings</span>
+</button>
+</nav>
+</body></html>

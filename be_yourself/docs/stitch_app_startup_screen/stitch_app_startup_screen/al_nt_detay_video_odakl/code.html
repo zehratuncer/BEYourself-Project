@@ -1,0 +1,170 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Quote Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#f9f9ff",
+                        "outline-variant": "#c1c7d3",
+                        "on-primary": "#ffffff",
+                        "secondary": "#516072",
+                        "on-secondary-container": "#556477",
+                        "primary-container": "#60a5fa",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#d8e3fb",
+                        "on-surface-variant": "#414751",
+                        "on-primary-fixed": "#001c39",
+                        "tertiary-container": "#a0a3a5",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "surface-container": "#e7eeff",
+                        "on-tertiary-container": "#36393b",
+                        "surface-container-low": "#f0f3ff",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#c4c7c9",
+                        "surface-dim": "#cfdaf2",
+                        "on-secondary-fixed-variant": "#39485a",
+                        "on-secondary-fixed": "#0d1c2d",
+                        "primary-fixed": "#d4e3ff",
+                        "error": "#ba1a1a",
+                        "primary": "#0060ac",
+                        "surface-tint": "#0060ac",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#dee8ff",
+                        "error-container": "#ffdad6",
+                        "tertiary": "#5c5f61",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#ecf1ff",
+                        "surface-container-highest": "#d8e3fb",
+                        "on-surface": "#111c2d",
+                        "outline": "#717783",
+                        "surface-bright": "#f9f9ff",
+                        "background": "#f9f9ff",
+                        "tertiary-fixed": "#e0e3e5",
+                        "inverse-surface": "#263143",
+                        "secondary-fixed-dim": "#b9c8de",
+                        "secondary-container": "#d2e1f7",
+                        "on-background": "#111c2d",
+                        "on-tertiary-fixed": "#191c1e",
+                        "inverse-primary": "#a4c9ff",
+                        "secondary-fixed": "#d4e4fa",
+                        "on-primary-container": "#003a6b",
+                        "on-primary-fixed-variant": "#004883",
+                        "primary-fixed-dim": "#a4c9ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "12px",
+                        "margin-desktop": "40px",
+                        "gutter": "24px",
+                        "base": "8px",
+                        "stack-lg": "48px",
+                        "margin-mobile": "20px",
+                        "container-max": "1200px",
+                        "stack-md": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Geist"],
+                        "headline-xl": ["Geist"],
+                        "body-md": ["Geist"],
+                        "label-sm": ["Geist"],
+                        "headline-lg-mobile": ["Geist"],
+                        "headline-md": ["Geist"],
+                        "body-sm": ["Geist"],
+                        "body-lg": ["Geist"],
+                        "label-md": ["Geist"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Geist', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen pb-24 relative overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full bg-surface dark:bg-surface-dim flex items-center justify-between px-margin-mobile md:px-margin-desktop h-16 w-full z-50">
+<button class="text-primary dark:text-primary-fixed hover:bg-surface-variant/50 transition-colors active:scale-95 transition-transform p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md-mobile md:text-headline-md font-bold tracking-tight text-primary dark:text-primary-fixed">BeYourself</h1>
+<button class="text-primary dark:text-primary-fixed hover:bg-surface-variant/50 transition-colors active:scale-95 transition-transform p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</header>
+<!-- Main Content -->
+<main class="pt-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto h-full flex flex-col items-center justify-center min-h-[618px] relative">
+<!-- Decorative Background Quotes -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-5">
+<span class="material-symbols-outlined text-[300px] md:text-[500px] text-primary" style="font-variation-settings: &quot;FILL&quot; 1;">format_quote</span>
+</div>
+<!-- Quote Container -->
+<div class="relative z-10 w-full max-w-2xl text-center flex flex-col gap-stack-md">
+<p class="font-headline-xl text-headline-lg-mobile md:text-headline-xl text-on-surface tracking-tight leading-relaxed">
+                "The only journey is the one within."
+            </p><div class="w-full max-w-[320px] aspect-[9/16] mx-auto bg-surface-container-highest rounded-xl flex items-center justify-center border-2 border-dashed border-outline-variant mt-stack-md">
+<div class="flex flex-col items-center gap-base text-on-surface-variant">
+<span class="material-symbols-outlined text-headline-xl">movie</span>
+<span class="font-label-md">Instagram Reels Videosu</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-stack-sm mt-stack-md">
+<div class="flex items-center gap-base">
+<span class="bg-primary-container/10 text-primary px-3 py-1 rounded-full font-label-sm text-label-sm">Psikoloji</span>
+<span class="text-on-surface-variant font-body-sm text-body-sm">Eklendi: 12 Eki 2023</span>
+</div>
+</div>
+<!-- Action Bar -->
+<div class="flex justify-center items-center gap-stack-sm mt-stack-lg">
+<button class="p-4 rounded-full bg-surface-container hover:bg-surface-variant transition-colors flex items-center justify-center text-primary shadow-[0_4px_20px_rgba(96,165,250,0.08)]">
+<span class="material-symbols-outlined" data-icon="favorite">favorite</span>
+</button>
+<button class="p-4 rounded-full bg-surface-container hover:bg-surface-variant transition-colors flex items-center justify-center text-primary shadow-[0_4px_20px_rgba(96,165,250,0.08)]">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+<button class="p-4 rounded-full bg-surface-container hover:bg-surface-variant transition-colors flex items-center justify-center text-primary shadow-[0_4px_20px_rgba(96,165,250,0.08)]">
+<span class="material-symbols-outlined" data-icon="delete">delete</span>
+</button>
+<button class="p-4 rounded-full bg-surface-container hover:bg-surface-variant transition-colors flex items-center justify-center text-primary shadow-[0_4px_20px_rgba(96,165,250,0.08)]">
+<span class="material-symbols-outlined" data-icon="share">share</span>
+</button>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+
+
+
+
+
+</body></html>
