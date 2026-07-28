@@ -1,0 +1,21 @@
+US-01
+Kullanıcı olarak yeni bir söz ekleyebilmek istiyorum ki daha sonra tekrar okuyabileyim.
+
+US-02
+Kullanıcı olarak sözlerimi kategorilere ayırabilmek istiyorum.
+
+US-03
+Kullanıcı olarak rastgele bildirim almak istiyorum.
+
+US-04
+Kullanıcı olarak favori sözlerimi görebilmek istiyorum.
+
+US-05
+Kullanıcı olarak istediğim sözü silebilmek istiyorum.
+
+US-06
+Kullanıcı olarak bildirim saatlerini değiştirebilmek istiyorum.
+
+US-07
+Kullanıcı olarak bildirim geldiğinde ve o söz açıldığında (varsa) ufak bir video görmek isterim. (kaydedilenlerdeki güzel videolardan)
+

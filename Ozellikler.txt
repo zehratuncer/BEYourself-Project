@@ -1,0 +1,37 @@
+*Özellik Listesi
+Bunu MVP (ilk sürüm) olarak belirleyeceğiz.
+V1
+Splash Screen
+Ana Sayfa
+Quote Listesi
+Quote Detayı
+Quote Ekle
+Quote Düzenle
+Quote Sil
+Favoriler
+Kategoriler
+Ayarlar
+Local Notification
+
+*Veri Modeli
+-Alıntılar-
+id
+text
+author
+categoryId
+isFavorite
+createdDate
+updatedDate
+
+-Category-
+id
+name
+icon
+color
+
+-Settings-
+notificationEnabled
+notificationCount
+startHour
+endHour
+darkMode
