@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:quote_reminder/core/theme/app_colors.dart';
 import 'package:quote_reminder/features/quote/domain/entities/quote.dart';
+import 'package:quote_reminder/features/quote/presentation/pages/quote_form_page.dart';
 import 'package:quote_reminder/features/quote/presentation/providers/quote_providers.dart';
 
 class QuoteCard extends ConsumerWidget {
@@ -100,15 +101,54 @@ class QuoteCard extends ConsumerWidget {
                             .toggleFavorite(quote.id);
                       },
                     ),
-                    IconButton(
+                    PopupMenuButton<String>(
                       icon: const Icon(
                         Icons.more_vert,
                         color: Color(0xFF717783),
                         size: 22,
                       ),
-                      onPressed: () {
-                        // Options menu
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  QuoteFormPage(initialQuote: quote),
+                            ),
+                          );
+                        } else if (value == 'delete') {
+                          ref
+                              .read(quoteListProvider.notifier)
+                              .deleteQuote(quote.id);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Alıntı silindi.'),
+                            ),
+                          );
+                        }
                       },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit, size: 20, color: Color(0xFF717783)),
+                              SizedBox(width: 8),
+                              Text('Düzenle'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete, size: 20, color: Colors.red),
+                              SizedBox(width: 8),
+                              Text('Sil', style: TextStyle(color: Colors.red)),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
