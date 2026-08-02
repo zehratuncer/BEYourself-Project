@@ -12,6 +12,17 @@ class HomePage extends ConsumerWidget {
   final VoidCallback? onAddQuoteTap;
   final Function(String quoteId)? onQuoteTap;
 
+  String _getGreetingMessage() {
+    final hour = DateTime.now().hour;
+    if (hour >= 6 && hour < 12) {
+      return 'Günaydınnn☀️';
+    } else if (hour >= 12 && hour < 18) {
+      return 'İyi Öğlenlerrr🤗';
+    } else {
+      return 'İyi Gecelerrr🌃 biological/bed';
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final filteredQuotes = ref.watch(filteredQuoteListProvider);
@@ -69,9 +80,9 @@ class HomePage extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Merhaba, Can',
-                      style: TextStyle(
+                    Text(
+                      _getGreetingMessage(),
+                      style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF111C2D),
