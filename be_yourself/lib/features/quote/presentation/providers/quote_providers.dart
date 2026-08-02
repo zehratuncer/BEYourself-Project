@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:quote_reminder/features/quote/domain/entities/quote.dart';
@@ -98,7 +100,54 @@ final favoriteQuoteListProvider = Provider<List<Quote>>((ref) {
   return quotes.where((quote) => quote.isFavorite).toList();
 });
 
+class QuoteOfDayState {
+  final Quote quote;
+  final DateTime selectedAt;
+
+  const QuoteOfDayState({
+    required this.quote,
+    required this.selectedAt,
+  });
+}
+
+class QuoteOfDayNotifier extends StateNotifier<QuoteOfDayState?> {
+  QuoteOfDayNotifier() : super(null);
+
+  Quote getOrUpdateQuoteOfDay(List<Quote> quotes) {
+    if (quotes.isEmpty) {
+      return Quote(
+        id: '0',
+        text: 'Henüz söz eklenmedi.',
+        author: 'Sistem',
+        categoryName: 'Genel',
+        createdAt: DateTime.now(),
+      );
+    }
+
+    final now = DateTime.now();
+
+    // 4 saat geçip geçmediğini veya henüz seçim yapılmadığını kontrol et
+    if (state == null ||
+        now.difference(state!.selectedAt).inHours >= 4 ||
+        !quotes.any((q) => q.id == state!.quote.id)) {
+      final random = Random();
+      final newQuote = quotes[random.nextInt(quotes.length)];
+      state = QuoteOfDayState(quote: newQuote, selectedAt: now);
+      return newQuote;
+    }
+
+    return state!.quote;
+  }
+}
+
+final quoteOfDayNotifierProvider =
+    StateNotifierProvider<QuoteOfDayNotifier, QuoteOfDayState?>((ref) {
+  return QuoteOfDayNotifier();
+});
+
 final quoteOfDayProvider = Provider<Quote>((ref) {
   final quotes = ref.watch(quoteListProvider);
-  return quotes.first;
+  return ref
+      .watch(quoteOfDayNotifierProvider.notifier)
+      .getOrUpdateQuoteOfDay(quotes);
 });

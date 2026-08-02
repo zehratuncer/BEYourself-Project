@@ -12,6 +12,17 @@ class HomePage extends ConsumerWidget {
   final VoidCallback? onAddQuoteTap;
   final Function(String quoteId)? onQuoteTap;
 
+  String _getGreetingMessage() {
+    final hour = DateTime.now().hour;
+    if (hour >= 6 && hour < 12) {
+      return 'Günaydınnn☀️';
+    } else if (hour >= 12 && hour < 18) {
+      return 'İyi Öğlenlerrr🤗';
+    } else {
+      return 'İyi Gecelerrr🌃 biological/bed';
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final filteredQuotes = ref.watch(filteredQuoteListProvider);
@@ -35,17 +46,11 @@ class HomePage extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        Container(
+                        Image.asset(
+                          'assets/images/app_bird_logo.png',
                           width: 42,
                           height: 42,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.primaryBlue.withAlpha(25),
-                          ),
-                          child: const Icon(
-                            Icons.person,
-                            color: AppColors.primaryBlue,
-                          ),
+                          fit: BoxFit.contain,
                         ),
                         const SizedBox(width: 12),
                         const Text(
@@ -57,10 +62,6 @@ class HomePage extends ConsumerWidget {
                           ),
                         ),
                       ],
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.search, color: Color(0xFF414751)),
-                      onPressed: () {},
                     ),
                   ],
                 ),
@@ -75,9 +76,9 @@ class HomePage extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Merhaba, Can',
-                      style: TextStyle(
+                    Text(
+                      _getGreetingMessage(),
+                      style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF111C2D),
@@ -89,7 +90,7 @@ class HomePage extends ConsumerWidget {
                         ref.read(searchQueryProvider.notifier).state = val;
                       },
                       decoration: InputDecoration(
-                        hintText: 'Ne aramak istersin?',
+                        hintText: 'Ne aramak istersiniz?',
                         hintStyle: const TextStyle(
                           color: Color(0xFF717783),
                           fontSize: 15,
@@ -117,58 +118,62 @@ class HomePage extends ConsumerWidget {
               child: Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFFEBF3FF),
-                        Color(0xFFD8E3FB),
+                child: InkWell(
+                  onTap: () => onQuoteTap?.call(quoteOfDay.id),
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFFEBF3FF),
+                          Color(0xFFD8E3FB),
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF60A5FA).withAlpha(20),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
                       ],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF60A5FA).withAlpha(20),
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'GÜNÜN ALINTISI',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primaryBlue,
-                          letterSpacing: 1.5,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'GÜNÜN ALINTISI',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryBlue,
+                            letterSpacing: 1.5,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        '"${quoteOfDay.text}"',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF111C2D),
-                          height: 1.4,
+                        const SizedBox(height: 14),
+                        Text(
+                          '"${quoteOfDay.displayText}"',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF111C2D),
+                            height: 1.4,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '— ${quoteOfDay.author}',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF414751),
+                        const SizedBox(height: 12),
+                        Text(
+                          '— ${quoteOfDay.author}',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF414751),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

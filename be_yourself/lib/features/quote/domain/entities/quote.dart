@@ -7,6 +7,7 @@ class Quote {
     required this.createdAt,
     this.isFavorite = false,
     this.mediaUrl,
+    this.shortText,
   });
 
   final String id;
@@ -16,6 +17,10 @@ class Quote {
   final DateTime createdAt;
   final bool isFavorite;
   final String? mediaUrl;
+  final String? shortText;
+
+  String get displayText =>
+      (shortText != null && shortText!.isNotEmpty) ? shortText! : text;
 
   Quote copyWith({
     String? id,
@@ -25,6 +30,7 @@ class Quote {
     DateTime? createdAt,
     bool? isFavorite,
     String? mediaUrl,
+    String? shortText,
   }) {
     return Quote(
       id: id ?? this.id,
@@ -34,6 +40,7 @@ class Quote {
       createdAt: createdAt ?? this.createdAt,
       isFavorite: isFavorite ?? this.isFavorite,
       mediaUrl: mediaUrl ?? this.mediaUrl,
+      shortText: shortText ?? this.shortText,
     );
   }
 }

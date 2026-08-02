@@ -91,6 +91,59 @@ class QuoteDetailPage extends ConsumerWidget {
                         ),
                       ),
                     ),
+                    if (quote.mediaUrl != null && quote.mediaUrl!.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: quote.mediaUrl!.startsWith('http')
+                            ? Image.network(
+                                quote.mediaUrl!,
+                                height: 200,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              )
+                            : (quote.mediaUrl!.contains('.mp4') ||
+                                    quote.mediaUrl!.contains('.mov') ||
+                                    quote.mediaUrl!.contains('video')
+                                ? Container(
+                                    height: 200,
+                                    width: double.infinity,
+                                    color: Colors.black87,
+                                    child: const Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.play_circle_fill,
+                                            size: 64,
+                                            color: Colors.white,
+                                          ),
+                                          SizedBox(height: 8),
+                                          Text(
+                                            'Video Oynat',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                : Image.asset(
+                                    quote.mediaUrl!,
+                                    height: 200,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        const Icon(
+                                      Icons.image_not_supported,
+                                      size: 50,
+                                    ),
+                                  )),
+                      ),
+                    ],
                     const SizedBox(height: 24),
                     Text(
                       '"${quote.text}"',
