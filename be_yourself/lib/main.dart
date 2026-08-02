@@ -5,10 +5,22 @@ import 'package:quote_reminder/core/constants/app_strings.dart';
 import 'package:quote_reminder/core/theme/app_theme.dart';
 import 'package:quote_reminder/features/onboarding/presentation/pages/welcome_page.dart';
 
-void main() {
+import 'package:shared_preferences/shared_preferences.dart';
+
+final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
+  throw UnimplementedError();
+});
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+
   runApp(
-    const ProviderScope(
-      child: MyApp(),
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ],
+      child: const MyApp(),
     ),
   );
 }
