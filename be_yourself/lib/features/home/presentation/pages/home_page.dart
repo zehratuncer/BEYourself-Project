@@ -155,7 +155,7 @@ class HomePage extends ConsumerWidget {
                         ),
                         const SizedBox(height: 14),
                         Text(
-                          '"${quoteOfDay.text}"',
+                          '"${quoteOfDay.displayText}"',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,

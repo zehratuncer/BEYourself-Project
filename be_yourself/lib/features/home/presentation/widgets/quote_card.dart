@@ -38,7 +38,7 @@ class QuoteCard extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '"${quote.text}"',
+              '"${quote.displayText}"',
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
