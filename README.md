@@ -69,7 +69,7 @@ flutter --version
 ```bash
 git clone https://github.com/kullaniciadi/quote-reminder.git
 
-cd quote-reminder
+cd be_yourself
 ```
 
 ---
