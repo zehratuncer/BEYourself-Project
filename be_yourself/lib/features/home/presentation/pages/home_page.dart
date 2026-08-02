@@ -63,10 +63,6 @@ class HomePage extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.search, color: Color(0xFF414751)),
-                      onPressed: () {},
-                    ),
                   ],
                 ),
               ),
@@ -94,7 +90,7 @@ class HomePage extends ConsumerWidget {
                         ref.read(searchQueryProvider.notifier).state = val;
                       },
                       decoration: InputDecoration(
-                        hintText: 'Ne aramak istersin?',
+                        hintText: 'Ne aramak istersiniz?',
                         hintStyle: const TextStyle(
                           color: Color(0xFF717783),
                           fontSize: 15,
