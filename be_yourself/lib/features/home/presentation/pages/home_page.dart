@@ -35,17 +35,11 @@ class HomePage extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        Container(
+                        Image.asset(
+                          'assets/images/app_bird_logo.png',
                           width: 42,
                           height: 42,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.primaryBlue.withAlpha(25),
-                          ),
-                          child: const Icon(
-                            Icons.person,
-                            color: AppColors.primaryBlue,
-                          ),
+                          fit: BoxFit.contain,
                         ),
                         const SizedBox(width: 12),
                         const Text(
