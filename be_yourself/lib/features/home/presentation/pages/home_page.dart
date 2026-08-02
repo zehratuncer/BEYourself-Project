@@ -118,58 +118,62 @@ class HomePage extends ConsumerWidget {
               child: Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFFEBF3FF),
-                        Color(0xFFD8E3FB),
+                child: InkWell(
+                  onTap: () => onQuoteTap?.call(quoteOfDay.id),
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFFEBF3FF),
+                          Color(0xFFD8E3FB),
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF60A5FA).withAlpha(20),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
                       ],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF60A5FA).withAlpha(20),
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'GÜNÜN ALINTISI',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primaryBlue,
-                          letterSpacing: 1.5,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'GÜNÜN ALINTISI',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryBlue,
+                            letterSpacing: 1.5,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        '"${quoteOfDay.text}"',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF111C2D),
-                          height: 1.4,
+                        const SizedBox(height: 14),
+                        Text(
+                          '"${quoteOfDay.text}"',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF111C2D),
+                            height: 1.4,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '— ${quoteOfDay.author}',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF414751),
+                        const SizedBox(height: 12),
+                        Text(
+                          '— ${quoteOfDay.author}',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF414751),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
