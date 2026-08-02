@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kategori Ekle - ComeBack</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-tint": "#0060ac",
+                      "surface-container-high": "#dee8ff",
+                      "surface-container-highest": "#d8e3fb",
+                      "on-secondary-container": "#556477",
+                      "background": "#f9f9ff",
+                      "tertiary-fixed": "#e0e3e5",
+                      "outline": "#717783",
+                      "on-primary-fixed": "#001c39",
+                      "inverse-surface": "#263143",
+                      "on-secondary-fixed-variant": "#39485a",
+                      "secondary-fixed": "#d4e4fa",
+                      "on-background": "#111c2d",
+                      "secondary-container": "#d2e1f7",
+                      "on-primary-fixed-variant": "#004883",
+                      "primary-fixed": "#d4e3ff",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-container": "#36393b",
+                      "error": "#ba1a1a",
+                      "surface-dim": "#cfdaf2",
+                      "inverse-on-surface": "#ecf1ff",
+                      "primary": "#0060ac",
+                      "primary-container": "#60a5fa",
+                      "inverse-primary": "#a4c9ff",
+                      "tertiary-fixed-dim": "#c4c7c9",
+                      "on-secondary-fixed": "#0d1c2d",
+                      "surface-variant": "#d8e3fb",
+                      "surface-container-low": "#f0f3ff",
+                      "tertiary-container": "#a0a3a5",
+                      "on-primary-container": "#003a6b",
+                      "on-surface": "#111c2d",
+                      "secondary": "#516072",
+                      "surface-container": "#e7eeff",
+                      "on-surface-variant": "#414751",
+                      "on-tertiary": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-error": "#ffffff",
+                      "tertiary": "#5c5f61",
+                      "outline-variant": "#c1c7d3",
+                      "on-secondary": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "surface-bright": "#f9f9ff",
+                      "on-tertiary-fixed": "#191c1e",
+                      "primary-fixed-dim": "#a4c9ff",
+                      "on-tertiary-fixed-variant": "#444749",
+                      "secondary-fixed-dim": "#b9c8de",
+                      "error-container": "#ffdad6",
+                      "surface": "#f9f9ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "container-max": "1200px",
+                      "base": "8px",
+                      "stack-md": "24px",
+                      "margin-mobile": "20px",
+                      "stack-lg": "48px",
+                      "margin-desktop": "40px",
+                      "stack-sm": "12px"
+              },
+              "fontFamily": {
+                      "label-md": ["Geist"],
+                      "headline-xl": ["Geist"],
+                      "headline-md": ["Geist"],
+                      "body-lg": ["Geist"],
+                      "headline-lg": ["Geist"],
+                      "headline-lg-mobile": ["Geist"],
+                      "body-md": ["Geist"],
+                      "label-sm": ["Geist"],
+                      "body-sm": ["Geist"]
+              },
+              "fontSize": {
+                      "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["28px", {"lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body { background-color: theme('colors.background'); }
+        .swatch-input:checked + .swatch-label {
+            outline: 2px solid theme('colors.primary');
+            outline-offset: 2px;
+        }
+        .icon-input:checked + .icon-label {
+            background-color: theme('colors.primary-container');
+            color: theme('colors.on-primary-container');
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-background min-h-screen flex flex-col pb-24 md:pb-0">
+<!-- TopAppBar -->
+<header class="bg-surface w-full top-0 sticky flex items-center justify-between px-margin-mobile h-16 max-w-container-max mx-auto z-40">
+<button class="text-on-surface-variant hover:bg-surface-container-high transition-all duration-200 ease-in-out p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-primary">Kategori Ekle</h1>
+<button class="text-on-surface-variant hover:bg-surface-container-high transition-all duration-200 ease-in-out p-2 rounded-full flex items-center justify-center opacity-0 pointer-events-none">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</header>
+<!-- Main Content -->
+<main class="flex-grow w-full max-w-container-max mx-auto px-margin-mobile pt-stack-sm md:pt-stack-md pb-stack-lg">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Form Section -->
+<div class="lg:col-span-8 flex flex-col gap-stack-md">
+<!-- Category Name -->
+<section>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-base" for="categoryName">Kategori Adı</label>
+<input class="w-full bg-tertiary-fixed text-on-surface font-body-lg text-body-lg rounded-lg px-4 py-3 border-none focus:ring-0 focus:bg-surface-container-lowest focus:shadow-[0_0_15px_rgba(96,165,250,0.15)] transition-all duration-300" id="categoryName" placeholder="Kategori Adı" type="text"/>
+</section>
+<!-- Icon Selection -->
+<section>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-base">Simge</label>
+<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-base">
+<!-- Icon 1 -->
+<div>
+<input checked="" class="icon-input sr-only" id="icon_favorite" name="icon" type="radio" value="favorite"/>
+<label class="icon-label flex items-center justify-center p-3 rounded-lg bg-surface-container cursor-pointer text-on-surface-variant hover:bg-surface-container-high transition-colors" for="icon_favorite">
+<span class="material-symbols-outlined" data-icon="favorite">favorite</span>
+</label>
+</div>
+<!-- Icon 2 -->
+<div>
+<input class="icon-input sr-only" id="icon_spa" name="icon" type="radio" value="spa"/>
+<label class="icon-label flex items-center justify-center p-3 rounded-lg bg-surface-container cursor-pointer text-on-surface-variant hover:bg-surface-container-high transition-colors" for="icon_spa">
+<span class="material-symbols-outlined" data-icon="spa">spa</span>
+</label>
+</div>
+<!-- Icon 3 -->
+<div>
+<input class="icon-input sr-only" id="icon_menu_book" name="icon" type="radio" value="menu_book"/>
+<label class="icon-label flex items-center justify-center p-3 rounded-lg bg-surface-container cursor-pointer text-on-surface-variant hover:bg-surface-container-high transition-colors" for="icon_menu_book">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+</label>
+</div>
+<!-- Icon 4 -->
+<div>
+<input class="icon-input sr-only" id="icon_music_note" name="icon" type="radio" value="music_note"/>
+<label class="icon-label flex items-center justify-center p-3 rounded-lg bg-surface-container cursor-pointer text-on-surface-variant hover:bg-surface-container-high transition-colors" for="icon_music_note">
+<span class="material-symbols-outlined" data-icon="music_note">music_note</span>
+</label>
+</div>
+<!-- Icon 5 -->
+<div>
+<input class="icon-input sr-only" id="icon_self_improvement" name="icon" type="radio" value="self_improvement"/>
+<label class="icon-label flex items-center justify-center p-3 rounded-lg bg-surface-container cursor-pointer text-on-surface-variant hover:bg-surface-container-high transition-colors" for="icon_self_improvement">
+<span class="material-symbols-outlined" data-icon="self_improvement">self_improvement</span>
+</label>
+</div>
+<!-- Icon 6 -->
+<div>
+<input class="icon-input sr-only" id="icon_work" name="icon" type="radio" value="work"/>
+<label class="icon-label flex items-center justify-center p-3 rounded-lg bg-surface-container cursor-pointer text-on-surface-variant hover:bg-surface-container-high transition-colors" for="icon_work">
+<span class="material-symbols-outlined" data-icon="work">work</span>
+</label>
+</div>
+<!-- Icon 7 -->
+<div>
+<input class="icon-input sr-only" id="icon_school" name="icon" type="radio" value="school"/>
+<label class="icon-label flex items-center justify-center p-3 rounded-lg bg-surface-container cursor-pointer text-on-surface-variant hover:bg-surface-container-high transition-colors" for="icon_school">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+</label>
+</div>
+<!-- Icon 8 -->
+<div>
+<input class="icon-input sr-only" id="icon_flight" name="icon" type="radio" value="flight"/>
+<label class="icon-label flex items-center justify-center p-3 rounded-lg bg-surface-container cursor-pointer text-on-surface-variant hover:bg-surface-container-high transition-colors" for="icon_flight">
+<span class="material-symbols-outlined" data-icon="flight">flight</span>
+</label>
+</div>
+</div>
+</section>
+<!-- Color Selection -->
+<section>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-base">Renk</label>
+<div class="flex gap-4 overflow-x-auto pb-2">
+<!-- Swatch 1: Blue -->
+<div>
+<input checked="" class="swatch-input sr-only" id="color_blue" name="color" type="radio" value="bg-blue-500"/>
+<label class="swatch-label block w-10 h-10 rounded-full bg-blue-500 cursor-pointer shadow-sm" for="color_blue"></label>
+</div>
+<!-- Swatch 2: Green -->
+<div>
+<input class="swatch-input sr-only" id="color_green" name="color" type="radio" value="bg-emerald-500"/>
+<label class="swatch-label block w-10 h-10 rounded-full bg-emerald-500 cursor-pointer shadow-sm" for="color_green"></label>
+</div>
+<!-- Swatch 3: Orange -->
+<div>
+<input class="swatch-input sr-only" id="color_orange" name="color" type="radio" value="bg-orange-500"/>
+<label class="swatch-label block w-10 h-10 rounded-full bg-orange-500 cursor-pointer shadow-sm" for="color_orange"></label>
+</div>
+<!-- Swatch 4: Purple -->
+<div>
+<input class="swatch-input sr-only" id="color_purple" name="color" type="radio" value="bg-purple-500"/>
+<label class="swatch-label block w-10 h-10 rounded-full bg-purple-500 cursor-pointer shadow-sm" for="color_purple"></label>
+</div>
+<!-- Swatch 5: Pink -->
+<div>
+<input class="swatch-input sr-only" id="color_pink" name="color" type="radio" value="bg-pink-500"/>
+<label class="swatch-label block w-10 h-10 rounded-full bg-pink-500 cursor-pointer shadow-sm" for="color_pink"></label>
+</div>
+<!-- Swatch 6: Teal -->
+<div>
+<input class="swatch-input sr-only" id="color_teal" name="color" type="radio" value="bg-teal-500"/>
+<label class="swatch-label block w-10 h-10 rounded-full bg-teal-500 cursor-pointer shadow-sm" for="color_teal"></label>
+</div>
+</div>
+</section>
+</div>
+<!-- Preview Section -->
+<div class="lg:col-span-4 mt-stack-md lg:mt-0">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-base">Önizleme</label>
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-[0_8px_30px_rgba(96,165,250,0.08)] flex flex-col items-center justify-center text-center">
+<div class="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white mb-4 shadow-sm transition-colors duration-300" id="previewIconContainer">
+<span class="material-symbols-outlined text-3xl" data-icon="favorite" id="previewIcon">favorite</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-1" id="previewTitle">Kategori Adı</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">0 Alıntı</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Sticky Save Button -->
+<div class="fixed bottom-0 left-0 w-full bg-surface/90 backdrop-blur-sm p-margin-mobile border-t border-surface-container md:relative md:border-none md:bg-transparent md:pt-stack-md flex justify-center">
+<button class="w-full max-w-sm bg-primary text-on-primary font-label-md text-label-md py-4 rounded-full shadow-[0_4px_20px_rgba(0,96,172,0.2)] hover:bg-on-primary-container hover:shadow-[0_6px_25px_rgba(0,96,172,0.3)] transition-all duration-300 transform active:scale-95">
+            Kategoriyi Kaydet
+        </button>
+</div>
+<script>
+        // Simple interactivity for preview
+        const nameInput = document.getElementById('categoryName');
+        const previewTitle = document.getElementById('previewTitle');
+        const previewIconContainer = document.getElementById('previewIconContainer');
+        const previewIcon = document.getElementById('previewIcon');
+        const iconInputs = document.querySelectorAll('.icon-input');
+        const colorInputs = document.querySelectorAll('.swatch-input');
+
+        nameInput.addEventListener('input', (e) => {
+            previewTitle.textContent = e.target.value || 'Kategori Adı';
+        });
+
+        iconInputs.forEach(input => {
+            input.addEventListener('change', (e) => {
+                if(e.target.checked) {
+                    previewIcon.textContent = e.target.value;
+                    previewIcon.setAttribute('data-icon', e.target.value);
+                }
+            });
+        });
+
+        colorInputs.forEach(input => {
+            input.addEventListener('change', (e) => {
+                if(e.target.checked) {
+                    // Remove existing bg classes
+                    previewIconContainer.className = previewIconContainer.className.replace(/bg-\w+-500/, '');
+                    // Add new bg class
+                    previewIconContainer.classList.add(e.target.value);
+                }
+            });
+        });
+    </script>
+</body></html>

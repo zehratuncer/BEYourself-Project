@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ComeBack - Splash Screen</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed": "#e0e3e5",
+                      "on-secondary-fixed": "#0d1c2d",
+                      "on-primary-fixed-variant": "#004883",
+                      "outline-variant": "#c1c7d3",
+                      "surface-container-high": "#dee8ff",
+                      "tertiary-fixed-dim": "#c4c7c9",
+                      "error-container": "#ffdad6",
+                      "on-surface-variant": "#414751",
+                      "on-primary": "#ffffff",
+                      "on-primary-container": "#003a6b",
+                      "surface-container": "#e7eeff",
+                      "surface-tint": "#0060ac",
+                      "on-tertiary": "#ffffff",
+                      "on-tertiary-container": "#36393b",
+                      "on-secondary-container": "#556477",
+                      "surface-container-lowest": "#ffffff",
+                      "primary-fixed-dim": "#a4c9ff",
+                      "on-error": "#ffffff",
+                      "on-tertiary-fixed": "#191c1e",
+                      "on-secondary-fixed-variant": "#39485a",
+                      "surface-container-highest": "#d8e3fb",
+                      "error": "#ba1a1a",
+                      "secondary": "#516072",
+                      "inverse-primary": "#a4c9ff",
+                      "on-primary-fixed": "#001c39",
+                      "secondary-fixed": "#d4e4fa",
+                      "surface-variant": "#d8e3fb",
+                      "secondary-fixed-dim": "#b9c8de",
+                      "on-surface": "#111c2d",
+                      "surface-container-low": "#f0f3ff",
+                      "on-tertiary-fixed-variant": "#444749",
+                      "tertiary": "#5c5f61",
+                      "primary": "#0060ac",
+                      "surface-dim": "#cfdaf2",
+                      "on-background": "#111c2d",
+                      "inverse-on-surface": "#ecf1ff",
+                      "primary-fixed": "#d4e3ff",
+                      "inverse-surface": "#263143",
+                      "outline": "#717783",
+                      "surface": "#f9f9ff",
+                      "on-error-container": "#93000a",
+                      "background": "#f9f9ff",
+                      "tertiary-container": "#a0a3a5",
+                      "primary-container": "#60a5fa",
+                      "secondary-container": "#d2e1f7",
+                      "on-secondary": "#ffffff",
+                      "surface-bright": "#f9f9ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-sm": "12px",
+                      "stack-md": "24px",
+                      "stack-lg": "48px",
+                      "base": "8px",
+                      "margin-mobile": "20px",
+                      "margin-desktop": "40px",
+                      "gutter": "24px",
+                      "container-max": "1200px"
+              },
+              "fontFamily": {
+                      "body-lg": [
+                              "Geist"
+                      ],
+                      "body-sm": [
+                              "Geist"
+                      ],
+                      "body-md": [
+                              "Geist"
+                      ],
+                      "headline-lg-mobile": [
+                              "Geist"
+                      ],
+                      "headline-md": [
+                              "Geist"
+                      ],
+                      "label-sm": [
+                              "Geist"
+                      ],
+                      "headline-xl": [
+                              "Geist"
+                      ],
+                      "headline-lg": [
+                              "Geist"
+                      ],
+                      "label-md": [
+                              "Geist"
+                      ]
+              },
+              "fontSize": {
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "34px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-xl": [
+                              "40px",
+                              {
+                                      "lineHeight": "48px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .animate-fade-in-up {
+            animation: fadeInUp 1s ease-out forwards;
+        }
+        
+        .animate-fade-in-up-delay-1 {
+            animation: fadeInUp 1s ease-out 0.3s forwards;
+            opacity: 0;
+        }
+
+        .animate-fade-in-up-delay-2 {
+            animation: fadeInUp 1s ease-out 0.6s forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .loading-line {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .loading-line::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.8), transparent);
+            animation: slideRight 2s infinite ease-in-out;
+        }
+
+        @keyframes slideRight {
+            0% { left: -100%; }
+            100% { left: 200%; }
+        }
+    </style>
+</head>
+<body class="bg-surface-container-lowest min-h-screen flex flex-col items-center justify-center font-body-md text-on-surface antialiased overflow-hidden">
+<main class="w-full max-w-md mx-auto px-margin-mobile flex flex-col items-center justify-between h-screen py-24 relative">
+<!-- Top Spacer -->
+<div class="flex-1"></div>
+<!-- Central Content -->
+<div class="flex flex-col items-center justify-center space-y-stack-md w-full z-10">
+<!-- Logo Container -->
+<div class="w-32 h-32 rounded-3xl overflow-hidden shadow-[0_20px_40px_rgba(96,165,250,0.15)] animate-fade-in-up bg-surface">
+<img alt="ComeBack App Logo" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDabLn3lVRplK_RXeTXvRvFgZUD7KBYcsK9eUQOM75TxdP1SpETCPf-e_wg29iRTLHcNDVb9QHd--kCC6GAY1QBGkRODDfnWjK4SBFo8nlVUzGpJFzFixyYkbkZMolbdjJjm2JAcoyVuCbNiPBpHqtOzPDnO95pgplvaQvlgjcoLKG7qOirwe859KEsv3z7Ize13IthodR1wHAVoeBz2rVkz6UN3ghkEwnXkgImTvfdx92lmiTVeSucXNPdkpzzjnZIgALJME1Spw"/>
+</div>
+<!-- Text Content -->
+<div class="text-center space-y-stack-sm animate-fade-in-up-delay-1">
+<h1 class="font-headline-xl text-headline-xl text-primary tracking-tight">Be Yourself</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-[280px] mx-auto opacity-80">En sevdiğin sözler, her an yanında.</p>
+</div>
+</div>
+<!-- Bottom Loading Indicator -->
+<div class="flex-1 flex items-end justify-center w-full pb-12">
+<div class="w-48 h-[2px] bg-surface-variant rounded-full loading-line animate-fade-in-up-delay-2 overflow-hidden"></div>
+</div>
+<!-- Ambient Background Glow (Subtle) -->
+<div class="absolute inset-0 pointer-events-none overflow-hidden z-0 flex items-center justify-center">
+<div class="w-[80vw] h-[80vw] max-w-[600px] max-h-[600px] bg-primary-container/5 rounded-full blur-[100px] animate-fade-in-up"></div>
+</div>
+</main>
+</body></html>
