@@ -411,14 +411,14 @@ class _RandomQuoteModalState extends ConsumerState<RandomQuoteModal>
                       const SizedBox(width: 12),
                     ],
 
-                    // Re-Roll Button (Tekrar Zar At)
+                    // Re-Roll Button (Yeniden At)
                     Expanded(
                       child: ElevatedButton.icon(
                         key: const ValueKey('roll_button'),
                         onPressed: () => _roll(),
-                        icon: const Icon(Icons.casino_outlined, size: 22),
+                        icon: const Text('🎲', style: TextStyle(fontSize: 18)),
                         label: const Text(
-                          'Yeniden Zar At',
+                          'Yeniden At',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
