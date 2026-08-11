@@ -13,13 +13,30 @@ class CategoryNotifier extends StateNotifier<List<Category>> {
         ]);
 
   void addCategory(String name) {
-    if (name.trim().isEmpty) return;
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+    if (state.any((c) => c.name.toLowerCase() == trimmed.toLowerCase())) {
+      return;
+    }
     final newCategory = Category(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: name.trim(),
+      name: trimmed,
       quoteCount: 0,
     );
     state = [...state, newCategory];
+  }
+
+  void updateCategory(String id, String newName) {
+    final trimmed = newName.trim();
+    if (trimmed.isEmpty) return;
+    state = [
+      for (final category in state)
+        if (category.id == id) category.copyWith(name: trimmed) else category,
+    ];
+  }
+
+  void deleteCategory(String id) {
+    state = state.where((category) => category.id != id).toList();
   }
 }
 
@@ -27,3 +44,4 @@ final categoryListProvider =
     StateNotifierProvider<CategoryNotifier, List<Category>>((ref) {
   return CategoryNotifier();
 });
+

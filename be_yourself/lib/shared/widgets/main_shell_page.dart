@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:quote_reminder/core/theme/app_colors.dart';
 import 'package:quote_reminder/features/category/presentation/pages/categories_page.dart';
+import 'package:quote_reminder/features/category/presentation/widgets/add_category_dialog.dart';
 import 'package:quote_reminder/features/favorites/presentation/pages/favorites_page.dart';
 import 'package:quote_reminder/features/home/presentation/pages/home_page.dart';
 import 'package:quote_reminder/features/quote/presentation/pages/quote_detail_page.dart';
@@ -33,16 +34,28 @@ class MainShellPage extends ConsumerWidget {
       const SettingsPage(),
     ];
 
+    final isCategoriesTab = currentTab == 2;
+
     return Scaffold(
       body: IndexedStack(
         index: currentTab,
         children: pages,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _openAddQuote(context),
+        onPressed: () {
+          if (isCategoriesTab) {
+            showDialog(
+              context: context,
+              builder: (_) => const AddCategoryDialog(),
+            );
+          } else {
+            _openAddQuote(context);
+          }
+        },
         backgroundColor: AppColors.primaryBlue,
         elevation: 6,
         shape: const CircleBorder(),
+        tooltip: isCategoriesTab ? 'Kategori Ekle' : 'Alıntı Ekle',
         child: const Icon(
           Icons.add,
           color: Colors.white,

@@ -71,6 +71,26 @@ class QuoteNotifier extends StateNotifier<List<Quote>> {
   void deleteQuote(String id) {
     state = state.where((item) => item.id != id).toList();
   }
+
+  void renameCategory(String oldCategoryName, String newCategoryName) {
+    state = [
+      for (final quote in state)
+        if (quote.categoryName == oldCategoryName)
+          quote.copyWith(categoryName: newCategoryName)
+        else
+          quote,
+    ];
+  }
+
+  void handleCategoryDeleted(String categoryName) {
+    state = [
+      for (final quote in state)
+        if (quote.categoryName == categoryName)
+          quote.copyWith(categoryName: 'Genel')
+        else
+          quote,
+    ];
+  }
 }
 
 final quoteListProvider =
