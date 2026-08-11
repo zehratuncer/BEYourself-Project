@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:be_yourself/features/home_widget/services/home_widget_service.dart';
 import 'package:be_yourself/features/quote/data/datasources/quote_local_datasource.dart';
 import 'package:be_yourself/features/quote/domain/entities/quote.dart';
 import 'package:be_yourself/main.dart';
@@ -187,6 +188,7 @@ class QuoteOfDayNotifier extends StateNotifier<QuoteOfDayState?> {
         // Schedule state update after build frame
         Future.microtask(() {
           state = QuoteOfDayState(quote: newQuote, selectedAt: now);
+          HomeWidgetService.instance.updateQuoteWidget(newQuote);
         });
       }
       return newQuote;
@@ -201,6 +203,7 @@ class QuoteOfDayNotifier extends StateNotifier<QuoteOfDayState?> {
     if (state?.quote.id != existingQuote.id) {
        Future.microtask(() {
          state = QuoteOfDayState(quote: existingQuote, selectedAt: lastSelectedAt!);
+         HomeWidgetService.instance.updateQuoteWidget(existingQuote);
        });
     }
 
