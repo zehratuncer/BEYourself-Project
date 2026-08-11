@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/features/notifications/data/datasources/notification_service.dart';
+import 'package:be_yourself/features/notifications/presentation/providers/notification_providers.dart';
+import 'package:be_yourself/features/quote/presentation/providers/quote_providers.dart';
 import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
 import 'package:be_yourself/main.dart';
 
@@ -74,10 +78,14 @@ class NotificationSettingsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Automatically trigger notification schedule sync on change
+    ref.watch(notificationSyncProvider);
+
     final count = ref.watch(notificationCountProvider);
     final startTime = ref.watch(notificationStartTimeProvider);
     final endTime = ref.watch(notificationEndTimeProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final quotes = ref.watch(quoteListProvider);
 
     final cardBgColor = Theme.of(context).cardColor;
     final primaryTextColor = isDarkMode
@@ -124,10 +132,11 @@ class NotificationSettingsPage extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Gün içinde kaç bildirim almak istediğinizi ve saat aralığını seçin.',
+              'Gün içinde kaç bildirim almak istediğinizi ve saat aralığını seçin. Bildirimleriniz otomatik olarak gün içine eşit dağıtılır.',
               style: TextStyle(
                 fontSize: 14,
                 color: secondaryTextColor,
+                height: 1.4,
               ),
             ),
             const SizedBox(height: 24),
@@ -162,14 +171,27 @@ class NotificationSettingsPage extends ConsumerWidget {
                           color: primaryTextColor,
                         ),
                       ),
-                      Text(
-                        '$count Adet',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: isDarkMode
-                              ? AppColors.primaryBlueLight
-                              : AppColors.primaryBlue,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: (isDarkMode
+                                  ? AppColors.primaryBlueLight
+                                  : AppColors.primaryBlue)
+                              .withAlpha(25),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '$count Kez / Gün',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: isDarkMode
+                                ? AppColors.primaryBlueLight
+                                : AppColors.primaryBlue,
+                          ),
                         ),
                       ),
                     ],
@@ -214,6 +236,19 @@ class NotificationSettingsPage extends ConsumerWidget {
               child: Column(
                 children: [
                   ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withAlpha(25),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.wb_sunny_rounded,
+                        color: Color(0xFF10B981),
+                        size: 20,
+                      ),
+                    ),
                     title: Text(
                       'Başlangıç Saati',
                       style: TextStyle(
@@ -225,7 +260,7 @@ class NotificationSettingsPage extends ConsumerWidget {
                       startTime.format(context),
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         color: isDarkMode
                             ? AppColors.primaryBlueLight
                             : AppColors.primaryBlue,
@@ -250,6 +285,19 @@ class NotificationSettingsPage extends ConsumerWidget {
                         : AppColors.lightDivider,
                   ),
                   ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6366F1).withAlpha(25),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.nights_stay_rounded,
+                        color: Color(0xFF6366F1),
+                        size: 20,
+                      ),
+                    ),
                     title: Text(
                       'Bitiş Saati',
                       style: TextStyle(
@@ -261,7 +309,7 @@ class NotificationSettingsPage extends ConsumerWidget {
                       endTime.format(context),
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         color: isDarkMode
                             ? AppColors.primaryBlueLight
                             : AppColors.primaryBlue,
@@ -282,10 +330,173 @@ class NotificationSettingsPage extends ConsumerWidget {
                 ],
               ),
             ),
+
+            const SizedBox(height: 24),
+
+            // Action: Test Notification Button
+            Container(
+              width: double.infinity,
+              height: 54,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  colors: isDarkMode
+                      ? [
+                          AppColors.primaryBlueLight,
+                          const Color(0xFF60A5FA),
+                        ]
+                      : [
+                          AppColors.primaryBlue,
+                          const Color(0xFF3B82F6),
+                        ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isDarkMode
+                            ? AppColors.primaryBlueLight
+                            : AppColors.primaryBlue)
+                        .withAlpha(80),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ElevatedButton(
+                onPressed: () async {
+                  HapticFeedback.mediumImpact();
+
+                  try {
+                    // Request permissions if needed
+                    await NotificationService.instance.requestPermissions();
+
+                    // Pick sample text
+                    final sampleQuote = quotes.isNotEmpty
+                        ? quotes.first.displayText
+                        : 'Kendine inan, yapabileceklerinin sınırı yoktur.';
+                    final sampleAuthor = (quotes.isNotEmpty &&
+                            quotes.first.author.trim().isNotEmpty &&
+                            quotes.first.author.trim() != 'Anonim')
+                        ? quotes.first.author.trim()
+                        : 'Günün Alıntısı 💫';
+                    final sampleId =
+                        quotes.isNotEmpty ? quotes.first.id : 'fallback_0';
+
+                    await NotificationService.instance.showInstantNotification(
+                      title: sampleAuthor,
+                      body: sampleQuote,
+                      payload: sampleId,
+                    );
+
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Row(
+                            children: [
+                              Icon(Icons.check_circle_rounded,
+                                  color: Colors.white),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Test bildirimi gönderildi! Bildirim çubuğunu kontrol edin.',
+                                ),
+                              ),
+                            ],
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                          backgroundColor: const Color(0xFF10B981),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    debugPrint('Test notification error: $e');
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Bildirim hatası: $e'),
+                          behavior: SnackBarBehavior.floating,
+                          backgroundColor: const Color(0xFFEF4444),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      );
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: const Text(
+                  '🔔 Test Bildirimi Gönder',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            // Permission Request Card
+            OutlinedButton.icon(
+              onPressed: () async {
+                try {
+                  final granted =
+                      await NotificationService.instance.requestPermissions();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          granted
+                              ? 'Bildirim izni onaylandı! 🎉'
+                              : 'Bildirim izni reddedildi veya henüz verilmedi. Telefon ayarlarından BeYourself için bildirimleri açabilirsiniz.',
+                        ),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: granted
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFFF59E0B),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('İzin kontrol hatası: $e'),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: const Color(0xFFEF4444),
+                      ),
+                    );
+                  }
+                }
+              },
+              icon: const Icon(Icons.security_rounded),
+              label: const Text('Bildirim İznini Kontrol Et / İste'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 }
+
 

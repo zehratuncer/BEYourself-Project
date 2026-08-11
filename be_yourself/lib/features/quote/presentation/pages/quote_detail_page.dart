@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/features/quote/domain/entities/quote.dart';
 import 'package:be_yourself/features/quote/presentation/pages/quote_form_page.dart';
 import 'package:be_yourself/features/quote/presentation/providers/quote_providers.dart';
 import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
@@ -17,14 +18,18 @@ class QuoteDetailPage extends ConsumerWidget {
     final quoteList = quotes.where((q) => q.id == quoteId);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
-    if (quoteList.isEmpty) {
-      return Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: const Center(child: Text('Söz bulunamadı.')),
+    final Quote quote;
+    if (quoteList.isNotEmpty) {
+      quote = quoteList.first;
+    } else {
+      quote = Quote(
+        id: quoteId,
+        text: 'Kendine inan, yapabileceklerinin sınırı yoktur.',
+        author: 'Günün Alıntısı 💫',
+        categoryName: 'Genel',
+        createdAt: DateTime.now(),
       );
     }
-
-    final quote = quoteList.first;
     final cardBg = Theme.of(context).cardColor;
     final primaryTextColor = isDarkMode
         ? AppColors.darkTextPrimary
