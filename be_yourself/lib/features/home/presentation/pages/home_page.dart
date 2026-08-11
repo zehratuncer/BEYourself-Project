@@ -55,11 +55,25 @@ class HomePage extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        Image.asset(
-                          'assets/images/app_bird_logo.png',
+                        Container(
                           width: 42,
                           height: 42,
-                          fit: BoxFit.contain,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withAlpha(20),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Image.asset(
+                            'assets/images/app_bird_logo.png',
+                            fit: BoxFit.cover,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Text(

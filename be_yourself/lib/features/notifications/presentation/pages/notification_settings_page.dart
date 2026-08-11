@@ -361,7 +361,7 @@ class NotificationSettingsPage extends ConsumerWidget {
                   ),
                 ],
               ),
-              child: ElevatedButton.icon(
+              child: ElevatedButton(
                 onPressed: () async {
                   HapticFeedback.mediumImpact();
 
@@ -411,6 +411,7 @@ class NotificationSettingsPage extends ConsumerWidget {
                       );
                     }
                   } catch (e) {
+                    debugPrint('Test notification error: $e');
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -425,21 +426,20 @@ class NotificationSettingsPage extends ConsumerWidget {
                     }
                   }
                 },
-                icon: const Icon(Icons.notifications_active_rounded,
-                    color: Colors.white),
-                label: const Text(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: const Text(
                   '🔔 Test Bildirimi Gönder',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
               ),
