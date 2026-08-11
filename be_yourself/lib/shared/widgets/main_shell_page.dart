@@ -49,7 +49,7 @@ class MainShellPage extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                FloatingActionButton.small(
+                FloatingActionButton(
                   heroTag: 'random_quote_dice_fab',
                   onPressed: () {
                     HapticFeedback.mediumImpact();
@@ -58,12 +58,12 @@ class MainShellPage extends ConsumerWidget {
                   backgroundColor: isDarkMode
                       ? const Color(0xFF1E293B)
                       : Colors.white,
-                  elevation: 4,
+                  elevation: 6,
                   shape: const CircleBorder(),
                   tooltip: 'Rastgele Keşfet',
                   child: const Text(
                     '🎲',
-                    style: TextStyle(fontSize: 22),
+                    style: TextStyle(fontSize: 26),
                   ),
                 ),
                 const SizedBox(height: 12),
