@@ -16,11 +16,11 @@ class HomePage extends ConsumerWidget {
   String _getGreetingMessage() {
     final hour = DateTime.now().hour;
     if (hour >= 6 && hour < 12) {
-      return 'Günaydınnn☀️';
+      return 'Günaydın☀️';
     } else if (hour >= 12 && hour < 18) {
-      return 'İyi Öğlenlerrr🤗';
+      return 'İyi Öğlenler🤗';
     } else {
-      return 'İyi Gecelerrr🌃';
+      return 'İyi Geceler🌃';
     }
   }
 
