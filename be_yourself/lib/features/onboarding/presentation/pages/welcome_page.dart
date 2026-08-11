@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'package:quote_reminder/core/constants/app_strings.dart';
-import 'package:quote_reminder/core/theme/app_colors.dart';
-import 'package:quote_reminder/features/onboarding/presentation/widgets/logo_card.dart';
-import 'package:quote_reminder/shared/widgets/main_shell_page.dart';
+import 'package:be_yourself/core/constants/app_strings.dart';
+import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/features/onboarding/presentation/widgets/logo_card.dart';
+import 'package:be_yourself/shared/widgets/main_shell_page.dart';
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});

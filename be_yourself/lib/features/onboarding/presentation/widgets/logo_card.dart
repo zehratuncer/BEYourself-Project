@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:quote_reminder/core/constants/app_constants.dart';
-import 'package:quote_reminder/core/theme/app_colors.dart';
+import 'package:be_yourself/core/constants/app_constants.dart';
+import 'package:be_yourself/core/theme/app_colors.dart';
 
 class LogoCard extends StatelessWidget {
   const LogoCard({super.key});

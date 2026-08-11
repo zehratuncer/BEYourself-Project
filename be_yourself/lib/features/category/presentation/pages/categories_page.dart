@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:quote_reminder/core/theme/app_colors.dart';
-import 'package:quote_reminder/core/utils/category_icon_helper.dart';
-import 'package:quote_reminder/features/category/domain/entities/category.dart';
-import 'package:quote_reminder/features/category/presentation/providers/category_providers.dart';
-import 'package:quote_reminder/features/category/presentation/widgets/edit_category_dialog.dart';
-import 'package:quote_reminder/features/quote/presentation/providers/quote_providers.dart';
-import 'package:quote_reminder/shared/providers/navigation_provider.dart';
+import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/core/utils/category_icon_helper.dart';
+import 'package:be_yourself/features/category/domain/entities/category.dart';
+import 'package:be_yourself/features/category/presentation/providers/category_providers.dart';
+import 'package:be_yourself/features/category/presentation/widgets/edit_category_dialog.dart';
+import 'package:be_yourself/features/quote/presentation/providers/quote_providers.dart';
+import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
+import 'package:be_yourself/shared/providers/navigation_provider.dart';
 
 class CategoriesPage extends ConsumerWidget {
   const CategoriesPage({super.key});
@@ -18,14 +19,23 @@ class CategoriesPage extends ConsumerWidget {
     Category category,
     int quoteCount,
   ) {
+    final isDarkMode = ref.read(isDarkModeProvider);
+    final cardBg = Theme.of(context).cardColor;
+    final primaryTextColor = isDarkMode
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+    final secondaryTextColor = isDarkMode
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: SafeArea(
           child: Column(
@@ -38,7 +48,9 @@ class CategoriesPage extends ConsumerWidget {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 18),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD0D7DE),
+                    color: isDarkMode
+                        ? AppColors.darkDivider
+                        : const Color(0xFFD0D7DE),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -49,12 +61,16 @@ class CategoriesPage extends ConsumerWidget {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: AppColors.primaryBlue.withAlpha(20),
+                      color: isDarkMode
+                          ? AppColors.primaryBlueLight.withAlpha(25)
+                          : AppColors.primaryBlue.withAlpha(20),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       CategoryIconHelper.getIconForCategory(category.name),
-                      color: AppColors.primaryBlue,
+                      color: isDarkMode
+                          ? AppColors.primaryBlueLight
+                          : AppColors.primaryBlue,
                       size: 22,
                     ),
                   ),
@@ -64,17 +80,17 @@ class CategoriesPage extends ConsumerWidget {
                     children: [
                       Text(
                         category.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF111C2D),
+                          color: primaryTextColor,
                         ),
                       ),
                       Text(
                         '$quoteCount Alıntı',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF516072),
+                          color: secondaryTextColor,
                         ),
                       ),
                     ],
@@ -82,33 +98,40 @@ class CategoriesPage extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 20),
-              const Divider(height: 1),
+              Divider(
+                height: 1,
+                color: isDarkMode ? AppColors.darkDivider : AppColors.lightDivider,
+              ),
               const SizedBox(height: 8),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF0F3FF),
+                    color: isDarkMode
+                        ? AppColors.darkInputFill
+                        : const Color(0xFFF0F3FF),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.edit_outlined,
-                    color: AppColors.primaryBlue,
+                    color: isDarkMode
+                        ? AppColors.primaryBlueLight
+                        : AppColors.primaryBlue,
                     size: 22,
                   ),
                 ),
-                title: const Text(
+                title: Text(
                   'Kategori İsmini Düzenle',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF111C2D),
+                    color: primaryTextColor,
                   ),
                 ),
-                subtitle: const Text(
+                subtitle: Text(
                   'Kategorinin başlığını güncelleyin',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF717783)),
+                  style: TextStyle(fontSize: 12, color: secondaryTextColor),
                 ),
                 onTap: () {
                   Navigator.of(ctx).pop();
@@ -124,7 +147,9 @@ class CategoriesPage extends ConsumerWidget {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFECEB),
+                    color: isDarkMode
+                        ? const Color(0xFFDC2626).withAlpha(30)
+                        : const Color(0xFFFFECEB),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
@@ -145,8 +170,7 @@ class CategoriesPage extends ConsumerWidget {
                   quoteCount > 0
                       ? '$quoteCount alıntı "Genel" kategorisine aktarılacak'
                       : 'Bu kategoriyi kalıcı olarak kaldırın',
-                  style:
-                      const TextStyle(fontSize: 12, color: Color(0xFF717783)),
+                  style: TextStyle(fontSize: 12, color: secondaryTextColor),
                 ),
                 onTap: () {
                   Navigator.of(ctx).pop();
@@ -166,6 +190,11 @@ class CategoriesPage extends ConsumerWidget {
     Category category,
     int quoteCount,
   ) {
+    final isDarkMode = ref.read(isDarkModeProvider);
+    final secondaryTextColor = isDarkMode
+        ? AppColors.darkTextSecondary
+        : const Color(0xFF414751);
+
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
@@ -187,9 +216,9 @@ class CategoriesPage extends ConsumerWidget {
           quoteCount > 0
               ? '"${category.name}" kategorisini silmek istediğinize emin misiniz? Bu kategoriye ait $quoteCount alıntı "Genel" kategorisine taşınacaktır.'
               : '"${category.name}" kategorisini silmek istediğinize emin misiniz?',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
-            color: Color(0xFF414751),
+            color: secondaryTextColor,
             height: 1.4,
           ),
         ),
@@ -242,15 +271,24 @@ class CategoriesPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final categories = ref.watch(categoryListProvider);
     final quotes = ref.watch(quoteListProvider);
+    final isDarkMode = ref.watch(isDarkModeProvider);
+
+    final cardBg = Theme.of(context).cardColor;
+    final primaryTextColor = isDarkMode
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+    final secondaryTextColor = isDarkMode
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FF),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 20, 20, 12),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -259,15 +297,17 @@ class CategoriesPage extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primaryBlue,
+                      color: isDarkMode
+                          ? AppColors.primaryBlueLight
+                          : AppColors.primaryBlue,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     'İlham veren düşünceleri keşfet',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Color(0xFF516072),
+                      color: secondaryTextColor,
                     ),
                   ),
                 ],
@@ -275,12 +315,12 @@ class CategoriesPage extends ConsumerWidget {
             ),
             Expanded(
               child: categories.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
                         'Henüz bir kategori bulunmuyor.\nSağ alttaki butondan ekleyebilirsiniz.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Color(0xFF516072),
+                          color: secondaryTextColor,
                           fontSize: 15,
                         ),
                       ),
@@ -332,12 +372,19 @@ class CategoriesPage extends ConsumerWidget {
                             child: Ink(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: cardBg,
                                 borderRadius: BorderRadius.circular(20),
+                                border: isDarkMode
+                                    ? Border.all(
+                                        color: Colors.white.withAlpha(15),
+                                        width: 1,
+                                      )
+                                    : null,
                                 boxShadow: [
                                   BoxShadow(
-                                    color:
-                                        const Color(0xFF60A5FA).withAlpha(15),
+                                    color: isDarkMode
+                                        ? Colors.black.withAlpha(40)
+                                        : const Color(0xFF60A5FA).withAlpha(15),
                                     blurRadius: 20,
                                     offset: const Offset(0, 4),
                                   ),
@@ -351,12 +398,17 @@ class CategoriesPage extends ConsumerWidget {
                                     height: 52,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: AppColors.primaryBlue
-                                          .withAlpha(20),
+                                      color: isDarkMode
+                                          ? AppColors.primaryBlueLight
+                                              .withAlpha(25)
+                                          : AppColors.primaryBlue
+                                              .withAlpha(20),
                                     ),
                                     child: Icon(
                                       categoryIcon,
-                                      color: AppColors.primaryBlue,
+                                      color: isDarkMode
+                                          ? AppColors.primaryBlueLight
+                                          : AppColors.primaryBlue,
                                       size: 26,
                                     ),
                                   ),
@@ -365,10 +417,10 @@ class CategoriesPage extends ConsumerWidget {
                                     category.name,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
-                                      color: Color(0xFF111C2D),
+                                      color: primaryTextColor,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -378,15 +430,17 @@ class CategoriesPage extends ConsumerWidget {
                                       vertical: 3,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF0F3FF),
+                                      color: isDarkMode
+                                          ? AppColors.darkInputFill
+                                          : const Color(0xFFF0F3FF),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
                                       '$displayCount Alıntı',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w500,
-                                        color: Color(0xFF516072),
+                                        color: secondaryTextColor,
                                       ),
                                     ),
                                   ),
@@ -404,4 +458,5 @@ class CategoriesPage extends ConsumerWidget {
     );
   }
 }
+
 

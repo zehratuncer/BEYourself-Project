@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:quote_reminder/core/constants/app_strings.dart';
-import 'package:quote_reminder/core/theme/app_theme.dart';
-import 'package:quote_reminder/features/onboarding/presentation/pages/welcome_page.dart';
+import 'package:be_yourself/core/constants/app_strings.dart';
+import 'package:be_yourself/core/theme/app_theme.dart';
+import 'package:be_yourself/features/onboarding/presentation/pages/welcome_page.dart';
+import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,16 +26,21 @@ Future<void> main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDarkMode = ref.watch(isDarkModeProvider);
+
     return MaterialApp(
       title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
       home: const WelcomePage(),
     );
   }
 }
+

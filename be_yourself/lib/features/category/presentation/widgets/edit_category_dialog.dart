@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:quote_reminder/core/theme/app_colors.dart';
-import 'package:quote_reminder/core/utils/category_icon_helper.dart';
-import 'package:quote_reminder/features/category/domain/entities/category.dart';
-import 'package:quote_reminder/features/category/presentation/providers/category_providers.dart';
-import 'package:quote_reminder/features/quote/presentation/providers/quote_providers.dart';
+import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/core/utils/category_icon_helper.dart';
+import 'package:be_yourself/features/category/domain/entities/category.dart';
+import 'package:be_yourself/features/category/presentation/providers/category_providers.dart';
+import 'package:be_yourself/features/quote/presentation/providers/quote_providers.dart';
+import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
 
 class EditCategoryDialog extends ConsumerStatefulWidget {
   const EditCategoryDialog({super.key, required this.category});
@@ -61,8 +62,17 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
   Widget build(BuildContext context) {
     final previewIcon =
         CategoryIconHelper.getIconForCategory(_controller.text);
+    final isDarkMode = ref.watch(isDarkModeProvider);
+
+    final primaryTextColor = isDarkMode
+        ? AppColors.darkTextPrimary
+        : const Color(0xFF111C2D);
+    final secondaryTextColor = isDarkMode
+        ? AppColors.darkTextSecondary
+        : const Color(0xFF5E6C84);
 
     return Dialog(
+      backgroundColor: Theme.of(context).cardColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -76,17 +86,21 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryBlue.withAlpha(25),
+                    color: isDarkMode
+                        ? AppColors.primaryBlueLight.withAlpha(30)
+                        : AppColors.primaryBlue.withAlpha(25),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     previewIcon,
-                    color: AppColors.primaryBlue,
+                    color: isDarkMode
+                        ? AppColors.primaryBlueLight
+                        : AppColors.primaryBlue,
                     size: 24,
                   ),
                 ),
                 const SizedBox(width: 14),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -95,15 +109,15 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF111C2D),
+                          color: primaryTextColor,
                         ),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
                         'Kategori ismini güncelleyin',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF5E6C84),
+                          color: secondaryTextColor,
                         ),
                       ),
                     ],
@@ -115,22 +129,34 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
             TextField(
               controller: _controller,
               autofocus: true,
+              style: TextStyle(color: primaryTextColor),
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
                 hintText: 'Kategori Adı',
+                hintStyle: TextStyle(
+                  color: isDarkMode
+                      ? AppColors.darkTextSecondary
+                      : const Color(0xFFA0AAB8),
+                ),
                 prefixIcon: Icon(
                   previewIcon,
-                  color: AppColors.primaryBlue,
+                  color: isDarkMode
+                      ? AppColors.primaryBlueLight
+                      : AppColors.primaryBlue,
                 ),
                 filled: true,
-                fillColor: const Color(0xFFF0F3FF),
+                fillColor: isDarkMode
+                    ? AppColors.darkInputFill
+                    : const Color(0xFFF0F3FF),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 14,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
+                  borderSide: isDarkMode
+                      ? BorderSide(color: Colors.white.withAlpha(20))
+                      : BorderSide.none,
                 ),
               ),
               onSubmitted: (_) => _saveCategory(),
@@ -141,14 +167,24 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
               children: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('İptal'),
+                  child: Text(
+                    'İptal',
+                    style: TextStyle(
+                      color: isDarkMode
+                          ? AppColors.darkTextSecondary
+                          : const Color(0xFF717783),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: _saveCategory,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlue,
-                    foregroundColor: Colors.white,
+                    backgroundColor: isDarkMode
+                        ? AppColors.primaryBlueLight
+                        : AppColors.primaryBlue,
+                    foregroundColor:
+                        isDarkMode ? Colors.black87 : Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -167,3 +203,4 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
     );
   }
 }
+

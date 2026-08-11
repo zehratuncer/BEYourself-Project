@@ -3,8 +3,8 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:quote_reminder/main.dart';
-import 'package:quote_reminder/features/quote/domain/entities/quote.dart';
+import 'package:be_yourself/main.dart';
+import 'package:be_yourself/features/quote/domain/entities/quote.dart';
 
 class QuoteNotifier extends StateNotifier<List<Quote>> {
   QuoteNotifier()

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:quote_reminder/core/theme/app_colors.dart';
-import 'package:quote_reminder/features/category/presentation/pages/categories_page.dart';
-import 'package:quote_reminder/features/category/presentation/widgets/add_category_dialog.dart';
-import 'package:quote_reminder/features/favorites/presentation/pages/favorites_page.dart';
-import 'package:quote_reminder/features/home/presentation/pages/home_page.dart';
-import 'package:quote_reminder/features/quote/presentation/pages/quote_detail_page.dart';
-import 'package:quote_reminder/features/quote/presentation/pages/quote_form_page.dart';
-import 'package:quote_reminder/features/settings/presentation/pages/settings_page.dart';
-import 'package:quote_reminder/shared/providers/navigation_provider.dart';
+import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/features/category/presentation/pages/categories_page.dart';
+import 'package:be_yourself/features/category/presentation/widgets/add_category_dialog.dart';
+import 'package:be_yourself/features/favorites/presentation/pages/favorites_page.dart';
+import 'package:be_yourself/features/home/presentation/pages/home_page.dart';
+import 'package:be_yourself/features/quote/presentation/pages/quote_detail_page.dart';
+import 'package:be_yourself/features/quote/presentation/pages/quote_form_page.dart';
+import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
+import 'package:be_yourself/shared/providers/navigation_provider.dart';
 
 class MainShellPage extends ConsumerWidget {
   const MainShellPage({super.key});
@@ -17,6 +17,7 @@ class MainShellPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentTab = ref.watch(currentTabProvider);
+    final isDarkMode = ref.watch(isDarkModeProvider);
 
     final pages = [
       HomePage(
@@ -41,33 +42,37 @@ class MainShellPage extends ConsumerWidget {
         index: currentTab,
         children: pages,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          if (isCategoriesTab) {
-            showDialog(
-              context: context,
-              builder: (_) => const AddCategoryDialog(),
-            );
-          } else {
-            _openAddQuote(context);
-          }
-        },
-        backgroundColor: AppColors.primaryBlue,
-        elevation: 6,
-        shape: const CircleBorder(),
-        tooltip: isCategoriesTab ? 'Kategori Ekle' : 'Alıntı Ekle',
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 28,
-        ),
-      ),
+      floatingActionButton: (currentTab == 0 || currentTab == 2)
+          ? FloatingActionButton(
+              onPressed: () {
+                if (isCategoriesTab) {
+                  showDialog(
+                    context: context,
+                    builder: (_) => const AddCategoryDialog(),
+                  );
+                } else {
+                  _openAddQuote(context);
+                }
+              },
+              backgroundColor: AppColors.primaryBlue,
+              elevation: 6,
+              shape: const CircleBorder(),
+              tooltip: isCategoriesTab ? 'Kategori Ekle' : 'Alıntı Ekle',
+              child: const Icon(
+                Icons.add,
+                color: Colors.white,
+                size: 28,
+              ),
+            )
+          : null,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(12),
+              color: isDarkMode
+                  ? Colors.black.withAlpha(40)
+                  : Colors.black.withAlpha(12),
               blurRadius: 20,
               offset: const Offset(0, -4),
             ),
@@ -79,9 +84,13 @@ class MainShellPage extends ConsumerWidget {
             ref.read(currentTabProvider.notifier).state = index;
           },
           type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: AppColors.primaryBlue,
-          unselectedItemColor: const Color(0xFF516072),
+          backgroundColor: Theme.of(context).cardColor,
+          selectedItemColor: isDarkMode
+              ? AppColors.primaryBlueLight
+              : AppColors.primaryBlue,
+          unselectedItemColor: isDarkMode
+              ? AppColors.darkTextSecondary
+              : const Color(0xFF516072),
           selectedLabelStyle: const TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 12,
