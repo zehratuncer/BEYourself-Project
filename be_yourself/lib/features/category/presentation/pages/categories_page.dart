@@ -293,7 +293,7 @@ class CategoriesPage extends ConsumerWidget {
                         crossAxisCount: 2,
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,
-                        childAspectRatio: 1.1,
+                        childAspectRatio: 0.95,
                       ),
                       itemCount: categories.length,
                       itemBuilder: (context, index) {
