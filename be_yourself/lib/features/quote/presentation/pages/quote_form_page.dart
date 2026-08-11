@@ -382,68 +382,6 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Hero Card: İlhamı Yakala
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 20),
-                      decoration: BoxDecoration(
-                        color: isDarkMode
-                            ? AppColors.darkCardBackground
-                            : const Color(0xFFF0F4FD),
-                        borderRadius: BorderRadius.circular(24),
-                        border: isDarkMode
-                            ? Border.all(
-                                color: Colors.white.withAlpha(15),
-                                width: 1,
-                              )
-                            : null,
-                      ),
-                      child: Stack(
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'İlhamı Yakala',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDarkMode
-                                      ? AppColors.primaryBlueLight
-                                      : AppColors.primaryBlue,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Sizi etkileyen kelimeleri kalıcı hale getirin.',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: secondaryTextColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Positioned(
-                            right: 0,
-                            top: -12,
-                            child: Text(
-                              '”',
-                              style: TextStyle(
-                                fontSize: 80,
-                                fontWeight: FontWeight.w900,
-                                color: isDarkMode
-                                    ? AppColors.primaryBlueLight.withAlpha(20)
-                                    : AppColors.primaryBlue.withAlpha(25),
-                                height: 1.0,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
                     // Alıntı Text Field
                     Text(
                       'Alıntı',
