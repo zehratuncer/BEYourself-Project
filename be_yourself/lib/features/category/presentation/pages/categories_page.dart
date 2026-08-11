@@ -301,9 +301,7 @@ class CategoriesPage extends ConsumerWidget {
                         final categoryQuotesCount = quotes
                             .where((q) => q.categoryName == category.name)
                             .length;
-                        final displayCount = categoryQuotesCount > 0
-                            ? categoryQuotesCount
-                            : category.quoteCount;
+                        final displayCount = categoryQuotesCount;
 
                         final categoryIcon =
                             CategoryIconHelper.getIconForCategory(
