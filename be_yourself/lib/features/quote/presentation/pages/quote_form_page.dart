@@ -58,6 +58,33 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
     super.dispose();
   }
 
+  String _generateSmartTitle(String rawText) {
+    // 1. Remove hashtags (#word)
+    var clean = rawText.replaceAll(RegExp(r'#\S+'), '');
+    // 2. Remove URLs
+    clean = clean.replaceAll(RegExp(r'https?:\/\/\S+'), '');
+    // 3. Remove @mentions
+    clean = clean.replaceAll(RegExp(r'@\S+'), '');
+    // 4. Normalize multiple spaces & newlines
+    clean = clean.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+    if (clean.isEmpty) return 'İlham Veren Reels ✨';
+
+    // 5. Extract first complete sentence
+    final sentenceMatch = RegExp(r'^([^.!?\n]+[.!?]?)').firstMatch(clean);
+    String summary = sentenceMatch?.group(1)?.trim() ?? clean;
+
+    if (summary.length > 65) {
+      if (summary.contains(',')) {
+        summary = '${summary.split(',').first.trim()}...';
+      } else {
+        summary = '${summary.substring(0, 60).trim()}...';
+      }
+    }
+
+    return summary;
+  }
+
   Future<void> _generateAiSummary() async {
     final originalText = _textController.text.trim();
     if (originalText.isEmpty) {
@@ -71,16 +98,9 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
 
     setState(() => _isSummarizing = true);
 
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 400));
 
-    String summary = originalText;
-    if (originalText.contains(',') && originalText.length > 50) {
-      summary = '${originalText.split(',').first}...';
-    } else if (originalText.contains('.') && originalText.length > 50) {
-      summary = '${originalText.split('.').first}.';
-    } else if (originalText.length > 60) {
-      summary = '${originalText.substring(0, 55).trim()}...';
-    }
+    final summary = _generateSmartTitle(originalText);
 
     setState(() {
       _shortTextController.text = summary;
@@ -90,7 +110,7 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('✨ Alıntı AI ile başarıyla kısaltıldı!'),
+          content: Text('✨ Alıntı AI ile başarıyla kısaltıldı ve başlık oluşturuldu!'),
           backgroundColor: AppColors.primaryBlue,
         ),
       );
@@ -162,9 +182,14 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
           _isDownloadingReel = false;
           _instagramUrlController.clear();
 
-          // Auto-fill caption if available and text is empty
+          // Auto-fill caption and generate smart title
           if (result.caption != null && result.caption!.trim().isNotEmpty) {
-            _textController.text = result.caption!.trim();
+            final cleanCaption = result.caption!.trim();
+            _textController.text = cleanCaption;
+
+            // Auto-generate punchy single-sentence title
+            final smartTitle = _generateSmartTitle(cleanCaption);
+            _shortTextController.text = smartTitle;
           }
 
           // Auto-fill author if available and author is empty
@@ -177,7 +202,7 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                '🎬 Reels videosu ve açıklaması başarıyla alıntıya aktarıldı!'),
+                '🎬 Reels videosu, açıklaması ve başlığı otomatik oluşturuldu! ✨'),
             backgroundColor: AppColors.primaryBlue,
           ),
         );
