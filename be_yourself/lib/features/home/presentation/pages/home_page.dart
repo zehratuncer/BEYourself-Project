@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:be_yourself/core/theme/app_colors.dart';
 import 'package:be_yourself/features/category/presentation/providers/category_providers.dart';
 import 'package:be_yourself/features/home/presentation/widgets/quote_card.dart';
 import 'package:be_yourself/features/quote/presentation/providers/quote_providers.dart';
-import 'package:be_yourself/features/quote/presentation/widgets/random_quote_modal.dart';
 import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
 
 class HomePage extends ConsumerWidget {
@@ -47,7 +45,7 @@ class HomePage extends ConsumerWidget {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // Header: Profile & App Title & Random Discover Button
+            // Header: Profile & App Title
             SliverToBoxAdapter(
               child: Padding(
                 padding:
@@ -89,59 +87,6 @@ class HomePage extends ConsumerWidget {
                           ),
                         ),
                       ],
-                    ),
-                    InkWell(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        RandomQuoteModal.show(
-                          context,
-                          category: selectedCategory == 'Hepsi'
-                              ? null
-                              : selectedCategory,
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: isDarkMode
-                                ? const [Color(0xFF2563EB), Color(0xFF1D4ED8)]
-                                : const [Color(0xFF3B82F6), Color(0xFF2563EB)],
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primaryBlue.withAlpha(60),
-                              blurRadius: 10,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.casino_rounded,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              'Zar At',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ),
                   ],
                 ),

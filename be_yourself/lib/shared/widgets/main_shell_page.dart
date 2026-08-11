@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:be_yourself/core/theme/app_colors.dart';
@@ -8,6 +9,7 @@ import 'package:be_yourself/features/favorites/presentation/pages/favorites_page
 import 'package:be_yourself/features/home/presentation/pages/home_page.dart';
 import 'package:be_yourself/features/quote/presentation/pages/quote_detail_page.dart';
 import 'package:be_yourself/features/quote/presentation/pages/quote_form_page.dart';
+import 'package:be_yourself/features/quote/presentation/widgets/random_quote_modal.dart';
 import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
 import 'package:be_yourself/shared/providers/navigation_provider.dart';
 
@@ -42,29 +44,64 @@ class MainShellPage extends ConsumerWidget {
         index: currentTab,
         children: pages,
       ),
-      floatingActionButton: (currentTab == 0 || currentTab == 2)
-          ? FloatingActionButton(
-              onPressed: () {
-                if (isCategoriesTab) {
-                  showDialog(
-                    context: context,
-                    builder: (_) => const AddCategoryDialog(),
-                  );
-                } else {
-                  _openAddQuote(context);
-                }
-              },
-              backgroundColor: AppColors.primaryBlue,
-              elevation: 6,
-              shape: const CircleBorder(),
-              tooltip: isCategoriesTab ? 'Kategori Ekle' : 'Alıntı Ekle',
-              child: const Icon(
-                Icons.add,
-                color: Colors.white,
-                size: 28,
-              ),
+      floatingActionButton: (currentTab == 0)
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                FloatingActionButton.small(
+                  heroTag: 'random_quote_dice_fab',
+                  onPressed: () {
+                    HapticFeedback.mediumImpact();
+                    RandomQuoteModal.show(context);
+                  },
+                  backgroundColor: isDarkMode
+                      ? const Color(0xFF1E293B)
+                      : Colors.white,
+                  elevation: 4,
+                  shape: const CircleBorder(),
+                  tooltip: 'Rastgele Keşfet',
+                  child: const Text(
+                    '🎲',
+                    style: TextStyle(fontSize: 22),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                FloatingActionButton(
+                  heroTag: 'main_add_quote_fab',
+                  onPressed: () => _openAddQuote(context),
+                  backgroundColor: AppColors.primaryBlue,
+                  elevation: 6,
+                  shape: const CircleBorder(),
+                  tooltip: 'Alıntı Ekle',
+                  child: const Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+              ],
             )
-          : null,
+          : (isCategoriesTab
+              ? FloatingActionButton(
+                  heroTag: 'add_category_fab',
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => const AddCategoryDialog(),
+                    );
+                  },
+                  backgroundColor: AppColors.primaryBlue,
+                  elevation: 6,
+                  shape: const CircleBorder(),
+                  tooltip: 'Kategori Ekle',
+                  child: const Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                )
+              : null),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
