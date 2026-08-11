@@ -43,4 +43,32 @@ class Quote {
       shortText: shortText ?? this.shortText,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'text': text,
+      'author': author,
+      'categoryName': categoryName,
+      'createdAt': createdAt.toIso8601String(),
+      'isFavorite': isFavorite,
+      'mediaUrl': mediaUrl,
+      'shortText': shortText,
+    };
+  }
+
+  factory Quote.fromJson(Map<String, dynamic> json) {
+    return Quote(
+      id: json['id'] as String? ?? '',
+      text: json['text'] as String? ?? '',
+      author: json['author'] as String? ?? '',
+      categoryName: json['categoryName'] as String? ?? 'Genel',
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'] as String) ?? DateTime.now()
+          : DateTime.now(),
+      isFavorite: json['isFavorite'] as bool? ?? false,
+      mediaUrl: json['mediaUrl'] as String?,
+      shortText: json['shortText'] as String?,
+    );
+  }
 }

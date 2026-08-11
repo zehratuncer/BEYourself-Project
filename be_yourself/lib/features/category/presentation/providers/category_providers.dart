@@ -1,16 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:be_yourself/features/category/data/datasources/category_local_datasource.dart';
 import 'package:be_yourself/features/category/domain/entities/category.dart';
+import 'package:be_yourself/main.dart';
 
 class CategoryNotifier extends StateNotifier<List<Category>> {
-  CategoryNotifier()
-      : super([
-          const Category(id: '1', name: 'Psikoloji', quoteCount: 14),
-          const Category(id: '2', name: 'Motivasyon', quoteCount: 28),
-          const Category(id: '3', name: 'Kitaplar', quoteCount: 19),
-          const Category(id: '4', name: 'Müzik', quoteCount: 8),
-          const Category(id: '5', name: 'Felsefe', quoteCount: 22),
-        ]);
+  final CategoryLocalDataSource _dataSource;
+
+  CategoryNotifier(this._dataSource) : super([]) {
+    _loadCategories();
+  }
+
+  void _loadCategories() {
+    state = _dataSource.getCategories();
+  }
+
+  void _persist() {
+    _dataSource.saveCategories(state);
+  }
 
   void addCategory(String name) {
     final trimmed = name.trim();
@@ -24,6 +31,7 @@ class CategoryNotifier extends StateNotifier<List<Category>> {
       quoteCount: 0,
     );
     state = [...state, newCategory];
+    _persist();
   }
 
   void updateCategory(String id, String newName) {
@@ -33,15 +41,25 @@ class CategoryNotifier extends StateNotifier<List<Category>> {
       for (final category in state)
         if (category.id == id) category.copyWith(name: trimmed) else category,
     ];
+    _persist();
   }
 
   void deleteCategory(String id) {
     state = state.where((category) => category.id != id).toList();
+    _persist();
   }
 }
 
+final categoryLocalDataSourceProvider =
+    Provider<CategoryLocalDataSource>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return CategoryLocalDataSource(prefs);
+});
+
 final categoryListProvider =
     StateNotifierProvider<CategoryNotifier, List<Category>>((ref) {
-  return CategoryNotifier();
+  final dataSource = ref.watch(categoryLocalDataSourceProvider);
+  return CategoryNotifier(dataSource);
 });
+
 

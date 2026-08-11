@@ -3,11 +3,24 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:be_yourself/main.dart';
+import 'package:be_yourself/features/quote/data/datasources/quote_local_datasource.dart';
 import 'package:be_yourself/features/quote/domain/entities/quote.dart';
+import 'package:be_yourself/main.dart';
 
 class QuoteNotifier extends StateNotifier<List<Quote>> {
-  QuoteNotifier() : super([]);
+  final QuoteLocalDataSource _dataSource;
+
+  QuoteNotifier(this._dataSource) : super([]) {
+    _loadQuotes();
+  }
+
+  void _loadQuotes() {
+    state = _dataSource.getQuotes();
+  }
+
+  void _persist() {
+    _dataSource.saveQuotes(state);
+  }
 
   void toggleFavorite(String id) {
     state = [
@@ -17,10 +30,12 @@ class QuoteNotifier extends StateNotifier<List<Quote>> {
         else
           quote,
     ];
+    _persist();
   }
 
   void addQuote(Quote quote) {
     state = [quote, ...state];
+    _persist();
   }
 
   void updateQuote(Quote quote) {
@@ -28,10 +43,12 @@ class QuoteNotifier extends StateNotifier<List<Quote>> {
       for (final item in state)
         if (item.id == quote.id) quote else item,
     ];
+    _persist();
   }
 
   void deleteQuote(String id) {
     state = state.where((item) => item.id != id).toList();
+    _persist();
   }
 
   void renameCategory(String oldCategoryName, String newCategoryName) {
@@ -42,6 +59,7 @@ class QuoteNotifier extends StateNotifier<List<Quote>> {
         else
           quote,
     ];
+    _persist();
   }
 
   void handleCategoryDeleted(String categoryName) {
@@ -52,12 +70,19 @@ class QuoteNotifier extends StateNotifier<List<Quote>> {
         else
           quote,
     ];
+    _persist();
   }
 }
 
+final quoteLocalDataSourceProvider = Provider<QuoteLocalDataSource>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return QuoteLocalDataSource(prefs);
+});
+
 final quoteListProvider =
     StateNotifierProvider<QuoteNotifier, List<Quote>>((ref) {
-  return QuoteNotifier();
+  final dataSource = ref.watch(quoteLocalDataSourceProvider);
+  return QuoteNotifier(dataSource);
 });
 
 final selectedCategoryFilterProvider = StateProvider<String>((ref) => 'Hepsi');

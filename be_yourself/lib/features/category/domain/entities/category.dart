@@ -28,5 +28,25 @@ class Category {
       colorHex: colorHex ?? this.colorHex,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'quoteCount': quoteCount,
+      'iconName': iconName,
+      'colorHex': colorHex,
+    };
+  }
+
+  factory Category.fromJson(Map<String, dynamic> json) {
+    return Category(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      quoteCount: json['quoteCount'] as int? ?? 0,
+      iconName: json['iconName'] as String?,
+      colorHex: json['colorHex'] as String?,
+    );
+  }
 }
 
