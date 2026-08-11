@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:quote_reminder/core/theme/app_colors.dart';
+import 'package:quote_reminder/core/utils/category_icon_helper.dart';
 import 'package:quote_reminder/features/category/presentation/providers/category_providers.dart';
 
 class AddCategoryDialog extends ConsumerStatefulWidget {
@@ -15,13 +16,32 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
   final _controller = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _controller.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
+  void _saveCategory() {
+    final text = _controller.text.trim();
+    if (text.isNotEmpty) {
+      ref.read(categoryListProvider.notifier).addCategory(text);
+      Navigator.of(context).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final previewIcon =
+        CategoryIconHelper.getIconForCategory(_controller.text);
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
@@ -30,35 +50,70 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Yeni Kategori Ekle',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF111C2D),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Alıntılarınızı düzenlemek için yeni bir kategori adı girin.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Color(0xFF5E6C84),
-              ),
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryBlue.withAlpha(25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    previewIcon,
+                    color: AppColors.primaryBlue,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Yeni Kategori Ekle',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF111C2D),
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Alıntılarınızı düzenlemek için bir isim girin',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF5E6C84),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 20),
             TextField(
               controller: _controller,
               autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
-                hintText: 'Kategori Adı (ör. Şiir, Felsefe)',
+                hintText: 'Kategori Adı (ör. Şiir, Felsefe, Spor)',
+                prefixIcon: Icon(
+                  previewIcon,
+                  color: AppColors.primaryBlue,
+                ),
                 filled: true,
                 fillColor: const Color(0xFFF0F3FF),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
                 ),
               ),
+              onSubmitted: (_) => _saveCategory(),
             ),
             const SizedBox(height: 24),
             Row(
@@ -70,14 +125,7 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: () {
-                    if (_controller.text.trim().isNotEmpty) {
-                      ref
-                          .read(categoryListProvider.notifier)
-                          .addCategory(_controller.text.trim());
-                      Navigator.of(context).pop();
-                    }
-                  },
+                  onPressed: _saveCategory,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryBlue,
                     foregroundColor: Colors.white,
@@ -99,3 +147,4 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
     );
   }
 }
+
