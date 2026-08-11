@@ -13,6 +13,8 @@ final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError();
 });
 
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
@@ -31,6 +33,11 @@ Future<void> main() async {
       child: const MyApp(),
     ),
   );
+
+  // Check if app was launched via notification click
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    NotificationService.instance.checkPendingNotificationLaunch();
+  });
 }
 
 class MyApp extends ConsumerWidget {
@@ -41,6 +48,7 @@ class MyApp extends ConsumerWidget {
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return MaterialApp(
+      navigatorKey: appNavigatorKey,
       title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),

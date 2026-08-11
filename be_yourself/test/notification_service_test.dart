@@ -24,6 +24,9 @@ void main() {
             methodCall.method == 'requestPermissions') {
           return true;
         }
+        if (methodCall.method == 'getNotificationAppLaunchDetails') {
+          return null;
+        }
         return null;
       },
     );
@@ -73,10 +76,12 @@ void main() {
       );
 
       await service.showInstantNotification(
-        title: 'Test Başlık',
+        title: 'Günün Alıntısı 💫',
         body: 'Test İçerik',
+        payload: '1',
       );
 
+      await service.checkPendingNotificationLaunch();
       await service.cancelAll();
     });
   });

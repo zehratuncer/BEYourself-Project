@@ -6,6 +6,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:be_yourself/features/quote/domain/entities/quote.dart';
+import 'package:be_yourself/features/quote/presentation/pages/quote_detail_page.dart';
+import 'package:be_yourself/main.dart';
 
 class NotificationService {
   NotificationService._internal();
@@ -25,23 +27,23 @@ class NotificationService {
   static const List<Map<String, String>> _fallbackQuotes = [
     {
       'text': 'Kendine inan, yapabileceklerinin sınırı yoktur.',
-      'author': 'Günün İlhamı ✨',
+      'author': 'Günün Alıntısı 💫',
     },
     {
       'text': 'Her yeni gün, yepyeni bir başlangıç ve fırsattır.',
-      'author': 'Günün İlhamı ✨',
+      'author': 'Günün Alıntısı 💫',
     },
     {
       'text': 'Zorluklar, seni daha güçlü kılmak için vardır.',
-      'author': 'Günün İlhamı ✨',
+      'author': 'Günün Alıntısı 💫',
     },
     {
       'text': 'Bugün kendin için güzel bir adım at.',
-      'author': 'Günün İlhamı ✨',
+      'author': 'Günün Alıntısı 💫',
     },
     {
       'text': 'Küçük adımlar, büyük zaferlerin anahtarıdır.',
-      'author': 'Günün İlhamı ✨',
+      'author': 'Günün Alıntısı 💫',
     },
   ];
 
@@ -77,7 +79,7 @@ class NotificationService {
     await _notificationsPlugin.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-        debugPrint('Notification clicked with payload: ${response.payload}');
+        handleNotificationClick(response.payload);
       },
     );
 
@@ -100,6 +102,32 @@ class NotificationService {
     }
 
     _isInitialized = true;
+  }
+
+  void handleNotificationClick(String? payload) {
+    if (payload == null || payload.trim().isEmpty) return;
+
+    debugPrint('Navigating to quote detail for quoteId: $payload');
+    appNavigatorKey.currentState?.push(
+      MaterialPageRoute(
+        builder: (_) => QuoteDetailPage(quoteId: payload),
+      ),
+    );
+  }
+
+  Future<void> checkPendingNotificationLaunch() async {
+    try {
+      final details =
+          await _notificationsPlugin.getNotificationAppLaunchDetails();
+      if (details?.didNotificationLaunchApp ?? false) {
+        final payload = details?.notificationResponse?.payload;
+        if (payload != null && payload.isNotEmpty) {
+          handleNotificationClick(payload);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking launch notification: $e');
+    }
   }
 
   Future<bool> requestPermissions() async {
@@ -204,7 +232,7 @@ class NotificationService {
               quote['author']!.trim().isNotEmpty &&
               quote['author'] != 'Anonim')
           ? quote['author']!
-          : 'Günün Yazısı 💫';
+          : 'Günün Alıntısı 💫';
 
       final androidDetails = AndroidNotificationDetails(
         channelId,

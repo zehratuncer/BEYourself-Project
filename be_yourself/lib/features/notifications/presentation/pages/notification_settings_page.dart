@@ -377,11 +377,14 @@ class NotificationSettingsPage extends ConsumerWidget {
                             quotes.first.author.trim().isNotEmpty &&
                             quotes.first.author.trim() != 'Anonim')
                         ? quotes.first.author.trim()
-                        : 'Günün İlhamı ✨';
+                        : 'Günün Alıntısı 💫';
+                    final sampleId =
+                        quotes.isNotEmpty ? quotes.first.id : 'fallback_0';
 
                     await NotificationService.instance.showInstantNotification(
                       title: sampleAuthor,
                       body: sampleQuote,
+                      payload: sampleId,
                     );
 
                     if (context.mounted) {
