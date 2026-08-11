@@ -12,6 +12,7 @@ class AppVideoPlayer extends StatefulWidget {
     this.showControls = true,
     this.height = 220,
     this.borderRadius = 16.0,
+    this.fit = BoxFit.contain,
   });
 
   final String videoPath;
@@ -19,6 +20,7 @@ class AppVideoPlayer extends StatefulWidget {
   final bool showControls;
   final double height;
   final double borderRadius;
+  final BoxFit fit;
 
   @override
   State<AppVideoPlayer> createState() => _AppVideoPlayerState();
@@ -174,10 +176,25 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
           children: [
             // Video Player Surface
             Center(
-              child: AspectRatio(
-                aspectRatio: _controller!.value.aspectRatio,
-                child: VideoPlayer(_controller!),
-              ),
+              child: widget.fit == BoxFit.cover
+                  ? SizedBox.expand(
+                      child: FittedBox(
+                        fit: BoxFit.cover,
+                        child: SizedBox(
+                          width: _controller!.value.size.width > 0
+                              ? _controller!.value.size.width
+                              : 1080,
+                          height: _controller!.value.size.height > 0
+                              ? _controller!.value.size.height
+                              : 1920,
+                          child: VideoPlayer(_controller!),
+                        ),
+                      ),
+                    )
+                  : AspectRatio(
+                      aspectRatio: _controller!.value.aspectRatio,
+                      child: VideoPlayer(_controller!),
+                    ),
             ),
 
             // Tap detector overlay

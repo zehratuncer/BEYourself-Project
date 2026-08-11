@@ -19,8 +19,8 @@ class InstagramReelResult {
   final String? authorFullName;
 }
 
-class _ReelResolvedData {
-  const _ReelResolvedData({
+class ReelResolvedData {
+  const ReelResolvedData({
     required this.videoUrl,
     this.caption,
     this.authorUsername,
@@ -74,7 +74,7 @@ class InstagramDownloaderService {
   }
 
   /// Resolves video stream URL, caption and author from Instagram Reels link.
-  Future<_ReelResolvedData?> resolveReelData(String rawUrl) async {
+  Future<ReelResolvedData?> resolveReelData(String rawUrl) async {
     final shortcode = extractShortcode(rawUrl);
     if (shortcode == null) {
       throw const FormatException('Geçersiz Instagram Reels bağlantısı.');
@@ -139,7 +139,7 @@ class InstagramDownloaderService {
               authorFullName = media['owner']['full_name'] as String?;
             }
 
-            return _ReelResolvedData(
+            return ReelResolvedData(
               videoUrl: directUrl,
               caption: caption,
               authorUsername: authorUsername,
@@ -172,7 +172,7 @@ class InstagramDownloaderService {
         if (videoSrcMatch != null && videoSrcMatch.group(1) != null) {
           final extractedUrl =
               videoSrcMatch.group(1)!.replaceAll('&amp;', '&');
-          return _ReelResolvedData(videoUrl: extractedUrl);
+          return ReelResolvedData(videoUrl: extractedUrl);
         }
 
         final jsonVideoUrlMatch =
@@ -181,7 +181,7 @@ class InstagramDownloaderService {
           var cleanUrl = jsonVideoUrlMatch.group(1)!;
           cleanUrl =
               cleanUrl.replaceAll(r'\u0026', '&').replaceAll(r'\/', '/');
-          return _ReelResolvedData(videoUrl: cleanUrl);
+          return ReelResolvedData(videoUrl: cleanUrl);
         }
       }
     } catch (e) {
@@ -210,7 +210,7 @@ class InstagramDownloaderService {
 
         if (ogVideoMatch != null && ogVideoMatch.group(2) != null) {
           final directUrl = ogVideoMatch.group(2)!.replaceAll('&amp;', '&');
-          return _ReelResolvedData(videoUrl: directUrl);
+          return ReelResolvedData(videoUrl: directUrl);
         }
       }
     } catch (e) {
