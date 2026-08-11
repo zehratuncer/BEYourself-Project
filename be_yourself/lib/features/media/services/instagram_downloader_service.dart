@@ -11,18 +11,34 @@ class InstagramDownloaderService {
       InstagramDownloaderService._();
 
   static final RegExp _instagramUrlRegex = RegExp(
-    r'(https?:\/\/)?(www\.)?(instagram\.com|instagr\.am)\/(reel|reels|p)\/([a-zA-Z0-9_-]+)',
+    r'(https?:\/\/)?(www\.)?(instagram\.com|instagr\.am)\/(reel|reels|p|share\/reel|share\/p|tv)\/([a-zA-Z0-9_-]+)',
     caseSensitive: false,
   );
 
   /// Validates if the given string is a valid Instagram Reel or Post URL.
   bool isValidInstagramUrl(String url) {
-    return _instagramUrlRegex.hasMatch(url.trim());
+    final clean = url.trim();
+    if (clean.isEmpty) return false;
+    return extractShortcode(clean) != null;
   }
 
   /// Extracts the clean shortcode from an Instagram URL.
   String? extractShortcode(String url) {
-    final match = _instagramUrlRegex.firstMatch(url.trim());
+    final clean = url.trim();
+    final uri = Uri.tryParse(clean);
+
+    if (uri != null) {
+      final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+      for (int i = 0; i < segments.length; i++) {
+        final seg = segments[i].toLowerCase();
+        if ((seg == 'reel' || seg == 'reels' || seg == 'p' || seg == 'tv') &&
+            i + 1 < segments.length) {
+          return segments[i + 1];
+        }
+      }
+    }
+
+    final match = _instagramUrlRegex.firstMatch(clean);
     if (match != null && match.groupCount >= 5) {
       return match.group(5);
     }
@@ -36,36 +52,57 @@ class InstagramDownloaderService {
       throw const FormatException('Geçersiz Instagram Reels bağlantısı.');
     }
 
-    final normalizedUrl = 'https://www.instagram.com/reel/$shortcode/';
-
-    // Strategy 1: Cobalt API / Open Video Resolver
+    // Strategy 1: Official Instagram GraphQL Query (doc_id=10015901848480474)
     try {
-      final response = await http.post(
-        Uri.parse('https://co.wuk.sh/api/json'),
+      final uri = Uri.parse(
+        'https://www.instagram.com/graphql/query/?doc_id=10015901848480474&variables=%7B%22shortcode%22:%22$shortcode%22%7D',
+      );
+
+      final response = await http.get(
+        uri,
         headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
+          'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+          'X-IG-App-ID': '936619743392459',
+          'Accept': '*/*',
         },
-        body: jsonEncode({
-          'url': normalizedUrl,
-          'vQuality': '720',
-          'filenamePattern': 'basic',
-        }),
-      ).timeout(const Duration(seconds: 8));
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        if (data['url'] != null && data['url'].toString().isNotEmpty) {
-          return data['url'] as String;
+        final media = data['data']?['xdt_shortcode_media'];
+        if (media != null) {
+          // Direct video URL
+          if (media['video_url'] != null &&
+              media['video_url'].toString().isNotEmpty) {
+            return media['video_url'] as String;
+          }
+
+          // Carousel / Multi-item video check
+          if (media['edge_sidecar_to_children'] != null) {
+            final edges =
+                media['edge_sidecar_to_children']['edges'] as List<dynamic>?;
+            if (edges != null) {
+              for (final edge in edges) {
+                final node = edge['node'] as Map<String, dynamic>?;
+                if (node != null &&
+                    node['is_video'] == true &&
+                    node['video_url'] != null) {
+                  return node['video_url'] as String;
+                }
+              }
+            }
+          }
         }
       }
     } catch (e) {
-      debugPrint('Strategy 1 (Cobalt) error: $e');
+      debugPrint('Strategy 1 (GraphQL doc_id) error: $e');
     }
 
     // Strategy 2: Instagram Embed Page HTML Extraction
     try {
-      final embedUrl = 'https://www.instagram.com/p/$shortcode/embed/captioned/';
+      final embedUrl =
+          'https://www.instagram.com/p/$shortcode/embed/captioned/';
       final response = await http.get(
         Uri.parse(embedUrl),
         headers: {
@@ -78,17 +115,21 @@ class InstagramDownloaderService {
         final html = response.body;
 
         // Try extracting video src directly from HTML
-        final videoSrcMatch = RegExp(r'<video[^>]+src="([^">]+)"').firstMatch(html);
+        final videoSrcMatch =
+            RegExp(r'<video[^>]+src="([^">]+)"').firstMatch(html);
         if (videoSrcMatch != null && videoSrcMatch.group(1) != null) {
-          final extractedUrl = videoSrcMatch.group(1)!.replaceAll('&amp;', '&');
+          final extractedUrl =
+              videoSrcMatch.group(1)!.replaceAll('&amp;', '&');
           return extractedUrl;
         }
 
         // Try regex match for video_url in embedded JSON payload
-        final jsonVideoUrlMatch = RegExp(r'"video_url":"([^"]+)"').firstMatch(html);
+        final jsonVideoUrlMatch =
+            RegExp(r'"video_url":"([^"]+)"').firstMatch(html);
         if (jsonVideoUrlMatch != null && jsonVideoUrlMatch.group(1) != null) {
           var cleanUrl = jsonVideoUrlMatch.group(1)!;
-          cleanUrl = cleanUrl.replaceAll(r'\u0026', '&').replaceAll(r'\/', '/');
+          cleanUrl =
+              cleanUrl.replaceAll(r'\u0026', '&').replaceAll(r'\/', '/');
           return cleanUrl;
         }
       }
@@ -96,8 +137,9 @@ class InstagramDownloaderService {
       debugPrint('Strategy 2 (Embed page) error: $e');
     }
 
-    // Strategy 3: Instagram GraphQL / Open Graph HTML Meta Scraper
+    // Strategy 3: OpenGraph HTML Meta Tag Scraper
     try {
+      final normalizedUrl = 'https://www.instagram.com/reel/$shortcode/';
       final response = await http.get(
         Uri.parse(normalizedUrl),
         headers: {
@@ -135,7 +177,8 @@ class InstagramDownloaderService {
     onProgress?.call(0.1, 'Bağlantı doğrulanıyor...');
 
     if (!isValidInstagramUrl(instagramUrl)) {
-      throw const FormatException('Lütfen geçerli bir Instagram Reels linki giriniz.');
+      throw const FormatException(
+          'Lütfen geçerli bir Instagram Reels linki giriniz.');
     }
 
     final shortcode = extractShortcode(instagramUrl);
@@ -157,7 +200,8 @@ class InstagramDownloaderService {
     }
 
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final filePath = '${reelsDir.path}/reel_${shortcode ?? "video"}_$timestamp.mp4';
+    final filePath =
+        '${reelsDir.path}/reel_${shortcode ?? "video"}_$timestamp.mp4';
     final file = File(filePath);
 
     final request = http.Request('GET', Uri.parse(directVideoUrl));
@@ -178,7 +222,8 @@ class InstagramDownloaderService {
         if (totalBytes > 0) {
           final progress = 0.5 + (receivedBytes / totalBytes) * 0.5;
           final percentage = ((receivedBytes / totalBytes) * 100).toInt();
-          onProgress?.call(progress.clamp(0.5, 0.99), 'İndiriliyor... %$percentage');
+          onProgress?.call(
+              progress.clamp(0.5, 0.99), 'İndiriliyor... %$percentage');
         }
       }
 
