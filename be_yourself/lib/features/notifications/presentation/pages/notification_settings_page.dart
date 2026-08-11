@@ -365,44 +365,59 @@ class NotificationSettingsPage extends ConsumerWidget {
                 onPressed: () async {
                   HapticFeedback.mediumImpact();
 
-                  // Request permissions if needed
-                  await NotificationService.instance.requestPermissions();
+                  try {
+                    // Request permissions if needed
+                    await NotificationService.instance.requestPermissions();
 
-                  // Pick sample text
-                  final sampleQuote = quotes.isNotEmpty
-                      ? quotes.first.displayText
-                      : 'Kendine inan, yapabileceklerinin sınırı yoktur.';
-                  final sampleAuthor = quotes.isNotEmpty
-                      ? quotes.first.author
-                      : 'BeYourself';
+                    // Pick sample text
+                    final sampleQuote = quotes.isNotEmpty
+                        ? quotes.first.displayText
+                        : 'Kendine inan, yapabileceklerinin sınırı yoktur.';
+                    final sampleAuthor = quotes.isNotEmpty
+                        ? quotes.first.author
+                        : 'BeYourself';
 
-                  await NotificationService.instance.showInstantNotification(
-                    title: 'BeYourself • $sampleAuthor',
-                    body: sampleQuote,
-                  );
-
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Row(
-                          children: [
-                            Icon(Icons.check_circle_rounded,
-                                color: Colors.white),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Test bildirimi gönderildi! Bildirim çubuğunu kontrol edin.',
-                              ),
-                            ),
-                          ],
-                        ),
-                        behavior: SnackBarBehavior.floating,
-                        backgroundColor: const Color(0xFF10B981),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                    await NotificationService.instance.showInstantNotification(
+                      title: 'BeYourself • $sampleAuthor',
+                      body: sampleQuote,
                     );
+
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Row(
+                            children: [
+                              Icon(Icons.check_circle_rounded,
+                                  color: Colors.white),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Test bildirimi gönderildi! Bildirim çubuğunu kontrol edin.',
+                                ),
+                              ),
+                            ],
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                          backgroundColor: const Color(0xFF10B981),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Bildirim hatası: $e'),
+                          behavior: SnackBarBehavior.floating,
+                          backgroundColor: const Color(0xFFEF4444),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      );
+                    }
                   }
                 },
                 icon: const Icon(Icons.notifications_active_rounded,
@@ -430,22 +445,37 @@ class NotificationSettingsPage extends ConsumerWidget {
             // Permission Request Card
             OutlinedButton.icon(
               onPressed: () async {
-                final granted =
-                    await NotificationService.instance.requestPermissions();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        granted
-                            ? 'Bildirim izni onaylandı! 🎉'
-                            : 'Bildirim izni verilmedi veya desteklenmiyor.',
+                try {
+                  final granted =
+                      await NotificationService.instance.requestPermissions();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          granted
+                              ? 'Bildirim izni onaylandı! 🎉'
+                              : 'Bildirim izni reddedildi veya henüz verilmedi. Telefon ayarlarından BeYourself için bildirimleri açabilirsiniz.',
+                        ),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: granted
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFFF59E0B),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('İzin kontrol hatası: $e'),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: const Color(0xFFEF4444),
                       ),
-                    ),
-                  );
+                    );
+                  }
                 }
               },
               icon: const Icon(Icons.security_rounded),

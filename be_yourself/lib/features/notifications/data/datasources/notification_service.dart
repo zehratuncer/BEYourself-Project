@@ -81,6 +81,24 @@ class NotificationService {
       },
     );
 
+    // Explicitly create notification channel on Android
+    if (!kIsWeb && Platform.isAndroid) {
+      final androidImplementation =
+          _notificationsPlugin.resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      if (androidImplementation != null) {
+        const channel = AndroidNotificationChannel(
+          channelId,
+          channelName,
+          description: channelDescription,
+          importance: Importance.max,
+          playSound: true,
+          enableVibration: true,
+        );
+        await androidImplementation.createNotificationChannel(channel);
+      }
+    }
+
     _isInitialized = true;
   }
 
@@ -94,7 +112,9 @@ class NotificationService {
       if (androidImplementation != null) {
         final granted =
             await androidImplementation.requestNotificationsPermission();
-        return granted ?? false;
+        final areEnabled =
+            await androidImplementation.areNotificationsEnabled();
+        return (granted ?? false) || (areEnabled ?? false);
       }
     } else if (Platform.isIOS || Platform.isMacOS) {
       final iosImplementation =
@@ -125,6 +145,9 @@ class NotificationService {
       channelDescription: channelDescription,
       importance: Importance.max,
       priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+      icon: '@mipmap/launcher_icon',
       showWhen: true,
       styleInformation: BigTextStyleInformation(
         body,
