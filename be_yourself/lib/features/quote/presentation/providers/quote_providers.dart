@@ -7,45 +7,7 @@ import 'package:be_yourself/main.dart';
 import 'package:be_yourself/features/quote/domain/entities/quote.dart';
 
 class QuoteNotifier extends StateNotifier<List<Quote>> {
-  QuoteNotifier()
-      : super([
-          Quote(
-            id: '1',
-            text:
-                'Zorluklar, sıradan insanları sıra dışı bir kadere hazırlamak için doğanın kullandığı araçlardır.',
-            author: 'C.S. Lewis',
-            categoryName: 'Motivasyon',
-            createdAt: DateTime.now().subtract(const Duration(days: 1)),
-            isFavorite: false,
-          ),
-          Quote(
-            id: '2',
-            text:
-                'İçindeki sese güven, o genellikle ne yapman gerektiğini bilir, mantığın henüz bir açıklama bulamasa bile.',
-            author: 'Bilinmeyen',
-            categoryName: 'Psikoloji',
-            createdAt: DateTime.now().subtract(const Duration(days: 2)),
-            isFavorite: false,
-          ),
-          Quote(
-            id: '3',
-            text:
-                'Kendini bulmak, kendini yaratmakla aynı şey değildir. Kendini yaratmak, kim olmak istediğine karar verip o yönde adım atmaktır.',
-            author: 'Thomas Szasz',
-            categoryName: 'Motivasyon',
-            createdAt: DateTime.now().subtract(const Duration(days: 3)),
-            isFavorite: true,
-          ),
-          Quote(
-            id: '4',
-            text:
-                'Başarı, coşkuyu kaybetmeden başarısızlıktan başarısızlığa koşabilme yeteneğidir.',
-            author: 'Winston Churchill',
-            categoryName: 'Motivasyon',
-            createdAt: DateTime.now().subtract(const Duration(days: 4)),
-            isFavorite: false,
-          ),
-        ]);
+  QuoteNotifier() : super([]);
 
   void toggleFavorite(String id) {
     state = [
