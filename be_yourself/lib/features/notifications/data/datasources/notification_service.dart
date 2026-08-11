@@ -25,23 +25,23 @@ class NotificationService {
   static const List<Map<String, String>> _fallbackQuotes = [
     {
       'text': 'Kendine inan, yapabileceklerinin sınırı yoktur.',
-      'author': 'BeYourself',
+      'author': 'Günün İlhamı ✨',
     },
     {
       'text': 'Her yeni gün, yepyeni bir başlangıç ve fırsattır.',
-      'author': 'BeYourself',
+      'author': 'Günün İlhamı ✨',
     },
     {
       'text': 'Zorluklar, seni daha güçlü kılmak için vardır.',
-      'author': 'BeYourself',
+      'author': 'Günün İlhamı ✨',
     },
     {
       'text': 'Bugün kendin için güzel bir adım at.',
-      'author': 'BeYourself',
+      'author': 'Günün İlhamı ✨',
     },
     {
       'text': 'Küçük adımlar, büyük zaferlerin anahtarıdır.',
-      'author': 'BeYourself',
+      'author': 'Günün İlhamı ✨',
     },
   ];
 
@@ -152,7 +152,6 @@ class NotificationService {
       styleInformation: BigTextStyleInformation(
         body,
         contentTitle: title,
-        summaryText: 'BeYourself',
       ),
     );
 
@@ -201,16 +200,25 @@ class NotificationService {
 
       final scheduledTime = _nextInstanceOfTime(slot.hour, slot.minute);
 
+      final quoteTitle = (quote['author'] != null &&
+              quote['author']!.trim().isNotEmpty &&
+              quote['author'] != 'Anonim')
+          ? quote['author']!
+          : 'Günün İlhamı ✨';
+
       final androidDetails = AndroidNotificationDetails(
         channelId,
         channelName,
         channelDescription: channelDescription,
         importance: Importance.max,
         priority: Priority.high,
+        playSound: true,
+        enableVibration: true,
+        icon: '@mipmap/launcher_icon',
+        showWhen: true,
         styleInformation: BigTextStyleInformation(
           quote['text'] ?? '',
-          contentTitle: 'BeYourself • ${quote['author']}',
-          summaryText: 'Günün İlhamı',
+          contentTitle: quoteTitle,
         ),
       );
 
@@ -228,7 +236,7 @@ class NotificationService {
 
       await _notificationsPlugin.zonedSchedule(
         i + 1, // ID (1..count)
-        'BeYourself • ${quote['author']}',
+        quoteTitle,
         quote['text'],
         scheduledTime,
         notificationDetails,

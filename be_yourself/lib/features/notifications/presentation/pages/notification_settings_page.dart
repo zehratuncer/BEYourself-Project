@@ -373,12 +373,14 @@ class NotificationSettingsPage extends ConsumerWidget {
                     final sampleQuote = quotes.isNotEmpty
                         ? quotes.first.displayText
                         : 'Kendine inan, yapabileceklerinin sınırı yoktur.';
-                    final sampleAuthor = quotes.isNotEmpty
-                        ? quotes.first.author
-                        : 'BeYourself';
+                    final sampleAuthor = (quotes.isNotEmpty &&
+                            quotes.first.author.trim().isNotEmpty &&
+                            quotes.first.author.trim() != 'Anonim')
+                        ? quotes.first.author.trim()
+                        : 'Günün İlhamı ✨';
 
                     await NotificationService.instance.showInstantNotification(
-                      title: 'BeYourself • $sampleAuthor',
+                      title: sampleAuthor,
                       body: sampleQuote,
                     );
 
