@@ -204,7 +204,7 @@ class NotificationService {
               quote['author']!.trim().isNotEmpty &&
               quote['author'] != 'Anonim')
           ? quote['author']!
-          : 'Günün İlhamı ✨';
+          : 'Günün Yazısı 💫';
 
       final androidDetails = AndroidNotificationDetails(
         channelId,
