@@ -1,15 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:quote_reminder/core/theme/app_colors.dart';
+import 'package:quote_reminder/features/settings/presentation/pages/settings_page.dart';
+import 'package:quote_reminder/main.dart';
 
-final notificationCountProvider = StateProvider<int>((ref) => 3);
-final notificationStartTimeProvider = StateProvider<TimeOfDay>(
-  (ref) => const TimeOfDay(hour: 9, minute: 0),
-);
-final notificationEndTimeProvider = StateProvider<TimeOfDay>(
-  (ref) => const TimeOfDay(hour: 21, minute: 0),
-);
+class NotificationCountNotifier extends StateNotifier<int> {
+  final SharedPreferences prefs;
+  NotificationCountNotifier(this.prefs)
+      : super(prefs.getInt('notificationCount') ?? 3);
+
+  void setCount(int val) {
+    state = val;
+    prefs.setInt('notificationCount', val);
+  }
+}
+
+final notificationCountProvider =
+    StateNotifierProvider<NotificationCountNotifier, int>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return NotificationCountNotifier(prefs);
+});
+
+class NotificationStartTimeNotifier extends StateNotifier<TimeOfDay> {
+  final SharedPreferences prefs;
+  NotificationStartTimeNotifier(this.prefs)
+      : super(
+          TimeOfDay(
+            hour: prefs.getInt('notificationStartTimeHour') ?? 9,
+            minute: prefs.getInt('notificationStartTimeMinute') ?? 0,
+          ),
+        );
+
+  void setTime(TimeOfDay time) {
+    state = time;
+    prefs.setInt('notificationStartTimeHour', time.hour);
+    prefs.setInt('notificationStartTimeMinute', time.minute);
+  }
+}
+
+final notificationStartTimeProvider =
+    StateNotifierProvider<NotificationStartTimeNotifier, TimeOfDay>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return NotificationStartTimeNotifier(prefs);
+});
+
+class NotificationEndTimeNotifier extends StateNotifier<TimeOfDay> {
+  final SharedPreferences prefs;
+  NotificationEndTimeNotifier(this.prefs)
+      : super(
+          TimeOfDay(
+            hour: prefs.getInt('notificationEndTimeHour') ?? 21,
+            minute: prefs.getInt('notificationEndTimeMinute') ?? 0,
+          ),
+        );
+
+  void setTime(TimeOfDay time) {
+    state = time;
+    prefs.setInt('notificationEndTimeHour', time.hour);
+    prefs.setInt('notificationEndTimeMinute', time.minute);
+  }
+}
+
+final notificationEndTimeProvider =
+    StateNotifierProvider<NotificationEndTimeNotifier, TimeOfDay>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return NotificationEndTimeNotifier(prefs);
+});
 
 class NotificationSettingsPage extends ConsumerWidget {
   const NotificationSettingsPage({super.key});
@@ -19,39 +77,57 @@ class NotificationSettingsPage extends ConsumerWidget {
     final count = ref.watch(notificationCountProvider);
     final startTime = ref.watch(notificationStartTimeProvider);
     final endTime = ref.watch(notificationEndTimeProvider);
+    final isDarkMode = ref.watch(isDarkModeProvider);
+
+    final cardBgColor = Theme.of(context).cardColor;
+    final primaryTextColor = isDarkMode
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+    final secondaryTextColor = isDarkMode
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FF),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Bildirim Ayarları',
           style: TextStyle(
-            color: Color(0xFF111C2D),
+            color: isDarkMode
+                ? AppColors.darkTextPrimary
+                : const Color(0xFF111C2D),
             fontWeight: FontWeight.w700,
           ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.primaryBlue),
+        iconTheme: IconThemeData(
+          color: isDarkMode
+              ? AppColors.primaryBlueLight
+              : AppColors.primaryBlue,
+        ),
       ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
+          physics: const BouncingScrollPhysics(),
           children: [
-            const Text(
+            Text(
               'Günlük Hatırlatıcılar',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: AppColors.primaryBlue,
+                color: isDarkMode
+                    ? AppColors.primaryBlueLight
+                    : AppColors.primaryBlue,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Gün içinde kaç bildirim almak istediğinizi ve saat aralığını seçin.',
               style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF516072),
+                color: secondaryTextColor,
               ),
             ),
             const SizedBox(height: 24),
@@ -60,11 +136,13 @@ class NotificationSettingsPage extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBgColor,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF60A5FA).withAlpha(15),
+                    color: isDarkMode
+                        ? Colors.black.withAlpha(50)
+                        : const Color(0xFF60A5FA).withAlpha(15),
                     blurRadius: 20,
                     offset: const Offset(0, 4),
                   ),
@@ -76,20 +154,22 @@ class NotificationSettingsPage extends ConsumerWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Günlük Bildirim Sıklığı',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF111C2D),
+                          color: primaryTextColor,
                         ),
                       ),
                       Text(
                         '$count Adet',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.primaryBlue,
+                          color: isDarkMode
+                              ? AppColors.primaryBlueLight
+                              : AppColors.primaryBlue,
                         ),
                       ),
                     ],
@@ -100,10 +180,13 @@ class NotificationSettingsPage extends ConsumerWidget {
                     min: 1,
                     max: 10,
                     divisions: 9,
-                    activeColor: AppColors.primaryBlue,
+                    activeColor: isDarkMode
+                        ? AppColors.primaryBlueLight
+                        : AppColors.primaryBlue,
                     onChanged: (val) {
-                      ref.read(notificationCountProvider.notifier).state =
-                          val.toInt();
+                      ref
+                          .read(notificationCountProvider.notifier)
+                          .setCount(val.toInt());
                     },
                   ),
                 ],
@@ -116,11 +199,13 @@ class NotificationSettingsPage extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBgColor,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF60A5FA).withAlpha(15),
+                    color: isDarkMode
+                        ? Colors.black.withAlpha(50)
+                        : const Color(0xFF60A5FA).withAlpha(15),
                     blurRadius: 20,
                     offset: const Offset(0, 4),
                   ),
@@ -129,13 +214,21 @@ class NotificationSettingsPage extends ConsumerWidget {
               child: Column(
                 children: [
                   ListTile(
-                    title: const Text('Başlangıç Saati'),
+                    title: Text(
+                      'Başlangıç Saati',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: primaryTextColor,
+                      ),
+                    ),
                     trailing: Text(
                       startTime.format(context),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.primaryBlue,
+                        color: isDarkMode
+                            ? AppColors.primaryBlueLight
+                            : AppColors.primaryBlue,
                       ),
                     ),
                     onTap: () async {
@@ -146,19 +239,32 @@ class NotificationSettingsPage extends ConsumerWidget {
                       if (picked != null) {
                         ref
                             .read(notificationStartTimeProvider.notifier)
-                            .state = picked;
+                            .setTime(picked);
                       }
                     },
                   ),
-                  const Divider(height: 1),
+                  Divider(
+                    height: 1,
+                    color: isDarkMode
+                        ? AppColors.darkDivider
+                        : AppColors.lightDivider,
+                  ),
                   ListTile(
-                    title: const Text('Bitiş Saati'),
+                    title: Text(
+                      'Bitiş Saati',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: primaryTextColor,
+                      ),
+                    ),
                     trailing: Text(
                       endTime.format(context),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.primaryBlue,
+                        color: isDarkMode
+                            ? AppColors.primaryBlueLight
+                            : AppColors.primaryBlue,
                       ),
                     ),
                     onTap: () async {
@@ -167,8 +273,9 @@ class NotificationSettingsPage extends ConsumerWidget {
                         initialTime: endTime,
                       );
                       if (picked != null) {
-                        ref.read(notificationEndTimeProvider.notifier).state =
-                            picked;
+                        ref
+                            .read(notificationEndTimeProvider.notifier)
+                            .setTime(picked);
                       }
                     },
                   ),
@@ -181,3 +288,4 @@ class NotificationSettingsPage extends ConsumerWidget {
     );
   }
 }
+

@@ -17,6 +17,7 @@ class MainShellPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentTab = ref.watch(currentTabProvider);
+    final isDarkMode = ref.watch(isDarkModeProvider);
 
     final pages = [
       HomePage(
@@ -64,10 +65,12 @@ class MainShellPage extends ConsumerWidget {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(12),
+              color: isDarkMode
+                  ? Colors.black.withAlpha(40)
+                  : Colors.black.withAlpha(12),
               blurRadius: 20,
               offset: const Offset(0, -4),
             ),
@@ -79,9 +82,13 @@ class MainShellPage extends ConsumerWidget {
             ref.read(currentTabProvider.notifier).state = index;
           },
           type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: AppColors.primaryBlue,
-          unselectedItemColor: const Color(0xFF516072),
+          backgroundColor: Theme.of(context).cardColor,
+          selectedItemColor: isDarkMode
+              ? AppColors.primaryBlueLight
+              : AppColors.primaryBlue,
+          unselectedItemColor: isDarkMode
+              ? AppColors.darkTextSecondary
+              : const Color(0xFF516072),
           selectedLabelStyle: const TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 12,

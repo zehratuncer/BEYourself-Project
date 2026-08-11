@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quote_reminder/core/theme/app_colors.dart';
 import 'package:quote_reminder/features/quote/presentation/pages/quote_form_page.dart';
 import 'package:quote_reminder/features/quote/presentation/providers/quote_providers.dart';
+import 'package:quote_reminder/features/settings/presentation/pages/settings_page.dart';
 
 class QuoteDetailPage extends ConsumerWidget {
   const QuoteDetailPage({super.key, required this.quoteId});
@@ -14,33 +15,57 @@ class QuoteDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final quotes = ref.watch(quoteListProvider);
     final quoteList = quotes.where((q) => q.id == quoteId);
+    final isDarkMode = ref.watch(isDarkModeProvider);
 
     if (quoteList.isEmpty) {
-      return const Scaffold(
-        body: Center(child: Text('Söz bulunamadı.')),
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: const Center(child: Text('Söz bulunamadı.')),
       );
     }
 
     final quote = quoteList.first;
+    final cardBg = Theme.of(context).cardColor;
+    final primaryTextColor = isDarkMode
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+    final secondaryTextColor = isDarkMode
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FF),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.primaryBlue),
+        iconTheme: IconThemeData(
+          color: isDarkMode
+              ? AppColors.primaryBlueLight
+              : AppColors.primaryBlue,
+        ),
         actions: [
           IconButton(
             icon: Icon(
               quote.isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: quote.isFavorite ? AppColors.primaryBlue : Colors.grey,
+              color: quote.isFavorite
+                  ? (isDarkMode
+                      ? AppColors.primaryBlueLight
+                      : AppColors.primaryBlue)
+                  : (isDarkMode
+                      ? AppColors.darkTextSecondary
+                      : Colors.grey),
             ),
             onPressed: () {
               ref.read(quoteListProvider.notifier).toggleFavorite(quote.id);
             },
           ),
           IconButton(
-            icon: const Icon(Icons.edit_outlined, color: AppColors.primaryBlue),
+            icon: Icon(
+              Icons.edit_outlined,
+              color: isDarkMode
+                  ? AppColors.primaryBlueLight
+                  : AppColors.primaryBlue,
+            ),
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -61,11 +86,19 @@ class QuoteDetailPage extends ConsumerWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(28),
+                  border: isDarkMode
+                      ? Border.all(
+                          color: Colors.white.withAlpha(15),
+                          width: 1,
+                        )
+                      : null,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF60A5FA).withAlpha(20),
+                      color: isDarkMode
+                          ? Colors.black.withAlpha(40)
+                          : const Color(0xFF60A5FA).withAlpha(20),
                       blurRadius: 30,
                       offset: const Offset(0, 8),
                     ),
@@ -79,19 +112,24 @@ class QuoteDetailPage extends ConsumerWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryBlue.withAlpha(20),
+                        color: isDarkMode
+                            ? AppColors.primaryBlueLight.withAlpha(30)
+                            : AppColors.primaryBlue.withAlpha(20),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
                         quote.categoryName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.primaryBlue,
+                          color: isDarkMode
+                              ? AppColors.primaryBlueLight
+                              : AppColors.primaryBlue,
                         ),
                       ),
                     ),
-                    if (quote.mediaUrl != null && quote.mediaUrl!.isNotEmpty) ...[
+                    if (quote.mediaUrl != null &&
+                        quote.mediaUrl!.isNotEmpty) ...[
                       const SizedBox(height: 20),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(16),
@@ -136,8 +174,9 @@ class QuoteDetailPage extends ConsumerWidget {
                                     height: 200,
                                     width: double.infinity,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) =>
-                                        const Icon(
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const Icon(
                                       Icons.image_not_supported,
                                       size: 50,
                                     ),
@@ -148,20 +187,20 @@ class QuoteDetailPage extends ConsumerWidget {
                     Text(
                       '"${quote.text}"',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF111C2D),
+                        color: primaryTextColor,
                         height: 1.45,
                       ),
                     ),
                     const SizedBox(height: 20),
                     Text(
                       '— ${quote.author}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF414751),
+                        color: secondaryTextColor,
                       ),
                     ),
                   ],
@@ -180,7 +219,14 @@ class QuoteDetailPage extends ConsumerWidget {
                     icon: const Icon(Icons.copy_rounded),
                     label: const Text('Kopyala'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primaryBlue,
+                      foregroundColor: isDarkMode
+                          ? AppColors.primaryBlueLight
+                          : AppColors.primaryBlue,
+                      side: BorderSide(
+                        color: isDarkMode
+                            ? AppColors.primaryBlueLight.withAlpha(60)
+                            : AppColors.primaryBlue.withAlpha(50),
+                      ),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
                         vertical: 14,
@@ -199,3 +245,4 @@ class QuoteDetailPage extends ConsumerWidget {
     );
   }
 }
+

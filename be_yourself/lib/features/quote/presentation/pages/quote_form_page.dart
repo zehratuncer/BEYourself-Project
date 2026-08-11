@@ -6,6 +6,7 @@ import 'package:quote_reminder/core/theme/app_colors.dart';
 import 'package:quote_reminder/features/category/presentation/providers/category_providers.dart';
 import 'package:quote_reminder/features/quote/domain/entities/quote.dart';
 import 'package:quote_reminder/features/quote/presentation/providers/quote_providers.dart';
+import 'package:quote_reminder/features/settings/presentation/pages/settings_page.dart';
 
 class QuoteFormPage extends ConsumerStatefulWidget {
   const QuoteFormPage({super.key, this.initialQuote});
@@ -181,25 +182,41 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
   @override
   Widget build(BuildContext context) {
     final categories = ref.watch(categoryListProvider);
+    final isDarkMode = ref.watch(isDarkModeProvider);
+
+    final cardBg = Theme.of(context).cardColor;
+    final primaryTextColor = isDarkMode
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+    final secondaryTextColor = isDarkMode
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FE),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F56B3)),
+          icon: Icon(
+            Icons.arrow_back,
+            color: isDarkMode
+                ? AppColors.primaryBlueLight
+                : AppColors.primaryBlue,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           widget.initialQuote == null ? 'Alıntı Ekle' : 'Sözü Düzenle',
-          style: const TextStyle(
-            color: Color(0xFF0F56B3),
+          style: TextStyle(
+            color: isDarkMode
+                ? AppColors.primaryBlueLight
+                : AppColors.primaryBlue,
             fontWeight: FontWeight.w700,
             fontSize: 20,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_vert, color: Color(0xFF414751)),
+            icon: Icon(Icons.more_vert, color: secondaryTextColor),
             onPressed: () {},
           ),
         ],
@@ -223,28 +240,38 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF0F4FD),
+                        color: isDarkMode
+                            ? AppColors.darkCardBackground
+                            : const Color(0xFFF0F4FD),
                         borderRadius: BorderRadius.circular(24),
+                        border: isDarkMode
+                            ? Border.all(
+                                color: Colors.white.withAlpha(15),
+                                width: 1,
+                              )
+                            : null,
                       ),
                       child: Stack(
                         children: [
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
+                            children: [
                               Text(
                                 'İlhamı Yakala',
                                 style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0F56B3),
+                                  color: isDarkMode
+                                      ? AppColors.primaryBlueLight
+                                      : AppColors.primaryBlue,
                                 ),
                               ),
-                              SizedBox(height: 6),
+                              const SizedBox(height: 6),
                               Text(
                                 'Sizi etkileyen kelimeleri kalıcı hale getirin.',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: Color(0xFF5E6C84),
+                                  color: secondaryTextColor,
                                 ),
                               ),
                             ],
@@ -257,7 +284,9 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                               style: TextStyle(
                                 fontSize: 80,
                                 fontWeight: FontWeight.w900,
-                                color: AppColors.primaryBlue.withAlpha(25),
+                                color: isDarkMode
+                                    ? AppColors.primaryBlueLight.withAlpha(20)
+                                    : AppColors.primaryBlue.withAlpha(25),
                                 height: 1.0,
                               ),
                             ),
@@ -268,22 +297,30 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                     const SizedBox(height: 24),
 
                     // Alıntı Text Field
-                    const Text(
+                    Text(
                       'Alıntı',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF111C2D),
+                        color: primaryTextColor,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: cardBg,
                         borderRadius: BorderRadius.circular(20),
+                        border: isDarkMode
+                            ? Border.all(
+                                color: Colors.white.withAlpha(15),
+                                width: 1,
+                              )
+                            : null,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withAlpha(8),
+                            color: isDarkMode
+                                ? Colors.black.withAlpha(40)
+                                : Colors.black.withAlpha(8),
                             blurRadius: 16,
                             offset: const Offset(0, 4),
                           ),
@@ -295,13 +332,14 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                           TextField(
                             controller: _textController,
                             maxLines: 5,
-                            decoration: const InputDecoration(
+                            style: TextStyle(color: primaryTextColor),
+                            decoration: InputDecoration(
                               hintText: 'Alıntıyı buraya yazın...',
                               hintStyle: TextStyle(
-                                color: Color(0xFFA0AAB8),
+                                color: secondaryTextColor,
                                 fontSize: 15,
                               ),
-                              contentPadding: EdgeInsets.all(16),
+                              contentPadding: const EdgeInsets.all(16),
                               border: InputBorder.none,
                             ),
                           ),
@@ -317,9 +355,9 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                                       child: CircularProgressIndicator(
                                           strokeWidth: 2),
                                     )
-                                  : const Icon(
+                                  : Icon(
                                       Icons.format_indent_decrease_rounded,
-                                      color: Color(0xFF5E6C84),
+                                      color: secondaryTextColor,
                                     ),
                               tooltip: 'AI ile Özetle/Kısalt',
                             ),
@@ -330,20 +368,20 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                     const SizedBox(height: 24),
 
                     // Medya Ekle Section
-                    const Text(
+                    Text(
                       'Medya Ekle',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF111C2D),
+                        color: primaryTextColor,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Alıntınıza bir fotoğraf veya video ekleyerek onu görselleştirin.',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Color(0xFF5E6C84),
+                        color: secondaryTextColor,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -353,28 +391,36 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                           child: GestureDetector(
                             onTap: _pickImage,
                             child: CustomPaint(
-                              painter: const _DashedBorderPainter(),
+                              painter: _DashedBorderPainter(
+                                color: isDarkMode
+                                    ? AppColors.darkDivider
+                                    : const Color(0xFFC7D0EE),
+                              ),
                               child: Container(
                                 height: 110,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF2F4FD),
+                                  color: isDarkMode
+                                      ? AppColors.darkInputFill
+                                      : const Color(0xFFF2F4FD),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
+                                  children: [
                                     Icon(
                                       Icons.image_outlined,
-                                      color: Color(0xFF0F56B3),
+                                      color: isDarkMode
+                                          ? AppColors.primaryBlueLight
+                                          : AppColors.primaryBlue,
                                       size: 28,
                                     ),
-                                    SizedBox(height: 8),
+                                    const SizedBox(height: 8),
                                     Text(
                                       'Fotoğraf Ekle',
                                       style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
-                                        color: Color(0xFF111C2D),
+                                        color: primaryTextColor,
                                       ),
                                     ),
                                   ],
@@ -388,28 +434,36 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                           child: GestureDetector(
                             onTap: _pickVideo,
                             child: CustomPaint(
-                              painter: const _DashedBorderPainter(),
+                              painter: _DashedBorderPainter(
+                                color: isDarkMode
+                                    ? AppColors.darkDivider
+                                    : const Color(0xFFC7D0EE),
+                              ),
                               child: Container(
                                 height: 110,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF2F4FD),
+                                  color: isDarkMode
+                                      ? AppColors.darkInputFill
+                                      : const Color(0xFFF2F4FD),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
+                                  children: [
                                     Icon(
                                       Icons.ondemand_video_outlined,
-                                      color: Color(0xFF0F56B3),
+                                      color: isDarkMode
+                                          ? AppColors.primaryBlueLight
+                                          : AppColors.primaryBlue,
                                       size: 28,
                                     ),
-                                    SizedBox(height: 8),
+                                    const SizedBox(height: 8),
                                     Text(
                                       'Video Ekle',
                                       style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
-                                        color: Color(0xFF111C2D),
+                                        color: primaryTextColor,
                                       ),
                                     ),
                                   ],
@@ -427,10 +481,14 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                           const Icon(Icons.check_circle,
                               size: 16, color: Colors.green),
                           const SizedBox(width: 6),
-                          Text(
-                            'Seçilen medya: $_selectedMediaUrl',
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.green),
+                          Expanded(
+                            child: Text(
+                              'Seçilen medya: $_selectedMediaUrl',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.green),
+                            ),
                           ),
                         ],
                       ),
@@ -438,22 +496,30 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                     const SizedBox(height: 24),
 
                     // Yazar Field
-                    const Text(
+                    Text(
                       'Yazar',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF111C2D),
+                        color: primaryTextColor,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: cardBg,
                         borderRadius: BorderRadius.circular(16),
+                        border: isDarkMode
+                            ? Border.all(
+                                color: Colors.white.withAlpha(15),
+                                width: 1,
+                              )
+                            : null,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withAlpha(6),
+                            color: isDarkMode
+                                ? Colors.black.withAlpha(30)
+                                : Colors.black.withAlpha(6),
                             blurRadius: 12,
                             offset: const Offset(0, 3),
                           ),
@@ -461,17 +527,18 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                       ),
                       child: TextField(
                         controller: _authorController,
-                        decoration: const InputDecoration(
+                        style: TextStyle(color: primaryTextColor),
+                        decoration: InputDecoration(
                           hintText: 'Yazar adı',
                           hintStyle: TextStyle(
-                            color: Color(0xFFA0AAB8),
+                            color: secondaryTextColor,
                             fontSize: 15,
                           ),
                           suffixIcon: Icon(
                             Icons.person_outline_rounded,
-                            color: Color(0xFF717783),
+                            color: secondaryTextColor,
                           ),
-                          contentPadding: EdgeInsets.symmetric(
+                          contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 14),
                           border: InputBorder.none,
                         ),
@@ -480,23 +547,31 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                     const SizedBox(height: 24),
 
                     // Kategori Dropdown
-                    const Text(
+                    Text(
                       'Kategori',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF111C2D),
+                        color: primaryTextColor,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: cardBg,
                         borderRadius: BorderRadius.circular(16),
+                        border: isDarkMode
+                            ? Border.all(
+                                color: Colors.white.withAlpha(15),
+                                width: 1,
+                              )
+                            : null,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withAlpha(6),
+                            color: isDarkMode
+                                ? Colors.black.withAlpha(30)
+                                : Colors.black.withAlpha(6),
                             blurRadius: 12,
                             offset: const Offset(0, 3),
                           ),
@@ -504,27 +579,28 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
+                          dropdownColor: cardBg,
                           value: categories
                                   .any((c) => c.name == _selectedCategory)
                               ? _selectedCategory
-                              : categories.first.name,
+                              : (categories.isNotEmpty ? categories.first.name : null),
                           isExpanded: true,
-                          hint: const Text(
+                          hint: Text(
                             'Kategori seçin',
-                            style: TextStyle(color: Color(0xFFA0AAB8)),
+                            style: TextStyle(color: secondaryTextColor),
                           ),
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.unfold_more_rounded,
-                            color: Color(0xFF717783),
+                            color: secondaryTextColor,
                           ),
                           items: categories.map((cat) {
                             return DropdownMenuItem(
                               value: cat.name,
                               child: Text(
                                 cat.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 15,
-                                  color: Color(0xFF111C2D),
+                                  color: primaryTextColor,
                                 ),
                               ),
                             );
@@ -543,23 +619,35 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF2F4FD),
+                        color: isDarkMode
+                            ? AppColors.darkCardBackground
+                            : const Color(0xFFF2F4FD),
                         borderRadius: BorderRadius.circular(20),
+                        border: isDarkMode
+                            ? Border.all(
+                                color: Colors.white.withAlpha(15),
+                                width: 1,
+                              )
+                            : null,
                       ),
                       child: Row(
                         children: [
                           Container(
                             width: 42,
                             height: 42,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Color(0xFFE2E7FA),
+                              color: isDarkMode
+                                  ? AppColors.primaryBlueLight.withAlpha(30)
+                                  : const Color(0xFFE2E7FA),
                             ),
                             child: Icon(
                               _isFavorite
                                   ? Icons.favorite
                                   : Icons.favorite_border,
-                              color: const Color(0xFF0F56B3),
+                              color: isDarkMode
+                                  ? AppColors.primaryBlueLight
+                                  : AppColors.primaryBlue,
                               size: 22,
                             ),
                           ),
@@ -567,21 +655,21 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
+                              children: [
                                 Text(
                                   'Favorilerime Ekle',
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
-                                    color: Color(0xFF111C2D),
+                                    color: primaryTextColor,
                                   ),
                                 ),
-                                SizedBox(height: 3),
+                                const SizedBox(height: 3),
                                 Text(
                                   'Bu alıntıyı özel koleksiyonunuza kaydeder.',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Color(0xFF5E6C84),
+                                    color: secondaryTextColor,
                                   ),
                                 ),
                               ],
@@ -589,7 +677,9 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                           ),
                           Switch(
                             value: _isFavorite,
-                            activeTrackColor: const Color(0xFF0F56B3),
+                            activeTrackColor: isDarkMode
+                                ? AppColors.primaryBlueLight
+                                : AppColors.primaryBlue,
                             onChanged: (val) {
                               setState(() => _isFavorite = val);
                             },
@@ -620,8 +710,11 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F56B3),
-                    foregroundColor: Colors.white,
+                    backgroundColor: isDarkMode
+                        ? AppColors.primaryBlueLight
+                        : AppColors.primaryBlue,
+                    foregroundColor:
+                        isDarkMode ? Colors.black87 : Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(28),
                     ),
@@ -638,11 +731,12 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
 }
 
 class _DashedBorderPainter extends CustomPainter {
-  const _DashedBorderPainter();
+  const _DashedBorderPainter({this.color = const Color(0xFFC7D0EE)});
+
+  final Color color;
 
   @override
   void paint(Canvas canvas, Size size) {
-    const Color color = Color(0xFFC7D0EE);
     const double strokeWidth = 1.5;
     const double gap = 5;
     const double radius = 16;
@@ -672,6 +766,8 @@ class _DashedBorderPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_DashedBorderPainter oldDelegate) => false;
+  bool shouldRepaint(_DashedBorderPainter oldDelegate) =>
+      oldDelegate.color != color;
 }
+
 
