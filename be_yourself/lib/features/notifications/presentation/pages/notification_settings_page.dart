@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/features/notifications/data/datasources/notification_service.dart';
+import 'package:be_yourself/features/notifications/presentation/providers/notification_providers.dart';
+import 'package:be_yourself/features/quote/presentation/providers/quote_providers.dart';
 import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
 import 'package:be_yourself/main.dart';
 
@@ -74,10 +78,14 @@ class NotificationSettingsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Automatically trigger notification schedule sync on change
+    ref.watch(notificationSyncProvider);
+
     final count = ref.watch(notificationCountProvider);
     final startTime = ref.watch(notificationStartTimeProvider);
     final endTime = ref.watch(notificationEndTimeProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final quotes = ref.watch(quoteListProvider);
 
     final cardBgColor = Theme.of(context).cardColor;
     final primaryTextColor = isDarkMode
@@ -124,10 +132,11 @@ class NotificationSettingsPage extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Gün içinde kaç bildirim almak istediğinizi ve saat aralığını seçin.',
+              'Gün içinde kaç bildirim almak istediğinizi ve saat aralığını seçin. Bildirimleriniz otomatik olarak gün içine eşit dağıtılır.',
               style: TextStyle(
                 fontSize: 14,
                 color: secondaryTextColor,
+                height: 1.4,
               ),
             ),
             const SizedBox(height: 24),
@@ -162,14 +171,27 @@ class NotificationSettingsPage extends ConsumerWidget {
                           color: primaryTextColor,
                         ),
                       ),
-                      Text(
-                        '$count Adet',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: isDarkMode
-                              ? AppColors.primaryBlueLight
-                              : AppColors.primaryBlue,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: (isDarkMode
+                                  ? AppColors.primaryBlueLight
+                                  : AppColors.primaryBlue)
+                              .withAlpha(25),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '$count Kez / Gün',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: isDarkMode
+                                ? AppColors.primaryBlueLight
+                                : AppColors.primaryBlue,
+                          ),
                         ),
                       ),
                     ],
@@ -214,6 +236,19 @@ class NotificationSettingsPage extends ConsumerWidget {
               child: Column(
                 children: [
                   ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withAlpha(25),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.wb_sunny_rounded,
+                        color: Color(0xFF10B981),
+                        size: 20,
+                      ),
+                    ),
                     title: Text(
                       'Başlangıç Saati',
                       style: TextStyle(
@@ -225,7 +260,7 @@ class NotificationSettingsPage extends ConsumerWidget {
                       startTime.format(context),
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         color: isDarkMode
                             ? AppColors.primaryBlueLight
                             : AppColors.primaryBlue,
@@ -250,6 +285,19 @@ class NotificationSettingsPage extends ConsumerWidget {
                         : AppColors.lightDivider,
                   ),
                   ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6366F1).withAlpha(25),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.nights_stay_rounded,
+                        color: Color(0xFF6366F1),
+                        size: 20,
+                      ),
+                    ),
                     title: Text(
                       'Bitiş Saati',
                       style: TextStyle(
@@ -261,7 +309,7 @@ class NotificationSettingsPage extends ConsumerWidget {
                       endTime.format(context),
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         color: isDarkMode
                             ? AppColors.primaryBlueLight
                             : AppColors.primaryBlue,
@@ -282,10 +330,138 @@ class NotificationSettingsPage extends ConsumerWidget {
                 ],
               ),
             ),
+
+            const SizedBox(height: 24),
+
+            // Action: Test Notification Button
+            Container(
+              width: double.infinity,
+              height: 54,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  colors: isDarkMode
+                      ? [
+                          AppColors.primaryBlueLight,
+                          const Color(0xFF60A5FA),
+                        ]
+                      : [
+                          AppColors.primaryBlue,
+                          const Color(0xFF3B82F6),
+                        ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isDarkMode
+                            ? AppColors.primaryBlueLight
+                            : AppColors.primaryBlue)
+                        .withAlpha(80),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  HapticFeedback.mediumImpact();
+
+                  // Request permissions if needed
+                  await NotificationService.instance.requestPermissions();
+
+                  // Pick sample text
+                  final sampleQuote = quotes.isNotEmpty
+                      ? quotes.first.displayText
+                      : 'Kendine inan, yapabileceklerinin sınırı yoktur.';
+                  final sampleAuthor = quotes.isNotEmpty
+                      ? quotes.first.author
+                      : 'BeYourself';
+
+                  await NotificationService.instance.showInstantNotification(
+                    title: 'BeYourself • $sampleAuthor',
+                    body: sampleQuote,
+                  );
+
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Row(
+                          children: [
+                            Icon(Icons.check_circle_rounded,
+                                color: Colors.white),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Test bildirimi gönderildi! Bildirim çubuğunu kontrol edin.',
+                              ),
+                            ),
+                          ],
+                        ),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: const Color(0xFF10B981),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.notifications_active_rounded,
+                    color: Colors.white),
+                label: const Text(
+                  '🔔 Test Bildirimi Gönder',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            // Permission Request Card
+            OutlinedButton.icon(
+              onPressed: () async {
+                final granted =
+                    await NotificationService.instance.requestPermissions();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        granted
+                            ? 'Bildirim izni onaylandı! 🎉'
+                            : 'Bildirim izni verilmedi veya desteklenmiyor.',
+                      ),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.security_rounded),
+              label: const Text('Bildirim İznini Kontrol Et / İste'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 }
+
 

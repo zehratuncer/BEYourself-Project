@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:be_yourself/core/constants/app_strings.dart';
 import 'package:be_yourself/core/theme/app_theme.dart';
+import 'package:be_yourself/features/notifications/data/datasources/notification_service.dart';
 import 'package:be_yourself/features/onboarding/presentation/pages/welcome_page.dart';
 import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
 
@@ -15,6 +16,12 @@ final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
+
+  try {
+    await NotificationService.instance.initialize();
+  } catch (e) {
+    debugPrint('Notification service init error: $e');
+  }
 
   runApp(
     ProviderScope(
