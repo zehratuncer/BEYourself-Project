@@ -42,27 +42,29 @@ class MainShellPage extends ConsumerWidget {
         index: currentTab,
         children: pages,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          if (isCategoriesTab) {
-            showDialog(
-              context: context,
-              builder: (_) => const AddCategoryDialog(),
-            );
-          } else {
-            _openAddQuote(context);
-          }
-        },
-        backgroundColor: AppColors.primaryBlue,
-        elevation: 6,
-        shape: const CircleBorder(),
-        tooltip: isCategoriesTab ? 'Kategori Ekle' : 'Alıntı Ekle',
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 28,
-        ),
-      ),
+      floatingActionButton: (currentTab == 0 || currentTab == 2)
+          ? FloatingActionButton(
+              onPressed: () {
+                if (isCategoriesTab) {
+                  showDialog(
+                    context: context,
+                    builder: (_) => const AddCategoryDialog(),
+                  );
+                } else {
+                  _openAddQuote(context);
+                }
+              },
+              backgroundColor: AppColors.primaryBlue,
+              elevation: 6,
+              shape: const CircleBorder(),
+              tooltip: isCategoriesTab ? 'Kategori Ekle' : 'Alıntı Ekle',
+              child: const Icon(
+                Icons.add,
+                color: Colors.white,
+                size: 28,
+              ),
+            )
+          : null,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
