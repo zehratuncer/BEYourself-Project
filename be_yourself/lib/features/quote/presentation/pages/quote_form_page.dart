@@ -143,7 +143,7 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
     });
 
     try {
-      final downloadedPath =
+      final result =
           await InstagramDownloaderService.instance.downloadReel(
         instagramUrl: url,
         onProgress: (progress, status) {
@@ -158,14 +158,26 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
 
       if (mounted) {
         setState(() {
-          _selectedMediaUrl = downloadedPath;
+          _selectedMediaUrl = result.filePath;
           _isDownloadingReel = false;
           _instagramUrlController.clear();
+
+          // Auto-fill caption if available and text is empty
+          if (result.caption != null && result.caption!.trim().isNotEmpty) {
+            _textController.text = result.caption!.trim();
+          }
+
+          // Auto-fill author if available and author is empty
+          if (result.authorUsername != null &&
+              _authorController.text.trim().isEmpty) {
+            _authorController.text = '@${result.authorUsername}';
+          }
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('🎬 Reels videosu başarıyla indirildi ve eklendi!'),
+            content: Text(
+                '🎬 Reels videosu ve açıklaması başarıyla alıntıya aktarıldı!'),
             backgroundColor: AppColors.primaryBlue,
           ),
         );

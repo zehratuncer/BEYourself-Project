@@ -5,6 +5,34 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
+class InstagramReelResult {
+  const InstagramReelResult({
+    required this.filePath,
+    this.caption,
+    this.authorUsername,
+    this.authorFullName,
+  });
+
+  final String filePath;
+  final String? caption;
+  final String? authorUsername;
+  final String? authorFullName;
+}
+
+class _ReelResolvedData {
+  const _ReelResolvedData({
+    required this.videoUrl,
+    this.caption,
+    this.authorUsername,
+    this.authorFullName,
+  });
+
+  final String videoUrl;
+  final String? caption;
+  final String? authorUsername;
+  final String? authorFullName;
+}
+
 class InstagramDownloaderService {
   InstagramDownloaderService._();
   static final InstagramDownloaderService instance =
@@ -45,8 +73,8 @@ class InstagramDownloaderService {
     return null;
   }
 
-  /// Resolves direct MP4 video URL from Instagram Reels link.
-  Future<String?> resolveVideoUrl(String rawUrl) async {
+  /// Resolves video stream URL, caption and author from Instagram Reels link.
+  Future<_ReelResolvedData?> resolveReelData(String rawUrl) async {
     final shortcode = extractShortcode(rawUrl);
     if (shortcode == null) {
       throw const FormatException('Geçersiz Instagram Reels bağlantısı.');
@@ -72,14 +100,11 @@ class InstagramDownloaderService {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final media = data['data']?['xdt_shortcode_media'];
         if (media != null) {
-          // Direct video URL
+          String? directUrl;
           if (media['video_url'] != null &&
               media['video_url'].toString().isNotEmpty) {
-            return media['video_url'] as String;
-          }
-
-          // Carousel / Multi-item video check
-          if (media['edge_sidecar_to_children'] != null) {
+            directUrl = media['video_url'] as String;
+          } else if (media['edge_sidecar_to_children'] != null) {
             final edges =
                 media['edge_sidecar_to_children']['edges'] as List<dynamic>?;
             if (edges != null) {
@@ -88,10 +113,38 @@ class InstagramDownloaderService {
                 if (node != null &&
                     node['is_video'] == true &&
                     node['video_url'] != null) {
-                  return node['video_url'] as String;
+                  directUrl = node['video_url'] as String;
+                  break;
                 }
               }
             }
+          }
+
+          if (directUrl != null && directUrl.isNotEmpty) {
+            // Extract caption
+            String? caption;
+            if (media['edge_media_to_caption'] != null) {
+              final captionEdges = media['edge_media_to_caption']['edges']
+                  as List<dynamic>?;
+              if (captionEdges != null && captionEdges.isNotEmpty) {
+                caption = captionEdges.first['node']?['text'] as String?;
+              }
+            }
+
+            // Extract author info
+            String? authorUsername;
+            String? authorFullName;
+            if (media['owner'] != null) {
+              authorUsername = media['owner']['username'] as String?;
+              authorFullName = media['owner']['full_name'] as String?;
+            }
+
+            return _ReelResolvedData(
+              videoUrl: directUrl,
+              caption: caption,
+              authorUsername: authorUsername,
+              authorFullName: authorFullName,
+            );
           }
         }
       }
@@ -114,23 +167,21 @@ class InstagramDownloaderService {
       if (response.statusCode == 200) {
         final html = response.body;
 
-        // Try extracting video src directly from HTML
         final videoSrcMatch =
             RegExp(r'<video[^>]+src="([^">]+)"').firstMatch(html);
         if (videoSrcMatch != null && videoSrcMatch.group(1) != null) {
           final extractedUrl =
               videoSrcMatch.group(1)!.replaceAll('&amp;', '&');
-          return extractedUrl;
+          return _ReelResolvedData(videoUrl: extractedUrl);
         }
 
-        // Try regex match for video_url in embedded JSON payload
         final jsonVideoUrlMatch =
             RegExp(r'"video_url":"([^"]+)"').firstMatch(html);
         if (jsonVideoUrlMatch != null && jsonVideoUrlMatch.group(1) != null) {
           var cleanUrl = jsonVideoUrlMatch.group(1)!;
           cleanUrl =
               cleanUrl.replaceAll(r'\u0026', '&').replaceAll(r'\/', '/');
-          return cleanUrl;
+          return _ReelResolvedData(videoUrl: cleanUrl);
         }
       }
     } catch (e) {
@@ -158,7 +209,8 @@ class InstagramDownloaderService {
         ).firstMatch(html);
 
         if (ogVideoMatch != null && ogVideoMatch.group(2) != null) {
-          return ogVideoMatch.group(2)!.replaceAll('&amp;', '&');
+          final directUrl = ogVideoMatch.group(2)!.replaceAll('&amp;', '&');
+          return _ReelResolvedData(videoUrl: directUrl);
         }
       }
     } catch (e) {
@@ -169,8 +221,8 @@ class InstagramDownloaderService {
   }
 
   /// Downloads the Instagram Reel video file and saves it to local app storage.
-  /// Returns the absolute local file path (`.mp4`).
-  Future<String> downloadReel({
+  /// Returns [InstagramReelResult] containing the local file path, caption and author.
+  Future<InstagramReelResult> downloadReel({
     required String instagramUrl,
     void Function(double progress, String status)? onProgress,
   }) async {
@@ -182,10 +234,10 @@ class InstagramDownloaderService {
     }
 
     final shortcode = extractShortcode(instagramUrl);
-    onProgress?.call(0.3, 'Video adresi çözümleniyor...');
+    onProgress?.call(0.3, 'Video bilgileri çekiliyor...');
 
-    final directVideoUrl = await resolveVideoUrl(instagramUrl);
-    if (directVideoUrl == null || directVideoUrl.isEmpty) {
+    final resolved = await resolveReelData(instagramUrl);
+    if (resolved == null || resolved.videoUrl.isEmpty) {
       throw const HttpException(
         'Video indirilemedi. Gönderi gizli bir hesaba ait olabilir veya Instagram erişimi kısıtlamış olabilir.',
       );
@@ -204,7 +256,7 @@ class InstagramDownloaderService {
         '${reelsDir.path}/reel_${shortcode ?? "video"}_$timestamp.mp4';
     final file = File(filePath);
 
-    final request = http.Request('GET', Uri.parse(directVideoUrl));
+    final request = http.Request('GET', Uri.parse(resolved.videoUrl));
     request.headers['User-Agent'] =
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
@@ -231,7 +283,12 @@ class InstagramDownloaderService {
       await sink.close();
 
       onProgress?.call(1.0, 'İndirme tamamlandı! ✨');
-      return file.path;
+      return InstagramReelResult(
+        filePath: file.path,
+        caption: resolved.caption,
+        authorUsername: resolved.authorUsername,
+        authorFullName: resolved.authorFullName,
+      );
     } finally {
       client.close();
     }
