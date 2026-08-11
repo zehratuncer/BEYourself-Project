@@ -9,6 +9,8 @@
     android:minResizeWidth="140dp"
     android:minResizeHeight="70dp"
     android:previewImage="@mipmap/launcher_icon"
+    android:previewLayout="@layout/widget_quote_layout"
+    android:description="@string/widget_description"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="3600000"
     android:widgetCategory="home_screen" />
