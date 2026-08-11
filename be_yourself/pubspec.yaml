@@ -39,6 +39,9 @@ dependencies:
   flutter_local_notifications: ^17.2.4
   timezone: ^0.9.4
   home_widget: ^0.7.0
+  video_player: ^2.9.2
+  path_provider: ^2.1.5
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:

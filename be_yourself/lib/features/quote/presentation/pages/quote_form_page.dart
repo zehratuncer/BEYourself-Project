@@ -1,12 +1,16 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:be_yourself/core/theme/app_colors.dart';
 import 'package:be_yourself/features/category/presentation/providers/category_providers.dart';
+import 'package:be_yourself/features/media/services/instagram_downloader_service.dart';
 import 'package:be_yourself/features/quote/domain/entities/quote.dart';
 import 'package:be_yourself/features/quote/presentation/providers/quote_providers.dart';
 import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
+import 'package:be_yourself/shared/widgets/app_video_player.dart';
 
 class QuoteFormPage extends ConsumerStatefulWidget {
   const QuoteFormPage({super.key, this.initialQuote});
@@ -21,10 +25,14 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
   late final TextEditingController _textController;
   late final TextEditingController _shortTextController;
   late final TextEditingController _authorController;
+  late final TextEditingController _instagramUrlController;
   late String _selectedCategory;
   late bool _isFavorite;
   String? _selectedMediaUrl;
   bool _isSummarizing = false;
+  bool _isDownloadingReel = false;
+  String _downloadStatus = '';
+  double _downloadProgress = 0.0;
 
   @override
   void initState() {
@@ -35,6 +43,7 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
         TextEditingController(text: widget.initialQuote?.shortText ?? '');
     _authorController =
         TextEditingController(text: widget.initialQuote?.author ?? '');
+    _instagramUrlController = TextEditingController();
     _selectedCategory = widget.initialQuote?.categoryName ?? 'Motivasyon';
     _isFavorite = widget.initialQuote?.isFavorite ?? false;
     _selectedMediaUrl = widget.initialQuote?.mediaUrl;
@@ -45,6 +54,7 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
     _textController.dispose();
     _shortTextController.dispose();
     _authorController.dispose();
+    _instagramUrlController.dispose();
     super.dispose();
   }
 
@@ -87,6 +97,106 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
     }
   }
 
+  Future<void> _pasteInstagramUrl() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (data?.text != null && data!.text!.trim().isNotEmpty) {
+      setState(() {
+        _instagramUrlController.text = data.text!.trim();
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Panodaki bağlantı yapıştırıldı! 📋'),
+            duration: Duration(milliseconds: 1000),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _downloadReelVideo() async {
+    final url = _instagramUrlController.text.trim();
+    if (url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Lütfen bir Instagram Reels bağlantısı giriniz.'),
+        ),
+      );
+      return;
+    }
+
+    if (!InstagramDownloaderService.instance.isValidInstagramUrl(url)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Lütfen geçerli bir Instagram bağlantısı giriniz (örn: instagram.com/reel/...).',
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isDownloadingReel = true;
+      _downloadProgress = 0.0;
+      _downloadStatus = 'Bağlantı kontrol ediliyor...';
+    });
+
+    try {
+      final downloadedPath =
+          await InstagramDownloaderService.instance.downloadReel(
+        instagramUrl: url,
+        onProgress: (progress, status) {
+          if (mounted) {
+            setState(() {
+              _downloadProgress = progress;
+              _downloadStatus = status;
+            });
+          }
+        },
+      );
+
+      if (mounted) {
+        setState(() {
+          _selectedMediaUrl = downloadedPath;
+          _isDownloadingReel = false;
+          _instagramUrlController.clear();
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('🎬 Reels videosu başarıyla indirildi ve eklendi!'),
+            backgroundColor: AppColors.primaryBlue,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isDownloadingReel = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Video indirilirken hata oluştu: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  bool _isVideoMedia(String? path) {
+    if (path == null) return false;
+    final lower = path.toLowerCase();
+    return lower.endsWith('.mp4') ||
+        lower.endsWith('.mov') ||
+        lower.endsWith('.avi') ||
+        lower.endsWith('.mkv') ||
+        lower.contains('/reels/') ||
+        lower.contains('video');
+  }
+
   Future<void> _pickImage() async {
     try {
       final ImagePicker picker = ImagePicker();
@@ -100,7 +210,8 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Fotoğraf galeriden başarıyla seçildi!')),
+            const SnackBar(
+                content: Text('Fotoğraf galeriden başarıyla seçildi!')),
           );
         }
       }
@@ -378,13 +489,297 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Alıntınıza bir fotoğraf veya video ekleyerek onu görselleştirin.',
+                      'Instagram Reels bağlantısı girin veya galerinizden fotoğraf/video ekleyin.',
                       style: TextStyle(
                         fontSize: 13,
                         color: secondaryTextColor,
                       ),
                     ),
                     const SizedBox(height: 12),
+
+                    // Instagram Reels Linki Card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: cardBg,
+                        borderRadius: BorderRadius.circular(20),
+                        border: isDarkMode
+                            ? Border.all(
+                                color: Colors.white.withAlpha(15),
+                                width: 1,
+                              )
+                            : Border.all(
+                                color: const Color(0xFFE2E8F0),
+                                width: 1,
+                              ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isDarkMode
+                                ? Colors.black.withAlpha(30)
+                                : Colors.black.withAlpha(6),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFFF58529),
+                                      Color(0xFFDD2A7B),
+                                      Color(0xFF8134AF)
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.video_library_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Instagram Reels Linki',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: primaryTextColor,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Reels linkini yapıştırarak videoyu otomatik indirin.',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: secondaryTextColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: isDarkMode
+                                  ? AppColors.darkInputFill
+                                  : AppColors.lightInputFill,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: _instagramUrlController,
+                                    enabled: !_isDownloadingReel,
+                                    style: TextStyle(
+                                        color: primaryTextColor, fontSize: 14),
+                                    decoration: InputDecoration(
+                                      hintText:
+                                          'https://www.instagram.com/reel/...',
+                                      hintStyle: TextStyle(
+                                        color: secondaryTextColor,
+                                        fontSize: 13,
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 12,
+                                      ),
+                                      border: InputBorder.none,
+                                    ),
+                                  ),
+                                ),
+                                TextButton.icon(
+                                  onPressed: _isDownloadingReel
+                                      ? null
+                                      : _pasteInstagramUrl,
+                                  icon: const Icon(
+                                    Icons.content_paste_rounded,
+                                    size: 16,
+                                  ),
+                                  label: const Text(
+                                    'Yapıştır',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: isDarkMode
+                                        ? AppColors.primaryBlueLight
+                                        : AppColors.primaryBlue,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          if (_isDownloadingReel) ...[
+                            LinearProgressIndicator(
+                              value: _downloadProgress > 0
+                                  ? _downloadProgress
+                                  : null,
+                              backgroundColor: isDarkMode
+                                  ? Colors.white12
+                                  : Colors.black12,
+                              color: AppColors.primaryBlueLight,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _downloadStatus,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: isDarkMode
+                                        ? AppColors.primaryBlueLight
+                                        : AppColors.primaryBlue,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ] else
+                            SizedBox(
+                              width: double.infinity,
+                              height: 42,
+                              child: ElevatedButton.icon(
+                                onPressed: _downloadReelVideo,
+                                icon: const Icon(Icons.download_rounded,
+                                    size: 18),
+                                label: const Text(
+                                  'Videoyu İndir',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isDarkMode
+                                      ? const Color(0xFF2563EB)
+                                      : AppColors.primaryBlue,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 0,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Media Preview (if media selected/downloaded)
+                    if (_selectedMediaUrl != null) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: cardBg,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.green.withAlpha(80),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.check_circle_rounded,
+                                        color: Colors.green, size: 18),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      _isVideoMedia(_selectedMediaUrl)
+                                          ? 'Eklenen Video'
+                                          : 'Eklenen Fotoğraf',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.green,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                TextButton.icon(
+                                  onPressed: () {
+                                    setState(() {
+                                      _selectedMediaUrl = null;
+                                    });
+                                  },
+                                  icon: const Icon(Icons.delete_outline,
+                                      size: 16, color: Colors.redAccent),
+                                  label: const Text(
+                                    'Kaldır',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.redAccent),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            if (_isVideoMedia(_selectedMediaUrl))
+                              AppVideoPlayer(
+                                videoPath: _selectedMediaUrl!,
+                                height: 180,
+                              )
+                            else if (_selectedMediaUrl!.startsWith('http'))
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(14),
+                                child: Image.network(
+                                  _selectedMediaUrl!,
+                                  height: 180,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            else
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(14),
+                                child: Image.file(
+                                  File(_selectedMediaUrl!),
+                                  height: 180,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Alternative Pickers from Gallery
                     Row(
                       children: [
                         Expanded(
@@ -397,7 +792,7 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                                     : const Color(0xFFC7D0EE),
                               ),
                               child: Container(
-                                height: 110,
+                                height: 95,
                                 decoration: BoxDecoration(
                                   color: isDarkMode
                                       ? AppColors.darkInputFill
@@ -412,13 +807,13 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                                       color: isDarkMode
                                           ? AppColors.primaryBlueLight
                                           : AppColors.primaryBlue,
-                                      size: 28,
+                                      size: 26,
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 6),
                                     Text(
-                                      'Fotoğraf Ekle',
+                                      'Galeriden Fotoğraf',
                                       style: TextStyle(
-                                        fontSize: 13,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                         color: primaryTextColor,
                                       ),
@@ -429,7 +824,7 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: GestureDetector(
                             onTap: _pickVideo,
@@ -440,10 +835,10 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                                     : const Color(0xFFC7D0EE),
                               ),
                               child: Container(
-                                height: 110,
+                                height: 95,
                                 decoration: BoxDecoration(
                                   color: isDarkMode
-                                      ? AppColors.darkInputFill
+                                  ? AppColors.darkInputFill
                                       : const Color(0xFFF2F4FD),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
@@ -455,13 +850,13 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                                       color: isDarkMode
                                           ? AppColors.primaryBlueLight
                                           : AppColors.primaryBlue,
-                                      size: 28,
+                                      size: 26,
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 6),
                                     Text(
-                                      'Video Ekle',
+                                      'Galeriden Video',
                                       style: TextStyle(
-                                        fontSize: 13,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                         color: primaryTextColor,
                                       ),
@@ -474,25 +869,6 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                         ),
                       ],
                     ),
-                    if (_selectedMediaUrl != null) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(Icons.check_circle,
-                              size: 16, color: Colors.green),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              'Seçilen medya: $_selectedMediaUrl',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  fontSize: 12, color: Colors.green),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
                     const SizedBox(height: 24),
 
                     // Yazar Field
