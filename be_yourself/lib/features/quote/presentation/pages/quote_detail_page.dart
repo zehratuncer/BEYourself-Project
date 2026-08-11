@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:quote_reminder/core/theme/app_colors.dart';
-import 'package:quote_reminder/features/quote/presentation/pages/quote_form_page.dart';
-import 'package:quote_reminder/features/quote/presentation/providers/quote_providers.dart';
-import 'package:quote_reminder/features/settings/presentation/pages/settings_page.dart';
+import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/features/quote/presentation/pages/quote_form_page.dart';
+import 'package:be_yourself/features/quote/presentation/providers/quote_providers.dart';
+import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
 
 class QuoteDetailPage extends ConsumerWidget {
   const QuoteDetailPage({super.key, required this.quoteId});

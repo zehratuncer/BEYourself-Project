@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:quote_reminder/core/theme/app_colors.dart';
-import 'package:quote_reminder/core/utils/category_icon_helper.dart';
-import 'package:quote_reminder/features/category/domain/entities/category.dart';
-import 'package:quote_reminder/features/category/presentation/providers/category_providers.dart';
-import 'package:quote_reminder/features/category/presentation/widgets/edit_category_dialog.dart';
-import 'package:quote_reminder/features/quote/presentation/providers/quote_providers.dart';
-import 'package:quote_reminder/features/settings/presentation/pages/settings_page.dart';
-import 'package:quote_reminder/shared/providers/navigation_provider.dart';
+import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/core/utils/category_icon_helper.dart';
+import 'package:be_yourself/features/category/domain/entities/category.dart';
+import 'package:be_yourself/features/category/presentation/providers/category_providers.dart';
+import 'package:be_yourself/features/category/presentation/widgets/edit_category_dialog.dart';
+import 'package:be_yourself/features/quote/presentation/providers/quote_providers.dart';
+import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
+import 'package:be_yourself/shared/providers/navigation_provider.dart';
 
 class CategoriesPage extends ConsumerWidget {
   const CategoriesPage({super.key});

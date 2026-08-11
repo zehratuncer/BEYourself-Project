@@ -658,8 +658,8 @@ Her Dart dosyasında importları şu sırayla düzenleyin:
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:quote_reminder/core/theme/app_theme.dart';
-import 'package:quote_reminder/features/quote/domain/entities/quote.dart';
+import 'package:be_yourself/core/theme/app_theme.dart';
+import 'package:be_yourself/features/quote/domain/entities/quote.dart';
 ```
 
 Önce SDK, sonra üçüncü taraf paketler, sonra proje importları gelir. Gruplar arasında boş satır bırakın.

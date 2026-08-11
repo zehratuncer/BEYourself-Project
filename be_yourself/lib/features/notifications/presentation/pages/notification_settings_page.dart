@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:quote_reminder/core/theme/app_colors.dart';
-import 'package:quote_reminder/features/settings/presentation/pages/settings_page.dart';
-import 'package:quote_reminder/main.dart';
+import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
+import 'package:be_yourself/main.dart';
 
 class NotificationCountNotifier extends StateNotifier<int> {
   final SharedPreferences prefs;

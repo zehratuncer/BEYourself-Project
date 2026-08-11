@@ -1,6 +1,6 @@
-# quote_reminder
+# BeYourself
 
-A new Flutter project.
+BeYourself - Kişisel Alıntı, İlham ve Motivasyon Hatırlatıcı Uygulaması (Offline-first Flutter App).
 
 ## Getting Started
 

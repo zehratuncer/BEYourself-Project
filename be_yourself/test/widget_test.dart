@@ -1,14 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:quote_reminder/core/constants/app_strings.dart';
-import 'package:quote_reminder/main.dart';
+import 'package:be_yourself/core/constants/app_strings.dart';
+import 'package:be_yourself/main.dart';
 
 void main() {
   testWidgets('WelcomePage smoke test', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MyApp(),
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+        child: const MyApp(),
       ),
     );
 
@@ -19,3 +26,4 @@ void main() {
     await tester.pumpAndSettle(const Duration(seconds: 3));
   });
 }
+

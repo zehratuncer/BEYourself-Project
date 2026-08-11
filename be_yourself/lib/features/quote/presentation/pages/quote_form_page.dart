@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:quote_reminder/core/theme/app_colors.dart';
-import 'package:quote_reminder/features/category/presentation/providers/category_providers.dart';
-import 'package:quote_reminder/features/quote/domain/entities/quote.dart';
-import 'package:quote_reminder/features/quote/presentation/providers/quote_providers.dart';
-import 'package:quote_reminder/features/settings/presentation/pages/settings_page.dart';
+import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/features/category/presentation/providers/category_providers.dart';
+import 'package:be_yourself/features/quote/domain/entities/quote.dart';
+import 'package:be_yourself/features/quote/presentation/providers/quote_providers.dart';
+import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
 
 class QuoteFormPage extends ConsumerStatefulWidget {
   const QuoteFormPage({super.key, this.initialQuote});

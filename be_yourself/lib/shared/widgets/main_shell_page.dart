@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:quote_reminder/core/theme/app_colors.dart';
-import 'package:quote_reminder/features/category/presentation/pages/categories_page.dart';
-import 'package:quote_reminder/features/category/presentation/widgets/add_category_dialog.dart';
-import 'package:quote_reminder/features/favorites/presentation/pages/favorites_page.dart';
-import 'package:quote_reminder/features/home/presentation/pages/home_page.dart';
-import 'package:quote_reminder/features/quote/presentation/pages/quote_detail_page.dart';
-import 'package:quote_reminder/features/quote/presentation/pages/quote_form_page.dart';
-import 'package:quote_reminder/features/settings/presentation/pages/settings_page.dart';
-import 'package:quote_reminder/shared/providers/navigation_provider.dart';
+import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/features/category/presentation/pages/categories_page.dart';
+import 'package:be_yourself/features/category/presentation/widgets/add_category_dialog.dart';
+import 'package:be_yourself/features/favorites/presentation/pages/favorites_page.dart';
+import 'package:be_yourself/features/home/presentation/pages/home_page.dart';
+import 'package:be_yourself/features/quote/presentation/pages/quote_detail_page.dart';
+import 'package:be_yourself/features/quote/presentation/pages/quote_form_page.dart';
+import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
+import 'package:be_yourself/shared/providers/navigation_provider.dart';
 
 class MainShellPage extends ConsumerWidget {
   const MainShellPage({super.key});

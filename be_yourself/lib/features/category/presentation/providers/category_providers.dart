@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:quote_reminder/features/category/domain/entities/category.dart';
+import 'package:be_yourself/features/category/domain/entities/category.dart';
 
 class CategoryNotifier extends StateNotifier<List<Category>> {
   CategoryNotifier()

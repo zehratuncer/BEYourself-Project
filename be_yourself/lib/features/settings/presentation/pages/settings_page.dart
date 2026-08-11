@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:quote_reminder/core/constants/app_constants.dart';
-import 'package:quote_reminder/core/theme/app_colors.dart';
-import 'package:quote_reminder/features/notifications/presentation/pages/notification_settings_page.dart';
-import 'package:quote_reminder/main.dart';
+import 'package:be_yourself/core/constants/app_constants.dart';
+import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/features/notifications/presentation/pages/notification_settings_page.dart';
+import 'package:be_yourself/main.dart';
 
 class DarkModeNotifier extends StateNotifier<bool> {
   final SharedPreferences prefs;
