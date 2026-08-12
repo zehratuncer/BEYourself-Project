@@ -1,6 +1,6 @@
 <div align="center">
 
-# ✨ BeYourself (ComeBack Project)
+# ✨ BeYourself
 
 **Kişisel İlham, Alıntı Defteri, Instagram Medya Entegrasyonu ve Akıllı Bildirim Uygulaması**
 
