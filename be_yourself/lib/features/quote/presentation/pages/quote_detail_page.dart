@@ -454,69 +454,15 @@ class QuoteDetailPage extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    if (quote.mediaUrl != null &&
-                        quote.mediaUrl!.isNotEmpty) ...[
+                    if (quote.allMediaUrls.isNotEmpty) ...[
                       const SizedBox(height: 20),
-                      GestureDetector(
-                        onTap: () => _showFullScreenImage(
+                      _MediaCarouselViewer(
+                        mediaUrls: quote.allMediaUrls,
+                        isDarkMode: isDarkMode,
+                        maxHeight: screenSize.height * 0.45,
+                        onTapImage: (path) => _showFullScreenImage(
                           context,
-                          quote.mediaUrl!,
-                        ),
-                        child: Container(
-                          constraints: BoxConstraints(
-                            maxHeight: screenSize.height * 0.45,
-                            minHeight: 120,
-                          ),
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: isDarkMode
-                                ? Colors.black.withAlpha(50)
-                                : Colors.black.withAlpha(8),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isDarkMode
-                                  ? Colors.white.withAlpha(12)
-                                  : Colors.black.withAlpha(8),
-                            ),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: quote.mediaUrl!.startsWith('http')
-                                ? Image.network(
-                                    quote.mediaUrl!,
-                                    width: double.infinity,
-                                    fit: BoxFit.contain,
-                                    loadingBuilder:
-                                        (context, child, progress) {
-                                      if (progress == null) return child;
-                                      return const Center(
-                                        child: Padding(
-                                          padding: EdgeInsets.all(24.0),
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  )
-                                : (File(quote.mediaUrl!).existsSync()
-                                    ? Image.file(
-                                        File(quote.mediaUrl!),
-                                        width: double.infinity,
-                                        fit: BoxFit.contain,
-                                      )
-                                    : Image.asset(
-                                        quote.mediaUrl!,
-                                        width: double.infinity,
-                                        fit: BoxFit.contain,
-                                        errorBuilder:
-                                            (context, error, stackTrace) =>
-                                                const Icon(
-                                          Icons.image_not_supported,
-                                          size: 50,
-                                        ),
-                                      )),
-                          ),
+                          path,
                         ),
                       ),
                     ],
@@ -666,6 +612,177 @@ class _FloatingCircleButton extends StatelessWidget {
           size: 20,
         ),
       ),
+    );
+  }
+}
+
+class _MediaCarouselViewer extends StatefulWidget {
+  const _MediaCarouselViewer({
+    required this.mediaUrls,
+    required this.isDarkMode,
+    required this.maxHeight,
+    required this.onTapImage,
+  });
+
+  final List<String> mediaUrls;
+  final bool isDarkMode;
+  final double maxHeight;
+  final void Function(String path) onTapImage;
+
+  @override
+  State<_MediaCarouselViewer> createState() => _MediaCarouselViewerState();
+}
+
+class _MediaCarouselViewerState extends State<_MediaCarouselViewer> {
+  int _currentIndex = 0;
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final count = widget.mediaUrls.length;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          constraints: BoxConstraints(
+            maxHeight: widget.maxHeight,
+            minHeight: 140,
+          ),
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: widget.isDarkMode
+                ? Colors.black.withAlpha(50)
+                : Colors.black.withAlpha(8),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: widget.isDarkMode
+                  ? Colors.white.withAlpha(12)
+                  : Colors.black.withAlpha(8),
+            ),
+          ),
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: PageView.builder(
+                  controller: _pageController,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: count,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentIndex = index;
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    final path = widget.mediaUrls[index];
+                    return GestureDetector(
+                      onTap: () => widget.onTapImage(path),
+                      child: path.startsWith('http')
+                          ? Image.network(
+                              path,
+                              width: double.infinity,
+                              fit: BoxFit.contain,
+                              loadingBuilder: (context, child, progress) {
+                                if (progress == null) return child;
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(24.0),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          : (File(path).existsSync()
+                              ? Image.file(
+                                  File(path),
+                                  width: double.infinity,
+                                  fit: BoxFit.contain,
+                                )
+                              : Image.asset(
+                                  path,
+                                  width: double.infinity,
+                                  fit: BoxFit.contain,
+                                  errorBuilder:
+                                      (context, error, stackTrace) =>
+                                          const Icon(
+                                    Icons.image_not_supported,
+                                    size: 50,
+                                  ),
+                                )),
+                    );
+                  },
+                ),
+              ),
+
+              // Page indicator badge (if more than 1 item)
+              if (count > 1)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withAlpha(160),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${_currentIndex + 1} / $count',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+
+        // Dots indicator if multiple items
+        if (count > 1) ...[
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(count, (index) {
+              final isSelected = index == _currentIndex;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: isSelected ? 18 : 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? (widget.isDarkMode
+                          ? AppColors.primaryBlueLight
+                          : AppColors.primaryBlue)
+                      : (widget.isDarkMode
+                          ? Colors.white.withAlpha(40)
+                          : Colors.black.withAlpha(30)),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              );
+            }),
+          ),
+        ],
+      ],
     );
   }
 }

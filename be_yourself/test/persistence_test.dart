@@ -42,6 +42,22 @@ void main() {
       expect(loadedQuotes.first.author, 'Sokrates');
       expect(loadedQuotes.first.categoryName, 'Felsefe');
       expect(loadedQuotes.first.isFavorite, true);
+
+      // Multi-media quote test
+      final multiMediaQuote = Quote(
+        id: 'test-2',
+        text: 'Çoklu fotoğraf alıntısı',
+        author: 'Fotoğrafçı',
+        categoryName: 'Sanat',
+        createdAt: DateTime(2026, 1, 2),
+        mediaUrls: ['/path/to/img1.jpg', '/path/to/img2.jpg', '/path/to/img3.jpg'],
+      );
+
+      expect(multiMediaQuote.allMediaUrls.length, 3);
+      final json = multiMediaQuote.toJson();
+      final fromJson = Quote.fromJson(json);
+      expect(fromJson.allMediaUrls.length, 3);
+      expect(fromJson.mediaUrls, contains('/path/to/img2.jpg'));
     });
 
     test('Category JSON serialization and LocalDataSource default categories', () async {

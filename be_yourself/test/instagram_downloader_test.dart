@@ -63,11 +63,29 @@ void main() {
       );
     });
 
-    test('downloadReel throws FormatException on invalid URL', () async {
+    test('downloadReel and downloadPost throw FormatException on invalid URL', () async {
       expect(
         () => service.downloadReel(instagramUrl: 'invalid_url_string'),
         throwsA(isA<FormatException>()),
       );
+      expect(
+        () => service.downloadPost(instagramUrl: 'invalid_url_string'),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('InstagramDownloadResult model has valid getters', () {
+      const result = InstagramDownloadResult(
+        filePaths: ['/path/to/img1.jpg', '/path/to/img2.jpg'],
+        caption: 'Harika bir gün! ✨ #ilham',
+        authorUsername: 'zehratuncer',
+        authorFullName: 'Zehra Tuncer',
+      );
+
+      expect(result.filePaths.length, 2);
+      expect(result.filePath, '/path/to/img1.jpg');
+      expect(result.caption, contains('Harika bir gün'));
+      expect(result.authorUsername, 'zehratuncer');
     });
   });
 }

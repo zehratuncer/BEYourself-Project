@@ -29,6 +29,7 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
   late String _selectedCategory;
   late bool _isFavorite;
   String? _selectedMediaUrl;
+  List<String> _selectedMediaUrls = [];
   bool _isSummarizing = false;
   bool _isDownloadingReel = false;
   String _downloadStatus = '';
@@ -47,6 +48,9 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
     _selectedCategory = widget.initialQuote?.categoryName ?? 'Motivasyon';
     _isFavorite = widget.initialQuote?.isFavorite ?? false;
     _selectedMediaUrl = widget.initialQuote?.mediaUrl;
+    _selectedMediaUrls = widget.initialQuote?.mediaUrls != null
+        ? List.from(widget.initialQuote!.mediaUrls!)
+        : (_selectedMediaUrl != null ? [_selectedMediaUrl!] : []);
   }
 
   @override
@@ -139,7 +143,7 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
     if (url.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Lütfen bir Instagram Reels bağlantısı giriniz.'),
+          content: Text('Lütfen bir Instagram bağlantısı giriniz.'),
         ),
       );
       return;
@@ -149,7 +153,7 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Lütfen geçerli bir Instagram bağlantısı giriniz (örn: instagram.com/reel/...).',
+            'Lütfen geçerli bir Instagram bağlantısı giriniz (örn: instagram.com/p/... veya reel/...).',
           ),
         ),
       );
@@ -164,7 +168,7 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
 
     try {
       final result =
-          await InstagramDownloaderService.instance.downloadReel(
+          await InstagramDownloaderService.instance.downloadPost(
         instagramUrl: url,
         onProgress: (progress, status) {
           if (mounted) {
@@ -178,6 +182,7 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
 
       if (mounted) {
         setState(() {
+          _selectedMediaUrls = result.filePaths;
           _selectedMediaUrl = result.filePath;
           _isDownloadingReel = false;
           _instagramUrlController.clear();
@@ -199,10 +204,14 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
           }
         });
 
+        final count = result.filePaths.length;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-                '🎬 Reels videosu, açıklaması ve başlığı otomatik oluşturuldu! ✨'),
+              count > 1
+                  ? '📸 $count adet fotoğraf, açıklaması ve başlığı otomatik oluşturuldu! ✨'
+                  : '🎬 Instagram medyası, açıklaması ve başlığı otomatik oluşturuldu! ✨',
+            ),
             backgroundColor: AppColors.primaryBlue,
           ),
         );
@@ -215,12 +224,62 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Video indirilirken hata oluştu: $e'),
+            content: Text('Medya indirilirken hata oluştu: $e'),
             backgroundColor: Colors.redAccent,
           ),
         );
       }
     }
+  }
+
+  void _saveQuote() {
+    final text = _textController.text.trim();
+    final shortText = _shortTextController.text.trim();
+    final author = _authorController.text.trim().isEmpty
+        ? 'Bilinmeyen'
+        : _authorController.text.trim();
+
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lütfen bir söz metni girin.')),
+      );
+      return;
+    }
+
+    final finalMediaUrl = _selectedMediaUrls.isNotEmpty
+        ? _selectedMediaUrls.first
+        : _selectedMediaUrl;
+    final finalMediaUrls = _selectedMediaUrls.isNotEmpty
+        ? _selectedMediaUrls
+        : (_selectedMediaUrl != null ? [_selectedMediaUrl!] : null);
+
+    if (widget.initialQuote != null) {
+      final updated = widget.initialQuote!.copyWith(
+        text: text,
+        shortText: shortText.isNotEmpty ? shortText : null,
+        author: author,
+        categoryName: _selectedCategory,
+        isFavorite: _isFavorite,
+        mediaUrl: finalMediaUrl,
+        mediaUrls: finalMediaUrls,
+      );
+      ref.read(quoteListProvider.notifier).updateQuote(updated);
+    } else {
+      final newQuote = Quote(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        text: text,
+        shortText: shortText.isNotEmpty ? shortText : null,
+        author: author,
+        categoryName: _selectedCategory,
+        createdAt: DateTime.now(),
+        isFavorite: _isFavorite,
+        mediaUrl: finalMediaUrl,
+        mediaUrls: finalMediaUrls,
+      );
+      ref.read(quoteListProvider.notifier).addQuote(newQuote);
+    }
+
+    Navigator.of(context).pop();
   }
 
   bool _isVideoMedia(String? path) {
@@ -284,47 +343,6 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
         );
       }
     }
-  }
-
-  void _saveQuote() {
-    final text = _textController.text.trim();
-    final shortText = _shortTextController.text.trim();
-    final author = _authorController.text.trim().isEmpty
-        ? 'Bilinmeyen'
-        : _authorController.text.trim();
-
-    if (text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen bir söz metni girin.')),
-      );
-      return;
-    }
-
-    if (widget.initialQuote != null) {
-      final updated = widget.initialQuote!.copyWith(
-        text: text,
-        shortText: shortText.isNotEmpty ? shortText : null,
-        author: author,
-        categoryName: _selectedCategory,
-        isFavorite: _isFavorite,
-        mediaUrl: _selectedMediaUrl,
-      );
-      ref.read(quoteListProvider.notifier).updateQuote(updated);
-    } else {
-      final newQuote = Quote(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        text: text,
-        shortText: shortText.isNotEmpty ? shortText : null,
-        author: author,
-        categoryName: _selectedCategory,
-        createdAt: DateTime.now(),
-        isFavorite: _isFavorite,
-        mediaUrl: _selectedMediaUrl,
-      );
-      ref.read(quoteListProvider.notifier).addQuote(newQuote);
-    }
-
-    Navigator.of(context).pop();
   }
 
   @override
@@ -645,7 +663,7 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                                 icon: const Icon(Icons.download_rounded,
                                     size: 18),
                                 label: const Text(
-                                  'Videoyu İndir',
+                                  'Medyayı İndir (Post / Reels)',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
@@ -669,7 +687,7 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                     const SizedBox(height: 16),
 
                     // Media Preview (if media selected/downloaded)
-                    if (_selectedMediaUrl != null) ...[
+                    if (_selectedMediaUrls.isNotEmpty || _selectedMediaUrl != null) ...[
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
@@ -694,9 +712,11 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                                         color: Colors.green, size: 18),
                                     const SizedBox(width: 6),
                                     Text(
-                                      _isVideoMedia(_selectedMediaUrl)
-                                          ? 'Eklenen Video'
-                                          : 'Eklenen Fotoğraf',
+                                      _selectedMediaUrls.length > 1
+                                          ? '${_selectedMediaUrls.length} Adet Fotoğraf'
+                                          : (_isVideoMedia(_selectedMediaUrl)
+                                              ? 'Eklenen Video'
+                                              : 'Eklenen Fotoğraf'),
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
@@ -709,6 +729,7 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                                   onPressed: () {
                                     setState(() {
                                       _selectedMediaUrl = null;
+                                      _selectedMediaUrls = [];
                                     });
                                   },
                                   icon: const Icon(Icons.delete_outline,
@@ -723,14 +744,79 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                               ],
                             ),
                             const SizedBox(height: 8),
-                            if (_isVideoMedia(_selectedMediaUrl))
+                            if (_selectedMediaUrls.length > 1)
+                              SizedBox(
+                                height: 130,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  physics: const BouncingScrollPhysics(),
+                                  itemCount: _selectedMediaUrls.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(width: 10),
+                                  itemBuilder: (context, index) {
+                                    final path = _selectedMediaUrls[index];
+                                    return Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          child: path.startsWith('http')
+                                              ? Image.network(
+                                                  path,
+                                                  height: 130,
+                                                  width: 130,
+                                                  fit: BoxFit.cover,
+                                                )
+                                              : (File(path).existsSync()
+                                                  ? Image.file(
+                                                      File(path),
+                                                      height: 130,
+                                                      width: 130,
+                                                      fit: BoxFit.cover,
+                                                    )
+                                                  : Image.asset(
+                                                      path,
+                                                      height: 130,
+                                                      width: 130,
+                                                      fit: BoxFit.cover,
+                                                    )),
+                                        ),
+                                        Positioned(
+                                          top: 6,
+                                          left: 6,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withAlpha(160),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              '${index + 1}',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              )
+                            else if (_isVideoMedia(_selectedMediaUrl))
                               AppVideoPlayer(
                                 videoPath: _selectedMediaUrl!,
                                 height: 180,
                               )
-                            else if (_selectedMediaUrl!.startsWith('http'))
+                            else if (_selectedMediaUrl != null &&
+                                _selectedMediaUrl!.startsWith('http'))
                               Container(
-                                constraints: const BoxConstraints(maxHeight: 240),
+                                constraints:
+                                    const BoxConstraints(maxHeight: 240),
                                 width: double.infinity,
                                 decoration: BoxDecoration(
                                   color: isDarkMode
@@ -747,9 +833,10 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                                   ),
                                 ),
                               )
-                            else
+                            else if (_selectedMediaUrl != null)
                               Container(
-                                constraints: const BoxConstraints(maxHeight: 240),
+                                constraints:
+                                    const BoxConstraints(maxHeight: 240),
                                 width: double.infinity,
                                 decoration: BoxDecoration(
                                   color: isDarkMode
