@@ -674,54 +674,6 @@ class _FullScreenGalleryDialogState extends State<_FullScreenGalleryDialog> {
                 ),
               ),
             ),
-
-          // Navigation arrows (if multiple images)
-          if (count > 1 && _currentIndex > 0)
-            Positioned(
-              left: 4,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withAlpha(120),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                  onPressed: () {
-                    _pageController.previousPage(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
-                  },
-                ),
-              ),
-            ),
-          if (count > 1 && _currentIndex < count - 1)
-            Positioned(
-              right: 4,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withAlpha(120),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                  onPressed: () {
-                    _pageController.nextPage(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
-                  },
-                ),
-              ),
-            ),
         ],
       ),
     );
