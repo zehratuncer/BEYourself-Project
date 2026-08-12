@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -5,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:be_yourself/core/constants/app_constants.dart';
 import 'package:be_yourself/core/theme/app_colors.dart';
 import 'package:be_yourself/features/notifications/presentation/pages/notification_settings_page.dart';
+import 'package:be_yourself/features/profile/presentation/pages/profile_settings_page.dart';
+import 'package:be_yourself/features/profile/presentation/providers/profile_providers.dart';
 import 'package:be_yourself/main.dart';
 
 class DarkModeNotifier extends StateNotifier<bool> {
@@ -55,6 +58,10 @@ class SettingsPage extends ConsumerWidget {
         ? AppColors.darkTextSecondary
         : AppColors.lightTextSecondary;
 
+    final userProfile = ref.watch(profileProvider);
+    final hasCustomPhoto = userProfile.avatarPath != null &&
+        File(userProfile.avatarPath!).existsSync();
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -74,9 +81,8 @@ class SettingsPage extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-            // Profile Card
+            // Profile Card (Clickable -> ProfileSettingsPage)
             Container(
-              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: cardBgColor,
                 borderRadius: BorderRadius.circular(20),
@@ -90,53 +96,100 @@ class SettingsPage extends ConsumerWidget {
                   ),
                 ],
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.primaryBlue.withAlpha(isDarkMode ? 35 : 20),
-                      border: Border.all(
-                        color: isDarkMode
-                            ? AppColors.primaryBlueLight.withAlpha(60)
-                            : AppColors.primaryBlue.withAlpha(30),
-                        width: 2,
+              child: Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ProfileSettingsPage(),
                       ),
-                    ),
-                    child: Center(
-                      child: Image.asset(
-                        AppConstants.logoAssetPath,
-                        fit: BoxFit.contain,
-                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 58,
+                          height: 58,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.primaryBlue
+                                .withAlpha(isDarkMode ? 35 : 20),
+                            border: Border.all(
+                              color: isDarkMode
+                                  ? AppColors.primaryBlueLight.withAlpha(60)
+                                  : AppColors.primaryBlue.withAlpha(30),
+                              width: 2,
+                            ),
+                          ),
+                          child: ClipOval(
+                            child: hasCustomPhoto
+                                ? Image.file(
+                                    File(userProfile.avatarPath!),
+                                    fit: BoxFit.cover,
+                                    width: 58,
+                                    height: 58,
+                                  )
+                                : Center(
+                                    child: Text(
+                                      userProfile.avatarEmoji,
+                                      style: const TextStyle(fontSize: 28),
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                userProfile.name,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: primaryTextColor,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.tune_rounded,
+                                    size: 14,
+                                    color: isDarkMode
+                                        ? AppColors.primaryBlueLight
+                                        : AppColors.primaryBlue,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Profil Ayarları',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDarkMode
+                                          ? AppColors.primaryBlueLight
+                                          : AppColors.primaryBlue,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 18,
+                          color: secondaryTextColor.withAlpha(140),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Zehra Tuncer',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: primaryTextColor,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'İlham Arayıcısı ✨',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: secondaryTextColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
             ),
 
