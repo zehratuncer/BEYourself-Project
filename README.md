@@ -1,319 +1,163 @@
-# 📖 Quote Reminder
-
-<p align="center">
-  <strong>Favori sözlerini kaydet, kategorilere ayır ve gün içerisinde bildirimlerle tekrar hatırla.</strong>
-</p>
-
-<p align="center">
-  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.x-02569B?style=flat-square&logo=flutter" />
-  <img alt="Dart" src="https://img.shields.io/badge/Dart-3.x-0175C2?style=flat-square&logo=dart" />
-  <img alt="Platform" src="https://img.shields.io/badge/Platform-Android-3DDC84?style=flat-square&logo=android" />
-  <img alt="Database" src="https://img.shields.io/badge/Database-Isar-6E56CF?style=flat-square" />
-  <img alt="Status" src="https://img.shields.io/badge/Status-Geliştiriliyor-orange?style=flat-square" />
-</p>
-
-<p align="center">
-  <a href="#kurulum"><strong>Kurulum</strong></a>
-  ·
-  <a href="#proje-amaci"><strong>Proje Amacı</strong></a>
-  ·
-  <a href="#mimari"><strong>Mimari</strong></a>
-  ·
-  <a href="#yol-haritasi"><strong>Yol Haritası</strong></a>
-</p>
-
----
-
 <div align="center">
 
-# İçindekiler
+# ✨ BeYourself (ComeBack Project)
 
-| # | Bölüm | Açıklama |
-|:-:|:------|:---------|
-| **1** | Kurulum | Flutter kurulumu ve projeyi çalıştırma |
-| **2** | Proje Amacı | Uygulamanın amacı ve kapsamı |
-| **3** | Özellikler | Mevcut ve planlanan özellikler |
-| **4** | Teknolojiler | Kullanılan teknolojiler |
-| **5** | Mimari | Katman yapısı |
-| **6** | Klasör Yapısı | Flutter klasör organizasyonu |
-| **7** | Veri Modeli | Quote modeli |
-| **8** | Bildirim Sistemi | Local Notification mantığı |
-| **9** | Yol Haritası | Geliştirme planı |
-| **10** | Katkı | Git stratejisi |
+**Kişisel İlham, Alıntı Defteri, Instagram Medya Entegrasyonu ve Akıllı Bildirim Uygulaması**
+
+[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
+[![Riverpod](https://img.shields.io/badge/Riverpod-2.5-00D2B4?style=for-the-badge&logo=flutter&logoColor=white)](https://riverpod.dev)
+[![Tests](https://img.shields.io/badge/Unit%20Tests-50%2F50%20Passed-success?style=for-the-badge&logo=checkmarx&logoColor=white)]()
+[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Web-brightgreen?style=for-the-badge)]()
+[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)]()
+
+<p align="center">
+  <em>"Kendine inan, yapabileceklerinin sınırı yoktur."</em>
+</p>
 
 </div>
 
 ---
 
-# 🚀 1. Kurulum
+## 📱 Proje Hakkında
 
-## Gereksinimler
+**BeYourself**, sosyal medyada (özellikle Instagram) gördüğünüz ilham verici sözleri, Reels videolarını ve galeri gönderilerini kolayca kaydedebileceğiniz, kategorilere ayırabileceğiniz, gün içerisinde motive edici yerel bildirimler alabileceğiniz ve telefonunuzun ana ekranında canlı widget ile takip edebileceğiniz **Local-First (Gizlilik Odaklı & Çevrimdışı)** modern bir Flutter uygulamasıdır.
 
-- Flutter SDK
-- Dart SDK
-- Android Studio
-- Android SDK
-- VS Code
-- Flutter Extension
+Kullanıcı verileri, alıntılar ve indirilen medyalar hiçbir harici sunucuya gönderilmeden tamamen **cihaz üzerinde güvenle** saklanır.
 
-Flutter sürümünü kontrol edin.
+---
+
+## 🚀 Öne Çıkan ve Aktif Olarak Kullanılan Özellikler
+
+### 1. 🎬 Instagram Entegrasyonu (Reels & Çoklu Fotoğraf / Carousel)
+- **Instagram URL ile Medya İndirme:** Reels videoları ve 10 fotoğrafa kadar olan carousel/post gönderileri tek tıkla cihaza indirilir.
+- **Otomatik Açıklama (Caption) & Akıllı Başlık:** Gönderi açıklaması alıntı metnine otomatik aktarılır, ilk cümleden vurucu bir kısa başlık (`shortText`) üretilir ve yazar adı Instagram profilinden çekilir.
+- **Dahili Video Oynatıcı & Kaydırılabilir Galeri:** Alıntı detayında tam ekran Reels video oynatıcı ve çoklu fotoğraflar için sağa-sola kaydırılabilir galeri (`PageView`) bulunur.
+- **Gelişmiş Tam Ekran Zoom (Pinch-to-Zoom):** Büyütülen fotoğraflarda parmakla kaydırarak sonraki görsellere geçiş yapılabilir.
+
+### 2. 📲 Ana Ekran (Home Screen) Widget'ı
+- **Android Home Widget:** Günün sözü Android ana ekranında zarif bir kart olarak görüntülenir.
+- **Akıllı Senkronizasyon:** Uygulama içinden alıntı silindiğinde veya güncellendiğinde widget otomatik olarak fallback sözüne veya havuzdaki yeni bir söze güncellenir.
+- **Derin Bağlantı (Deep Link):** Widget'a tıklandığında doğrudan o alıntının detay sayfasına yönlendirir.
+
+### 3. ⏰ Akıllı Yerel Bildirimler (Local Notifications)
+- **Kişiselleştirilebilir Zamanlama:** Günde 1 ile 5 arasında bildirim sıklığı ve özel saat seçimi (örn: 09:00, 14:00, 21:00).
+- **Kategori Filtreli Bildirim:** Sadece seçtiğiniz kategorilerden (Motivasyon, Felsefe vb.) ilham alma imkanı.
+- **Arka Planda Senkron:** Alıntı silindiğinde veya eklendiğinde bekleyen bildirimler anında yeniden senkronize edilir.
+- **Bildirime Tıklama Desteği:** Bildirime tıklandığında uygulama açılır ve doğrudan ilgili alıntı kartına gider.
+
+### 4. 👤 Gelişmiş Profil Yönetimi & Kişiselleştirme
+- **İsim & Soyisim Düzenleme:** Dinamik kullanıcı profili yönetimi.
+- **Avatar & Fotoğraf Seçici:** Galeriden profil resmi yükleme veya 16 farklı hazır ilham avatarı (🌟, 🦋, 🌸, 🚀, vb.) seçme.
+- **Kişisel İlham Mottosu:** Kullanıcının kendine hatırlatmak istediği yaşam felsefesi.
+- **Bildirim Hitap Tercihi:** *Samimi* ("Günaydın Zehra ✨"), *Motive Edici* ("Bugün senin günün Zehra 🚀") veya *Sade* bildirim stilleri.
+- **Canlı İstatistikler:** Toplam kaydedilen alıntı ve favori sayıları.
+
+### 5. 🎲 Rastgele İlham Çarkı (Random Quote)
+- Kategoriye göre filtrelenebilir rastgele alıntı getirme.
+- Haptic Feedback (dokunsal titreşim) ve akıcı kart animasyonları.
+- Son 5 alıntıyı hatırlayan geçmiş buffer'ı ile art arda aynı sözün gelmesi engellenir.
+
+### 6. 🗂️ Dinamik Kategori & Favori Yönetimi
+- Otomatik akıllı kategori ikonları (`CategoryIconHelper`).
+- Yeni kategori ekleme, düzenleme ve silme (silinen kategorideki alıntılar güvenle "Genel" kategorisine aktarılır).
+- Tek dokunuşla favorilere ekleme ve favori listesi.
+
+### 7. 🌗 Modern Tasarım Sistemi (Dark & Light Mode)
+- Özel renk paleti (`AppColors`) ve Glassmorphism cam efektleri.
+- Koyu mod ve açık mod arasında anlık geçiş ve tercihlerin kalıcı saklanması.
+
+---
+
+## 🛠️ Teknoloji Yığını & Mimari
+
+| Katman | Teknoloji / Kütüphane | Açıklama |
+| :--- | :--- | :--- |
+| **Framework** | Flutter 3.x & Dart 3.x | Çoklu platform (Android, iOS, Web) |
+| **State Management** | Flutter Riverpod 2.5.x | Reaktif ve test edilebilir durum yönetimi |
+| **Yerel Depolama** | SharedPreferences | Local-First hızlı veri kalıcılığı (JSON serileştirme) |
+| **Bildirimler** | `flutter_local_notifications` + `timezone` | Zamanlanmış çevrimdışı bildirimler |
+| **Ana Ekran Widget** | `home_widget` | Android & iOS WidgetKit / AppWidgetProvider |
+| **Medya & Video** | `video_player` + `image_picker` + `http` | Reels oynatıcı ve Instagram medya ayrıştırıcı |
+| **Yazı Tipleri** | `google_fonts` (Outfit, Plus Jakarta Sans) | Tipografi ve modern UI |
+
+---
+
+## 🧪 Test Kapsamı (%100 Başarı)
+
+Projede toplam **50 adet otomatik birim (unit) ve widget testi** bulunmaktadır:
 
 ```bash
-flutter --version
+flutter test
+```
+
+- ✅ `instagram_downloader_test.dart`: URL doğrulama, regex, shortcode ve Carousel modelleri.
+- ✅ `notification_service_test.dart`: Bildirim planlama ve silme senkronizasyonu.
+- ✅ `home_widget_service_test.dart`: Widget URI ayrıştırma, veri güncelleme ve fallback mekanizması.
+- ✅ `profile_test.dart`: Profil modeli serileştirme, avatar ve motto güncellemeleri.
+- ✅ `category_test.dart`: Kategori iş mantığı, büyük/küçük harf mükerrer engelleme ve ikon eşleştirmeleri.
+- ✅ `quote_providers_test.dart`: Favori toggle, kategori taşıma, arama/filtreleme ve Günün Sözü önbelleği.
+- ✅ `settings_and_navigation_test.dart`: Koyu mod ve alt sekme navigasyon testleri.
+- ✅ `random_quote_test.dart`: Rastgele alıntı çekme ve geçmiş buffer hafızası.
+- ✅ `persistence_test.dart`: SharedPreferences veri kalıcılığı testleri.
+
+---
+
+## 📂 Proje Klasör Yapısı
+
+```
+lib/
+├── core/
+│   ├── constants/       # Uygulama sabitleri ve metinleri
+│   ├── theme/           # AppColors ve AppTheme (Dark & Light)
+│   └── utils/           # CategoryIconHelper ve yardımcı araçlar
+├── features/
+│   ├── category/        # Kategori CRUD ve sağlayıcıları
+│   ├── favorites/       # Favori alıntılar ekranı
+│   ├── home/            # Ana sayfa ve alıntı kartları
+│   ├── home_widget/     # Android/iOS Widget servisi
+│   ├── media/           # Instagram Reels/Post indirici servisi
+│   ├── notifications/   # Zamanlanmış yerel bildirim sistemi
+│   ├── onboarding/      # Karşılama (Splash) ekranı
+│   ├── profile/         # Profil ayarları, avatar ve motto yönetimi
+│   ├── quote/           # Alıntı ekleme, düzenleme, detay ve filtreleme
+│   └── settings/        # Ayarlar ve tema tercihleri
+└── shared/
+    ├── providers/       # Navigasyon sağlayıcısı
+    └── widgets/         # AppVideoPlayer, MainShellPage
 ```
 
 ---
 
-## Projeyi Klonlayın
+## 💻 Kurulum ve Çalıştırma
+
+### Gereksinimler
+- Flutter SDK (3.22 veya üzeri)
+- Android Studio / VS Code
+- Android Cihaz veya Emülatör
 
 ```bash
-git clone https://github.com/kullaniciadi/quote-reminder.git
+# 1. Projeyi klonlayın
+git clone https://github.com/zehratuncer/ComeBack-Project.git
 
-cd quote-reminder
-```
+# 2. Proje dizinine gidin
+cd ComeBack-Project/be_yourself
 
----
-
-## Paketleri Yükleyin
-
-```bash
+# 3. Bağımlılıkları yükleyin
 flutter pub get
-```
 
----
+# 4. Testleri çalıştırın
+flutter test
 
-## Uygulamayı Çalıştırın
-
-```bash
+# 5. Uygulamayı başlatın
 flutter run
 ```
 
 ---
 
-# 🎯 2. Proje Amacı
-
-Quote Reminder, sosyal medya platformlarında kaydedilen motivasyon, psikoloji, kişisel gelişim, kitap ve şarkı sözlerini düzenli olarak hatırlatmayı amaçlayan bir Flutter mobil uygulamasıdır.
-
-Uygulama internet bağlantısına ihtiyaç duymadan tamamen yerel (offline) çalışmaktadır.
-
-Temel hedefler:
-
-- Favori sözleri tek yerde toplamak
-- Gün içerisinde otomatik bildirim almak
-- Kategorilere göre filtreleme yapmak
-- Basit ve modern kullanıcı deneyimi sunmak
-
----
-
-# ✨ 3. Özellikler
-
-## Mevcut
-
-- [ ] Söz ekleme
-- [ ] Söz düzenleme
-- [ ] Söz silme
-- [ ] Favorilere ekleme
-- [ ] Kategori oluşturma
-- [ ] Yerel bildirim
-- [ ] Offline çalışma
-
----
-
-## Planlanan
-
-- [ ] Arama
-- [ ] Filtreleme
-- [ ] Rastgele söz
-- [ ] Dark Mode
-- [ ] İstatistikler
-- [ ] Widget desteği
-- [ ] AI ile yeni söz üretme
-
----
-
-# 🛠️ 4. Kullanılan Teknolojiler
-
-| Teknoloji | Amaç |
-|-----------|------|
-| Flutter | Mobil uygulama geliştirme |
-| Dart | Programlama dili |
-| Isar | Yerel veritabanı |
-| Riverpod | State Management |
-| flutter_local_notifications | Bildirim sistemi |
-| go_router | Sayfa geçişleri |
-
----
-
-# 🏗️ 5. Mimari
-
-Proje Feature Based Architecture yapısına göre geliştirilmektedir.
-
-```
-Presentation
-
-↓
-
-Application
-
-↓
-
-Data
-
-↓
-
-Local Database
-```
-
-İlerleyen sürümlerde Clean Architecture yapısına dönüştürülebilecek şekilde geliştirilecektir.
-
----
-
-# 📂 6. Klasör Yapısı
-
-```
-lib/
-
-core/
-│
-├── constants/
-├── theme/
-├── services/
-└── utils/
-
-features/
-
-home/
-
-quote/
-
-settings/
-
-favorites/
-
-notifications/
-
-shared/
-
-main.dart
-```
-
----
-
-# 🗄️ 7. Veri Modeli
-
-## Quote
-
-| Alan | Açıklama |
-|------|----------|
-| id | Benzersiz ID |
-| text | Söz |
-| author | Yazarı |
-| category | Kategori |
-| isFavorite | Favori mi |
-| createdDate | Oluşturulma tarihi |
-
----
-
-# 🔔 8. Bildirim Sistemi
-
-Bildirimler cihaz üzerinde çalışmaktadır.
-
-Sunucu kullanılmamaktadır.
-
-Bildirim mantığı:
-
-```
-Quote
-
-↓
-
-Local Database
-
-↓
-
-Notification Scheduler
-
-↓
-
-Android Notification
-```
-
-Kullanıcı;
-
-- Bildirim saatini belirleyebilir.
-- Günlük bildirim sayısını seçebilir.
-- Hangi kategorilerden bildirim almak istediğini belirleyebilir.
-
----
-
-# 🗺️ 9. Yol Haritası
-
-## Versiyon 1.0
-
-- Ana Sayfa
-- CRUD işlemleri
-- Kategoriler
-- Local Notification
-
----
-
-## Versiyon 1.1
-
-- Favoriler
-- Arama
-- Filtreleme
-- Dark Mode
-
----
-
-## Versiyon 2.0
-
-- Cloud Sync
-- Kullanıcı hesabı
-- ASP.NET Core Backend
-- PostgreSQL
-- Çoklu cihaz desteği
-
----
-
-# 🤝 10. Katkı Kuralları
-
-Dal yapısı
-
-```
-main
-
-develop
-
-feature/*
-```
-
-Commit örnekleri
-
-```
-feat: quote ekleme ekranı
-
-fix: notification bug
-
-refactor: repository düzenlemesi
-
-docs: README güncellendi
-```
-
----
+## 📄 Lisans
+Bu proje MIT Lisansı ile lisanslanmıştır.
 
 <div align="center">
-
-## 👨‍💻 Geliştirici
-
-**Zehra Tuncer**
-
-Bilgisayar Mühendisliği Öğrencisi
-
-Flutter • Mobile Development • AI Applications
-
----
-
-⭐ Eğer projeyi beğendiysen yıldız vermeyi unutma.
-
+  <sub>Geliştirici: <strong>Zehra Tuncer</strong> • ComeBack Project</sub>
 </div>
