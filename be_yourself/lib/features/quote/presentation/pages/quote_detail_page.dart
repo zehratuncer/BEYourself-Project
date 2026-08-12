@@ -460,9 +460,10 @@ class QuoteDetailPage extends ConsumerWidget {
                         mediaUrls: quote.allMediaUrls,
                         isDarkMode: isDarkMode,
                         maxHeight: screenSize.height * 0.45,
-                        onTapImage: (path) => _showFullScreenImage(
+                        onTapImage: (index) => _showFullScreenGallery(
                           context,
-                          path,
+                          mediaUrls: quote.allMediaUrls,
+                          initialIndex: index,
                         ),
                       ),
                     ],
@@ -544,38 +545,184 @@ class QuoteDetailPage extends ConsumerWidget {
     );
   }
 
-  void _showFullScreenImage(BuildContext context, String path) {
+  void _showFullScreenGallery(
+    BuildContext context, {
+    required List<String> mediaUrls,
+    int initialIndex = 0,
+  }) {
+    if (mediaUrls.isEmpty) return;
+
     showDialog(
       context: context,
       barrierColor: Colors.black87,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(12),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            InteractiveViewer(
-              minScale: 0.5,
-              maxScale: 4.0,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: path.startsWith('http')
-                    ? Image.network(path, fit: BoxFit.contain)
-                    : (File(path).existsSync()
-                        ? Image.file(File(path), fit: BoxFit.contain)
-                        : Image.asset(path, fit: BoxFit.contain)),
+      builder: (ctx) => _FullScreenGalleryDialog(
+        mediaUrls: mediaUrls,
+        initialIndex: initialIndex,
+      ),
+    );
+  }
+}
+
+class _FullScreenGalleryDialog extends StatefulWidget {
+  const _FullScreenGalleryDialog({
+    required this.mediaUrls,
+    this.initialIndex = 0,
+  });
+
+  final List<String> mediaUrls;
+  final int initialIndex;
+
+  @override
+  State<_FullScreenGalleryDialog> createState() =>
+      _FullScreenGalleryDialogState();
+}
+
+class _FullScreenGalleryDialogState extends State<_FullScreenGalleryDialog> {
+  late int _currentIndex;
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final count = widget.mediaUrls.length;
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(8),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            physics: const BouncingScrollPhysics(),
+            itemCount: count,
+            onPageChanged: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              final path = widget.mediaUrls[index];
+              return Center(
+                child: InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: path.startsWith('http')
+                        ? Image.network(path, fit: BoxFit.contain)
+                        : (File(path).existsSync()
+                            ? Image.file(File(path), fit: BoxFit.contain)
+                            : Image.asset(path, fit: BoxFit.contain)),
+                  ),
+                ),
+              );
+            },
+          ),
+
+          // Close button
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withAlpha(140),
+                shape: BoxShape.circle,
               ),
-            ),
-            Positioned(
-              top: 8,
-              right: 8,
               child: IconButton(
                 icon: const Icon(Icons.close, color: Colors.white, size: 28),
-                onPressed: () => Navigator.of(ctx).pop(),
+                onPressed: () => Navigator.of(context).pop(),
               ),
             ),
-          ],
-        ),
+          ),
+
+          // Page counter badge (if multiple images)
+          if (count > 1)
+            Positioned(
+              top: 16,
+              left: 16,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withAlpha(160),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withAlpha(40),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  '${_currentIndex + 1} / $count',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+
+          // Navigation arrows (if multiple images)
+          if (count > 1 && _currentIndex > 0)
+            Positioned(
+              left: 4,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withAlpha(120),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                  onPressed: () {
+                    _pageController.previousPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                ),
+              ),
+            ),
+          if (count > 1 && _currentIndex < count - 1)
+            Positioned(
+              right: 4,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withAlpha(120),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                  onPressed: () {
+                    _pageController.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -627,7 +774,7 @@ class _MediaCarouselViewer extends StatefulWidget {
   final List<String> mediaUrls;
   final bool isDarkMode;
   final double maxHeight;
-  final void Function(String path) onTapImage;
+  final void Function(int index) onTapImage;
 
   @override
   State<_MediaCarouselViewer> createState() => _MediaCarouselViewerState();
@@ -690,7 +837,7 @@ class _MediaCarouselViewerState extends State<_MediaCarouselViewer> {
                   itemBuilder: (context, index) {
                     final path = widget.mediaUrls[index];
                     return GestureDetector(
-                      onTap: () => widget.onTapImage(path),
+                      onTap: () => widget.onTapImage(index),
                       child: path.startsWith('http')
                           ? Image.network(
                               path,
