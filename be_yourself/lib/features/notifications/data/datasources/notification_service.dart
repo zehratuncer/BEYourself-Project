@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:be_yourself/features/onboarding/presentation/pages/welcome_page.dart';
 import 'package:be_yourself/features/quote/domain/entities/quote.dart';
 import 'package:be_yourself/features/quote/presentation/pages/quote_detail_page.dart';
 import 'package:be_yourself/main.dart';
+import 'package:be_yourself/shared/widgets/main_shell_page.dart';
 
 class NotificationService {
   NotificationService._internal();
@@ -108,7 +110,18 @@ class NotificationService {
     if (payload == null || payload.trim().isEmpty) return;
 
     debugPrint('Navigating to quote detail for quoteId: $payload');
-    appNavigatorKey.currentState?.push(
+    final navState = appNavigatorKey.currentState;
+    if (navState == null) return;
+
+    if (WelcomePage.isShowing) {
+      WelcomePage.isShowing = false;
+      navState.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const MainShellPage()),
+        (route) => false,
+      );
+    }
+
+    navState.push(
       MaterialPageRoute(
         builder: (_) => QuoteDetailPage(quoteId: payload),
       ),

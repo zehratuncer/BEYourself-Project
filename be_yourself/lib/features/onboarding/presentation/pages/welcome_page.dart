@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:be_yourself/core/constants/app_strings.dart';
@@ -8,6 +9,8 @@ import 'package:be_yourself/shared/widgets/main_shell_page.dart';
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
 
+  static bool isShowing = false;
+
   @override
   State<WelcomePage> createState() => _WelcomePageState();
 }
@@ -17,11 +20,13 @@ class _WelcomePageState extends State<WelcomePage>
   late final AnimationController _controller;
   late final Animation<double> _fadeAnimation;
   late final Animation<Offset> _slideAnimation;
+  Timer? _splashTimer;
   bool _hasNavigated = false;
 
   @override
   void initState() {
     super.initState();
+    WelcomePage.isShowing = true;
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
@@ -43,8 +48,8 @@ class _WelcomePageState extends State<WelcomePage>
     _controller.forward();
 
     // Auto navigate after 2 seconds splash screen
-    Future.delayed(const Duration(milliseconds: 2000), () {
-      if (mounted) {
+    _splashTimer = Timer(const Duration(milliseconds: 2000), () {
+      if (mounted && WelcomePage.isShowing) {
         _navigateToHome();
       }
     });
@@ -52,6 +57,8 @@ class _WelcomePageState extends State<WelcomePage>
 
   @override
   void dispose() {
+    WelcomePage.isShowing = false;
+    _splashTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -59,6 +66,9 @@ class _WelcomePageState extends State<WelcomePage>
   void _navigateToHome() {
     if (_hasNavigated) return;
     _hasNavigated = true;
+    WelcomePage.isShowing = false;
+    _splashTimer?.cancel();
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>

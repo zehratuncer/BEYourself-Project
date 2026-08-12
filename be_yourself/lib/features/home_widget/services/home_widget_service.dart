@@ -2,9 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:home_widget/home_widget.dart';
 
+import 'package:be_yourself/features/onboarding/presentation/pages/welcome_page.dart';
 import 'package:be_yourself/features/quote/domain/entities/quote.dart';
 import 'package:be_yourself/features/quote/presentation/pages/quote_detail_page.dart';
 import 'package:be_yourself/main.dart';
+import 'package:be_yourself/shared/widgets/main_shell_page.dart';
 
 class HomeWidgetService {
   HomeWidgetService._();
@@ -69,6 +71,13 @@ class HomeWidgetService {
     if (quoteId.isNotEmpty) {
       final navState = appNavigatorKey.currentState;
       if (navState != null) {
+        if (WelcomePage.isShowing) {
+          WelcomePage.isShowing = false;
+          navState.pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const MainShellPage()),
+            (route) => false,
+          );
+        }
         navState.push(
           MaterialPageRoute(
             builder: (_) => QuoteDetailPage(quoteId: quoteId),
