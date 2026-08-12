@@ -96,6 +96,41 @@ void main() {
       expect(QuoteLocalDataSource(prefs).getQuotes(), isEmpty);
     });
 
+    test('QuoteNotifier syncs widget data and keys when quotes are deleted', () async {
+      final dataSource = QuoteLocalDataSource(prefs);
+      final notifier = QuoteNotifier(dataSource);
+
+      final q1 = Quote(
+        id: 'q-sync-1',
+        text: 'Söz 1',
+        author: 'Yazar 1',
+        categoryName: 'Genel',
+        createdAt: DateTime.now(),
+      );
+      final q2 = Quote(
+        id: 'q-sync-2',
+        text: 'Söz 2',
+        author: 'Yazar 2',
+        categoryName: 'Genel',
+        createdAt: DateTime.now(),
+      );
+
+      notifier.addQuote(q1);
+      notifier.addQuote(q2);
+
+      // Simulate q1 was saved as quoteOfDay in prefs
+      await prefs.setString('quoteOfDay_id', 'q-sync-1');
+      await prefs.setString('quoteOfDay_time', DateTime.now().toIso8601String());
+
+      // Deleting q1 should clear old key and pick new quote q2
+      notifier.deleteQuote('q-sync-1');
+      expect(prefs.getString('quoteOfDay_id'), 'q-sync-2');
+
+      // Deleting q2 as well leaves state empty
+      notifier.deleteQuote('q-sync-2');
+      expect(prefs.getString('quoteOfDay_id'), isNull);
+    });
+
     test('CategoryNotifier automatically saves and loads state', () async {
       final dataSource = CategoryLocalDataSource(prefs);
       final notifier = CategoryNotifier(dataSource);

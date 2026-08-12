@@ -34,6 +34,20 @@ void main() {
       );
     });
 
+    test('defaultFallbackQuote has valid non-empty fields', () {
+      final fallback = HomeWidgetService.defaultFallbackQuote;
+      expect(fallback.id, 'default_fallback');
+      expect(fallback.text.isNotEmpty, true);
+      expect(fallback.author.isNotEmpty, true);
+    });
+
+    test('updateWidgetWithFallback runs safely', () async {
+      await expectLater(
+        HomeWidgetService.instance.updateWidgetWithFallback(),
+        completes,
+      );
+    });
+
     test('handleWidgetUri parses queryParameters safely', () {
       final uri = Uri.parse('beyourself://quote?id=test_quote_42');
       expect(uri.queryParameters['id'], 'test_quote_42');

@@ -46,6 +46,19 @@ class HomeWidgetService {
     }
   }
 
+  static final Quote defaultFallbackQuote = Quote(
+    id: 'default_fallback',
+    text: 'Kendine inan, yapabileceklerinin sınırı yoktur.',
+    author: 'BeYourself 💫',
+    categoryName: 'Genel',
+    createdAt: DateTime.now(),
+  );
+
+  /// Clears or updates widget with fallback quote when no quotes exist
+  Future<void> updateWidgetWithFallback() async {
+    await updateQuoteWidget(defaultFallbackQuote);
+  }
+
   /// Updates the native home screen widget with the latest quote data.
   Future<void> updateQuoteWidget(Quote quote) async {
     try {

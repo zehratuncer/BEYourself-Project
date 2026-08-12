@@ -45,11 +45,39 @@ class QuoteNotifier extends StateNotifier<List<Quote>> {
         if (item.id == quote.id) quote else item,
     ];
     _persist();
+    const quoteIdKey = 'quoteOfDay_id';
+    final savedId = _dataSource.prefs.getString(quoteIdKey);
+    if (savedId == quote.id) {
+      HomeWidgetService.instance.updateQuoteWidget(quote);
+    }
   }
 
   void deleteQuote(String id) {
     state = state.where((item) => item.id != id).toList();
     _persist();
+    _syncWidgetAfterDelete(id);
+  }
+
+  void _syncWidgetAfterDelete(String deletedId) {
+    const quoteIdKey = 'quoteOfDay_id';
+    const quoteTimeKey = 'quoteOfDay_time';
+    final savedId = _dataSource.prefs.getString(quoteIdKey);
+
+    if (savedId == deletedId) {
+      _dataSource.prefs.remove(quoteIdKey);
+      _dataSource.prefs.remove(quoteTimeKey);
+
+      if (state.isNotEmpty) {
+        final random = Random();
+        final newQuote = state[random.nextInt(state.length)];
+        _dataSource.prefs.setString(quoteIdKey, newQuote.id);
+        _dataSource.prefs.setString(
+            quoteTimeKey, DateTime.now().toIso8601String());
+        HomeWidgetService.instance.updateQuoteWidget(newQuote);
+      } else {
+        HomeWidgetService.instance.updateWidgetWithFallback();
+      }
+    }
   }
 
   void renameCategory(String oldCategoryName, String newCategoryName) {
@@ -144,13 +172,16 @@ class QuoteOfDayNotifier extends StateNotifier<QuoteOfDayState?> {
 
   Quote getOrUpdateQuoteOfDay(List<Quote> quotes) {
     if (quotes.isEmpty) {
-      return Quote(
-        id: '0',
-        text: 'Henüz söz eklenmedi.',
-        author: 'Sistem',
-        categoryName: 'Genel',
-        createdAt: DateTime.now(),
-      );
+      final fallback = HomeWidgetService.defaultFallbackQuote;
+      prefs.remove(_quoteIdKey);
+      prefs.remove(_quoteTimeKey);
+      if (state?.quote.id != fallback.id) {
+        Future.microtask(() {
+          state = QuoteOfDayState(quote: fallback, selectedAt: DateTime.now());
+          HomeWidgetService.instance.updateWidgetWithFallback();
+        });
+      }
+      return fallback;
     }
 
     final now = DateTime.now();
