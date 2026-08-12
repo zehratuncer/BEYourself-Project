@@ -1,6 +1,6 @@
 <div align="center">
 
-# ✨ BeYourself (ComeBack Project)
+# ✨ BeYourself
 
 **Kişisel İlham, Alıntı Defteri, Instagram Medya Entegrasyonu ve Akıllı Bildirim Uygulaması**
 
@@ -11,9 +11,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Web-brightgreen?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)]()
 
-<p align="center">
-  <em>"Kendine inan, yapabileceklerinin sınırı yoktur."</em>
-</p>
+
 
 </div>
 
@@ -21,7 +19,7 @@
 
 ## 📱 Proje Hakkında
 
-**BeYourself**, sosyal medyada (özellikle Instagram) gördüğünüz ilham verici sözleri, Reels videolarını ve galeri gönderilerini kolayca kaydedebileceğiniz, kategorilere ayırabileceğiniz, gün içerisinde motive edici yerel bildirimler alabileceğiniz ve telefonunuzun ana ekranında canlı widget ile takip edebileceğiniz **Local-First (Gizlilik Odaklı & Çevrimdışı)** modern bir Flutter uygulamasıdır.
+**BeYourself**, sosyal medyada (özellikle Instagram) gördüğünüz motivasyon sözlerini, aklınızda kalmasını istediğiniz sözleri, Reels videolarını ve galeri gönderilerini kolayca kaydedebileceğiniz, kategorilere ayırabileceğiniz, gün içerisinde motive edici yerel bildirimler alabileceğiniz ve telefonunuzun ana ekranında canlı widget ile takip edebileceğiniz **Local-First (Gizlilik Odaklı & Çevrimdışı)** modern bir Flutter uygulamasıdır.
 
 Kullanıcı verileri, alıntılar ve indirilen medyalar hiçbir harici sunucuya gönderilmeden tamamen **cihaz üzerinde güvenle** saklanır.
 
@@ -159,5 +157,5 @@ flutter run
 Bu proje MIT Lisansı ile lisanslanmıştır.
 
 <div align="center">
-  <sub>Geliştirici: <strong>Zehra Tuncer</strong> • ComeBack Project</sub>
+  <sub>Geliştirici: <strong>Zehra Tuncer</strong> • BeYourself Project</sub>
 </div>
