@@ -7,6 +7,7 @@ import 'package:be_yourself/features/category/presentation/pages/categories_page
 import 'package:be_yourself/features/category/presentation/widgets/add_category_dialog.dart';
 import 'package:be_yourself/features/favorites/presentation/pages/favorites_page.dart';
 import 'package:be_yourself/features/home/presentation/pages/home_page.dart';
+import 'package:be_yourself/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:be_yourself/features/quote/presentation/pages/quote_detail_page.dart';
 import 'package:be_yourself/features/quote/presentation/pages/quote_form_page.dart';
 import 'package:be_yourself/features/quote/presentation/widgets/random_quote_modal.dart';
@@ -18,6 +19,9 @@ class MainShellPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Keep notification scheduler alive and synced across the entire app lifecycle
+    ref.watch(notificationSyncProvider);
+
     final currentTab = ref.watch(currentTabProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 

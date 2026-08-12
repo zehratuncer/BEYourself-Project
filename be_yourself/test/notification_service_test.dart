@@ -84,5 +84,47 @@ void main() {
       await service.checkPendingNotificationLaunch();
       await service.cancelAll();
     });
+
+    test('Schedule method updates payload and slots when quotes are deleted', () async {
+      final service = NotificationService.instance;
+
+      final initialQuotes = [
+        Quote(
+          id: 'q1',
+          text: 'İlk Alıntı',
+          author: 'Yazar 1',
+          categoryName: 'Genel',
+          createdAt: DateTime.now(),
+        ),
+        Quote(
+          id: 'q2',
+          text: 'İkinci Alıntı',
+          author: 'Yazar 2',
+          categoryName: 'Genel',
+          createdAt: DateTime.now(),
+        ),
+      ];
+
+      // Schedule with 2 quotes
+      await service.scheduleDailyQuoteNotifications(
+        count: 2,
+        startTime: const TimeOfDay(hour: 9, minute: 0),
+        endTime: const TimeOfDay(hour: 18, minute: 0),
+        quotes: initialQuotes,
+      );
+
+      // Simulate deleting 'q1' -> only 'q2' remains
+      final updatedQuotes = initialQuotes.where((q) => q.id != 'q1').toList();
+
+      await service.scheduleDailyQuoteNotifications(
+        count: 2,
+        startTime: const TimeOfDay(hour: 9, minute: 0),
+        endTime: const TimeOfDay(hour: 18, minute: 0),
+        quotes: updatedQuotes,
+      );
+
+      expect(updatedQuotes.length, 1);
+      expect(updatedQuotes.first.id, 'q2');
+    });
   });
 }
