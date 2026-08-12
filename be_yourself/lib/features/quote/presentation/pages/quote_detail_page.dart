@@ -457,34 +457,67 @@ class QuoteDetailPage extends ConsumerWidget {
                     if (quote.mediaUrl != null &&
                         quote.mediaUrl!.isNotEmpty) ...[
                       const SizedBox(height: 20),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: quote.mediaUrl!.startsWith('http')
-                            ? Image.network(
-                                quote.mediaUrl!,
-                                height: 200,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              )
-                            : (File(quote.mediaUrl!).existsSync()
-                                ? Image.file(
-                                    File(quote.mediaUrl!),
-                                    height: 200,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
-                                  )
-                                : Image.asset(
+                      GestureDetector(
+                        onTap: () => _showFullScreenImage(
+                          context,
+                          quote.mediaUrl!,
+                        ),
+                        child: Container(
+                          constraints: BoxConstraints(
+                            maxHeight: screenSize.height * 0.45,
+                            minHeight: 120,
+                          ),
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: isDarkMode
+                                ? Colors.black.withAlpha(50)
+                                : Colors.black.withAlpha(8),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isDarkMode
+                                  ? Colors.white.withAlpha(12)
+                                  : Colors.black.withAlpha(8),
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: quote.mediaUrl!.startsWith('http')
+                                ? Image.network(
                                     quote.mediaUrl!,
-                                    height: 200,
                                     width: double.infinity,
-                                    fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            const Icon(
-                                      Icons.image_not_supported,
-                                      size: 50,
-                                    ),
-                                  )),
+                                    fit: BoxFit.contain,
+                                    loadingBuilder:
+                                        (context, child, progress) {
+                                      if (progress == null) return child;
+                                      return const Center(
+                                        child: Padding(
+                                          padding: EdgeInsets.all(24.0),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : (File(quote.mediaUrl!).existsSync()
+                                    ? Image.file(
+                                        File(quote.mediaUrl!),
+                                        width: double.infinity,
+                                        fit: BoxFit.contain,
+                                      )
+                                    : Image.asset(
+                                        quote.mediaUrl!,
+                                        width: double.infinity,
+                                        fit: BoxFit.contain,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                const Icon(
+                                          Icons.image_not_supported,
+                                          size: 50,
+                                        ),
+                                      )),
+                          ),
+                        ),
                       ),
                     ],
                     if (quote.shortText != null &&
@@ -560,6 +593,42 @@ class QuoteDetailPage extends ConsumerWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showFullScreenImage(BuildContext context, String path) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(12),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: path.startsWith('http')
+                    ? Image.network(path, fit: BoxFit.contain)
+                    : (File(path).existsSync()
+                        ? Image.file(File(path), fit: BoxFit.contain)
+                        : Image.asset(path, fit: BoxFit.contain)),
+              ),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                onPressed: () => Navigator.of(ctx).pop(),
+              ),
+            ),
+          ],
         ),
       ),
     );

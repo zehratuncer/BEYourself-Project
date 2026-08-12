@@ -729,23 +729,41 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                                 height: 180,
                               )
                             else if (_selectedMediaUrl!.startsWith('http'))
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(14),
-                                child: Image.network(
-                                  _selectedMediaUrl!,
-                                  height: 180,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
+                              Container(
+                                constraints: const BoxConstraints(maxHeight: 240),
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: isDarkMode
+                                      ? Colors.black.withAlpha(50)
+                                      : Colors.black.withAlpha(8),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: Image.network(
+                                    _selectedMediaUrl!,
+                                    width: double.infinity,
+                                    fit: BoxFit.contain,
+                                  ),
                                 ),
                               )
                             else
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(14),
-                                child: Image.file(
-                                  File(_selectedMediaUrl!),
-                                  height: 180,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
+                              Container(
+                                constraints: const BoxConstraints(maxHeight: 240),
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: isDarkMode
+                                      ? Colors.black.withAlpha(50)
+                                      : Colors.black.withAlpha(8),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: Image.file(
+                                    File(_selectedMediaUrl!),
+                                    width: double.infinity,
+                                    fit: BoxFit.contain,
+                                  ),
                                 ),
                               ),
                           ],

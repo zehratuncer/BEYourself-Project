@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -606,15 +607,40 @@ class _RandomQuoteModalState extends ConsumerState<RandomQuoteModal>
               // Media Preview (if available)
               if (quote.mediaUrl != null && quote.mediaUrl!.isNotEmpty) ...[
                 const SizedBox(height: 14),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: Image.asset(
-                    quote.mediaUrl!,
-                    height: 120,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        const SizedBox.shrink(),
+                Container(
+                  constraints: const BoxConstraints(maxHeight: 160),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: isDarkMode
+                        ? Colors.black.withAlpha(50)
+                        : Colors.black.withAlpha(8),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: quote.mediaUrl!.startsWith('http')
+                        ? Image.network(
+                            quote.mediaUrl!,
+                            width: double.infinity,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const SizedBox.shrink(),
+                          )
+                        : (File(quote.mediaUrl!).existsSync()
+                            ? Image.file(
+                                File(quote.mediaUrl!),
+                                width: double.infinity,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const SizedBox.shrink(),
+                              )
+                            : Image.asset(
+                                quote.mediaUrl!,
+                                width: double.infinity,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const SizedBox.shrink(),
+                              )),
                   ),
                 ),
               ],
