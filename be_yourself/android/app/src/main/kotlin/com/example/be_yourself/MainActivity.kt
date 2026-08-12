@@ -1,4 +1,4 @@
-package com.example.quote_reminder
+package com.example.be_yourself
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,11 +1,11 @@
 {
-    "name": "quote_reminder",
-    "short_name": "quote_reminder",
+    "name": "BeYourself",
+    "short_name": "BeYourself",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "BeYourself - A modern offline quote reminder application.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
