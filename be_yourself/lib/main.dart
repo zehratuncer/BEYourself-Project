@@ -27,14 +27,7 @@ Future<void> main() async {
       debugPrint('FlutterError.onError caught: ${details.exceptionAsString()}');
     };
 
-    SharedPreferences prefs;
-    try {
-      prefs = await SharedPreferences.getInstance();
-    } catch (e) {
-      debugPrint('SharedPreferences init error: $e');
-      SharedPreferences.setMockInitialValues({});
-      prefs = await SharedPreferences.getInstance();
-    }
+    final prefs = await SharedPreferences.getInstance();
 
     try {
       await NotificationService.instance.initialize();

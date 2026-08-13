@@ -183,6 +183,44 @@ class InstagramDownloaderService {
       throw const FormatException('Geçersiz veya tanınmayan Instagram bağlantısı.');
     }
 
+    // Strategy 0: High-speed Vercel Serverless Backend API (/api/instagram)
+    try {
+      final apiUrl = kIsWeb
+          ? '/api/instagram?url=${Uri.encodeComponent(rawUrl)}'
+          : 'https://be-yourself-project-orpin.vercel.app/api/instagram?url=${Uri.encodeComponent(rawUrl)}';
+
+      final res = await http
+          .get(Uri.parse(apiUrl))
+          .timeout(const Duration(seconds: 8));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        if (data['success'] == true && data['mediaItems'] != null) {
+          final itemsList = data['mediaItems'] as List<dynamic>;
+          final List<InstagramMediaItem> items = [];
+          for (final it in itemsList) {
+            if (it is Map<String, dynamic> && it['url'] != null) {
+              items.add(InstagramMediaItem(
+                url: it['url'] as String,
+                isVideo: it['isVideo'] == true,
+              ));
+            }
+          }
+
+          if (items.isNotEmpty) {
+            return InstagramResolvedData(
+              mediaItems: items,
+              caption: data['caption'] as String?,
+              authorUsername: data['authorUsername'] as String?,
+              authorFullName: data['authorFullName'] as String?,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Strategy 0 (Serverless API) error: $e');
+    }
+
     // Strategy 1: Multi-DocID GraphQL queries
     final docIds = [
       '10015901848480474',
