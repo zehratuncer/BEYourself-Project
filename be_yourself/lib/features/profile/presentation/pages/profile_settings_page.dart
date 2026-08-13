@@ -114,8 +114,11 @@ class _ProfileSettingsPageState extends ConsumerState<ProfileSettingsPage> {
       const SnackBar(
         content: Text('Profil bilgileri kaydedildi! ✨'),
         behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.primaryBlue,
       ),
     );
+
+    Navigator.of(context).pop();
   }
 
   void _confirmResetProfile() {
@@ -365,13 +368,12 @@ class _ProfileSettingsPageState extends ConsumerState<ProfileSettingsPage> {
 
               // Notification Greeting Style
               _SectionTitle(title: 'BİLDİRİM HİTAP ŞEKLİ', isDarkMode: isDarkMode),
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                decoration: BoxDecoration(
-                  color: cardBgColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: RadioGroup<String>(
+              Material(
+                color: cardBgColor,
+                borderRadius: BorderRadius.circular(20),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: RadioGroup<String>(
                   groupValue: profile.greetingStyle,
                   onChanged: (val) {
                     if (val != null) {
@@ -429,6 +431,7 @@ class _ProfileSettingsPageState extends ConsumerState<ProfileSettingsPage> {
                       ),
                     ],
                   ),
+                ),
                 ),
               ),
 
