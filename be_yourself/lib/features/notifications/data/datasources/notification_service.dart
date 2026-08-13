@@ -275,18 +275,38 @@ class NotificationService {
         macOS: darwinDetails,
       );
 
-      await _notificationsPlugin.zonedSchedule(
-        i + 1, // ID (1..count)
-        quoteTitle,
-        quote['text'],
-        scheduledTime,
-        notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time,
-        payload: quote['id'],
-      );
+      try {
+        await _notificationsPlugin.zonedSchedule(
+          i + 1, // ID (1..count)
+          quoteTitle,
+          quote['text'],
+          scheduledTime,
+          notificationDetails,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.time,
+          payload: quote['id'],
+        );
+      } catch (e) {
+        debugPrint('Exact alarm zonedSchedule error: $e, falling back to inexact mode');
+        try {
+          await _notificationsPlugin.zonedSchedule(
+            i + 1,
+            quoteTitle,
+            quote['text'],
+            scheduledTime,
+            notificationDetails,
+            androidScheduleMode: AndroidScheduleMode.inexact,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            matchDateTimeComponents: DateTimeComponents.time,
+            payload: quote['id'],
+          );
+        } catch (innerError) {
+          debugPrint('Inexact zonedSchedule error: $innerError');
+        }
+      }
     }
   }
 

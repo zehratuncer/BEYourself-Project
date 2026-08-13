@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,40 +19,65 @@ final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await NotificationService.instance.initialize();
-  } catch (e) {
-    debugPrint('Notification service init error: $e');
-  }
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.presentError(details);
+      debugPrint('FlutterError.onError caught: ${details.exceptionAsString()}');
+    };
 
-  try {
-    await HomeWidgetService.instance.initialize();
-  } catch (e) {
-    debugPrint('HomeWidget service init error: $e');
-  }
+    SharedPreferences prefs;
+    try {
+      prefs = await SharedPreferences.getInstance();
+    } catch (e) {
+      debugPrint('SharedPreferences init error: $e');
+      SharedPreferences.setMockInitialValues({});
+      prefs = await SharedPreferences.getInstance();
+    }
 
-  try {
-    await MediaStorageService.instance.init();
-  } catch (e) {
-    debugPrint('MediaStorageService init error: $e');
-  }
+    try {
+      await NotificationService.instance.initialize();
+    } catch (e) {
+      debugPrint('Notification service init error: $e');
+    }
 
-  runApp(
-    ProviderScope(
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ],
-      child: const MyApp(),
-    ),
-  );
+    try {
+      await HomeWidgetService.instance.initialize();
+    } catch (e) {
+      debugPrint('HomeWidget service init error: $e');
+    }
 
-  // Check if app was launched via notification or home widget click
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    NotificationService.instance.checkPendingNotificationLaunch();
-    HomeWidgetService.instance.checkPendingWidgetLaunch();
+    try {
+      await MediaStorageService.instance.init();
+    } catch (e) {
+      debugPrint('MediaStorageService init error: $e');
+    }
+
+    runApp(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+        child: const MyApp(),
+      ),
+    );
+
+    // Check if app was launched via notification or home widget click
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        NotificationService.instance.checkPendingNotificationLaunch();
+      } catch (e) {
+        debugPrint('checkPendingNotificationLaunch error: $e');
+      }
+      try {
+        HomeWidgetService.instance.checkPendingWidgetLaunch();
+      } catch (e) {
+        debugPrint('checkPendingWidgetLaunch error: $e');
+      }
+    });
+  }, (error, stackTrace) {
+    debugPrint('Uncaught asynchronous error: $error\n$stackTrace');
   });
 }
 

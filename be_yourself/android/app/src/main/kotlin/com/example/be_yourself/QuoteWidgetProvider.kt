@@ -15,26 +15,30 @@ class QuoteWidgetProvider : HomeWidgetProvider() {
         appWidgetIds: IntArray,
         widgetData: SharedPreferences
     ) {
-        appWidgetIds.forEach { widgetId ->
-            val views = RemoteViews(context.packageName, R.layout.widget_quote_layout).apply {
-                val quoteText = widgetData.getString("quote_text", "Kendine inan, yapabileceklerinin sınırı yoktur.")
-                val quoteAuthor = widgetData.getString("quote_author", "BeYourself")
-                val quoteCategory = widgetData.getString("quote_category", "Günün Alıntısı")
-                val quoteId = widgetData.getString("quote_id", "")
+        try {
+            appWidgetIds.forEach { widgetId ->
+                val views = RemoteViews(context.packageName, R.layout.widget_quote_layout).apply {
+                    val quoteText = widgetData.getString("quote_text", "Kendine inan, yapabileceklerinin sınırı yoktur.")
+                    val quoteAuthor = widgetData.getString("quote_author", "BeYourself")
+                    val quoteCategory = widgetData.getString("quote_category", "Günün Alıntısı")
+                    val quoteId = widgetData.getString("quote_id", "")
 
-                setTextViewText(R.id.widget_quote_text, "\"$quoteText\"")
-                setTextViewText(R.id.widget_quote_author, "— $quoteAuthor")
-                setTextViewText(R.id.widget_quote_category, quoteCategory)
+                    setTextViewText(R.id.widget_quote_text, "\"$quoteText\"")
+                    setTextViewText(R.id.widget_quote_author, "— $quoteAuthor")
+                    setTextViewText(R.id.widget_quote_category, quoteCategory)
 
-                // Launch app with deep link uri on widget click
-                val pendingIntent = HomeWidgetLaunchIntent.getActivity(
-                    context,
-                    MainActivity::class.java,
-                    Uri.parse("beyourself://quote?id=$quoteId")
-                )
-                setOnClickPendingIntent(R.id.widget_container, pendingIntent)
+                    // Launch app with deep link uri on widget click
+                    val pendingIntent = HomeWidgetLaunchIntent.getActivity(
+                        context,
+                        MainActivity::class.java,
+                        Uri.parse("beyourself://quote?id=$quoteId")
+                    )
+                    setOnClickPendingIntent(R.id.widget_container, pendingIntent)
+                }
+                appWidgetManager.updateAppWidget(widgetId, views)
             }
-            appWidgetManager.updateAppWidget(widgetId, views)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }
