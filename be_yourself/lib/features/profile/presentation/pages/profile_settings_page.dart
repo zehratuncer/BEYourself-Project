@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/features/media/services/media_storage_service.dart';
 import 'package:be_yourself/features/profile/presentation/providers/profile_providers.dart';
 import 'package:be_yourself/features/quote/presentation/providers/quote_providers.dart';
 import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
@@ -65,12 +66,16 @@ class _ProfileSettingsPageState extends ConsumerState<ProfileSettingsPage> {
         imageQuality: 85,
       );
       if (image != null) {
-        ref.read(profileProvider.notifier).setAvatarPath(image.path);
+        final permanentPath = await MediaStorageService.instance.saveAvatarLocally(
+          File(image.path),
+        );
+        ref.read(profileProvider.notifier).setAvatarPath(permanentPath);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Profil fotoğrafı güncellendi! 📸'),
               behavior: SnackBarBehavior.floating,
+              backgroundColor: AppColors.primaryBlue,
             ),
           );
         }
@@ -165,8 +170,11 @@ class _ProfileSettingsPageState extends ConsumerState<ProfileSettingsPage> {
         ? AppColors.darkTextSecondary
         : AppColors.lightTextSecondary;
 
+    final resolvedAvatarFile = profile.avatarPath != null && profile.avatarPath!.isNotEmpty
+        ? MediaStorageService.instance.resolveLocalFileSync(profile.avatarPath!)
+        : null;
     final hasCustomPhoto =
-        profile.avatarPath != null && File(profile.avatarPath!).existsSync();
+        resolvedAvatarFile != null && resolvedAvatarFile.existsSync();
 
     return Scaffold(
       appBar: AppBar(
@@ -213,7 +221,7 @@ class _ProfileSettingsPageState extends ConsumerState<ProfileSettingsPage> {
                           child: ClipOval(
                             child: hasCustomPhoto
                                 ? Image.file(
-                                    File(profile.avatarPath!),
+                                    resolvedAvatarFile,
                                     fit: BoxFit.cover,
                                     width: 100,
                                     height: 100,
@@ -363,74 +371,64 @@ class _ProfileSettingsPageState extends ConsumerState<ProfileSettingsPage> {
                   color: cardBgColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Column(
-                  children: [
-                    RadioListTile<String>(
-                      title: Text(
-                        'Samimi',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: primaryTextColor,
+                child: RadioGroup<String>(
+                  groupValue: profile.greetingStyle,
+                  onChanged: (val) {
+                    if (val != null) {
+                      ref.read(profileProvider.notifier).setGreetingStyle(val);
+                    }
+                  },
+                  child: Column(
+                    children: [
+                      RadioListTile<String>(
+                        title: Text(
+                          'Samimi',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: primaryTextColor,
+                          ),
                         ),
-                      ),
-                      subtitle: Text(
-                        'Örn: "Günaydın ${profile.name} ✨"',
-                        style: TextStyle(color: secondaryTextColor),
-                      ),
-                      value: 'friendly',
-                      groupValue: profile.greetingStyle,
-                      activeColor: AppColors.primaryBlue,
-                      onChanged: (val) {
-                        if (val != null) {
-                          ref.read(profileProvider.notifier).setGreetingStyle(val);
-                        }
-                      },
-                    ),
-                    const Divider(height: 1),
-                    RadioListTile<String>(
-                      title: Text(
-                        'Motive Edici',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: primaryTextColor,
+                        subtitle: Text(
+                          'Örn: "Günaydın ${profile.name} ✨"',
+                          style: TextStyle(color: secondaryTextColor),
                         ),
+                        value: 'friendly',
+                        activeColor: AppColors.primaryBlue,
                       ),
-                      subtitle: Text(
-                        'Örn: "Bugün harika bir gün olacak ${profile.name} 🚀"',
-                        style: TextStyle(color: secondaryTextColor),
-                      ),
-                      value: 'motivational',
-                      groupValue: profile.greetingStyle,
-                      activeColor: AppColors.primaryBlue,
-                      onChanged: (val) {
-                        if (val != null) {
-                          ref.read(profileProvider.notifier).setGreetingStyle(val);
-                        }
-                      },
-                    ),
-                    const Divider(height: 1),
-                    RadioListTile<String>(
-                      title: Text(
-                        'Sade / Klasik',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: primaryTextColor,
+                      const Divider(height: 1),
+                      RadioListTile<String>(
+                        title: Text(
+                          'Motive Edici',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: primaryTextColor,
+                          ),
                         ),
+                        subtitle: Text(
+                          'Örn: "Bugün harika bir gün olacak ${profile.name} 🚀"',
+                          style: TextStyle(color: secondaryTextColor),
+                        ),
+                        value: 'motivational',
+                        activeColor: AppColors.primaryBlue,
                       ),
-                      subtitle: Text(
-                        'Örn: "Günün Alıntısı 💫"',
-                        style: TextStyle(color: secondaryTextColor),
+                      const Divider(height: 1),
+                      RadioListTile<String>(
+                        title: Text(
+                          'Sade / Klasik',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: primaryTextColor,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Örn: "Günün Alıntısı 💫"',
+                          style: TextStyle(color: secondaryTextColor),
+                        ),
+                        value: 'classic',
+                        activeColor: AppColors.primaryBlue,
                       ),
-                      value: 'classic',
-                      groupValue: profile.greetingStyle,
-                      activeColor: AppColors.primaryBlue,
-                      onChanged: (val) {
-                        if (val != null) {
-                          ref.read(profileProvider.notifier).setGreetingStyle(val);
-                        }
-                      },
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
 

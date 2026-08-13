@@ -1,8 +1,8 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/features/media/services/media_storage_service.dart';
 
 class AppVideoPlayer extends StatefulWidget {
   const AppVideoPlayer({
@@ -54,11 +54,13 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
     });
 
     try {
-      final String path = widget.videoPath;
+      final String path = widget.videoPath.trim();
       if (path.startsWith('http://') || path.startsWith('https://')) {
         _controller = VideoPlayerController.networkUrl(Uri.parse(path));
       } else {
-        _controller = VideoPlayerController.file(File(path));
+        final resolvedFile = await MediaStorageService.instance.resolveLocalFile(path) ??
+            MediaStorageService.instance.resolveLocalFileSync(path);
+        _controller = VideoPlayerController.file(resolvedFile);
       }
 
       await _controller!.initialize();

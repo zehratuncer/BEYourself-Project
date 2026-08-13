@@ -58,7 +58,7 @@ class InstagramDownloaderService {
       InstagramDownloaderService._();
 
   static final RegExp _instagramUrlRegex = RegExp(
-    r'(https?:\/\/)?(www\.)?(instagram\.com|instagr\.am)\/(reel|reels|p|share\/reel|share\/p|tv)\/([a-zA-Z0-9_-]+)',
+    r'(https?:\/\/)?(www\.)?(instagram\.com|instagr\.am)\/(reel|reels|p|tv|share\/reel|share\/p|share)\/([a-zA-Z0-9_-]+)',
     caseSensitive: false,
   );
 
@@ -66,20 +66,32 @@ class InstagramDownloaderService {
   bool isValidInstagramUrl(String url) {
     final clean = url.trim();
     if (clean.isEmpty) return false;
+    if (!clean.contains('instagram.com') && !clean.contains('instagr.am')) {
+      return false;
+    }
     return extractShortcode(clean) != null;
   }
 
   /// Extracts the clean shortcode from an Instagram URL.
   String? extractShortcode(String url) {
-    final clean = url.trim();
-    final uri = Uri.tryParse(clean);
+    var clean = url.trim();
+    if (clean.isEmpty) return null;
 
+    // Remove query params if direct extraction
+    final uri = Uri.tryParse(clean);
     if (uri != null) {
       final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
       for (int i = 0; i < segments.length; i++) {
         final seg = segments[i].toLowerCase();
         if ((seg == 'reel' || seg == 'reels' || seg == 'p' || seg == 'tv') &&
             i + 1 < segments.length) {
+          return segments[i + 1];
+        }
+        if (seg == 'share' && i + 1 < segments.length) {
+          final nextSeg = segments[i + 1].toLowerCase();
+          if ((nextSeg == 'reel' || nextSeg == 'p') && i + 2 < segments.length) {
+            return segments[i + 2];
+          }
           return segments[i + 1];
         }
       }
@@ -92,146 +104,157 @@ class InstagramDownloaderService {
     return null;
   }
 
-  /// Resolves media stream URLs, caption and author from Instagram link (Post/Reels/Carousel).
-  Future<InstagramResolvedData?> resolveInstagramData(String rawUrl) async {
-    final shortcode = extractShortcode(rawUrl);
-    if (shortcode == null) {
-      throw const FormatException('Geçersiz Instagram bağlantısı.');
+  /// Follows any shortlink redirects (e.g., share links) to retrieve the real shortcode.
+  Future<String?> resolveCanonicalShortcode(String rawUrl) async {
+    final directShortcode = extractShortcode(rawUrl);
+    if (directShortcode != null &&
+        directShortcode != 'share' &&
+        directShortcode != 'reel' &&
+        directShortcode != 'p') {
+      return directShortcode;
     }
 
-    // Strategy 1: Official Instagram GraphQL Query (doc_id=10015901848480474)
     try {
-      final uri = Uri.parse(
-        'https://www.instagram.com/graphql/query/?doc_id=10015901848480474&variables=%7B%22shortcode%22:%22$shortcode%22%7D',
-      );
-
-      final response = await http.get(
-        uri,
-        headers: {
+      final client = http.Client();
+      final request = http.Request('GET', Uri.parse(rawUrl))
+        ..followRedirects = true
+        ..maxRedirects = 5
+        ..headers.addAll({
           'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-          'X-IG-App-ID': '936619743392459',
-          'Accept': '*/*',
-        },
-      ).timeout(const Duration(seconds: 10));
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        });
+      final streamedResponse =
+          await client.send(request).timeout(const Duration(seconds: 6));
+      final finalUrl = streamedResponse.headers['location'] ??
+          streamedResponse.request?.url.toString();
+      client.close();
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final media = data['data']?['xdt_shortcode_media'];
-        if (media != null) {
-          final List<InstagramMediaItem> items = [];
+      if (finalUrl != null) {
+        return extractShortcode(finalUrl);
+      }
+    } catch (e) {
+      debugPrint('Redirect resolution error: $e');
+    }
+    return directShortcode;
+  }
 
-          // Check for carousel sidecar (multiple images/videos)
-          if (media['edge_sidecar_to_children'] != null) {
-            final edges =
-                media['edge_sidecar_to_children']['edges'] as List<dynamic>?;
-            if (edges != null && edges.isNotEmpty) {
-              for (final edge in edges) {
-                final node = edge['node'] as Map<String, dynamic>?;
-                if (node != null) {
-                  if (node['is_video'] == true && node['video_url'] != null) {
-                    items.add(InstagramMediaItem(
-                      url: node['video_url'] as String,
-                      isVideo: true,
-                    ));
-                  } else if (node['display_url'] != null) {
-                    items.add(InstagramMediaItem(
-                      url: node['display_url'] as String,
-                      isVideo: false,
-                    ));
-                  } else if (node['display_resources'] != null) {
-                    final res = node['display_resources'] as List<dynamic>?;
-                    if (res != null && res.isNotEmpty) {
-                      items.add(InstagramMediaItem(
-                        url: res.last['src'] as String,
-                        isVideo: false,
-                      ));
-                    }
-                  }
-                }
-              }
+  /// Resolves media stream URLs, caption, and author info across multiple strategies.
+  Future<InstagramResolvedData?> resolveInstagramData(String rawUrl) async {
+    final shortcode = await resolveCanonicalShortcode(rawUrl) ??
+        extractShortcode(rawUrl);
+
+    if (shortcode == null) {
+      throw const FormatException('Geçersiz veya tanınmayan Instagram bağlantısı.');
+    }
+
+    // Strategy 1: Multi-DocID GraphQL queries
+    final docIds = [
+      '10015901848480474',
+      '8845758582119845',
+      '7479768652077977',
+      '25531498899829322',
+    ];
+
+    for (final docId in docIds) {
+      try {
+        final uri = Uri.parse(
+          'https://www.instagram.com/graphql/query/?doc_id=$docId&variables=%7B%22shortcode%22:%22$shortcode%22%7D',
+        );
+
+        final response = await http.get(
+          uri,
+          headers: {
+            'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'X-IG-App-ID': '936619743392459',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': '*/*',
+          },
+        ).timeout(const Duration(seconds: 7));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body) as Map<String, dynamic>;
+          final media = data['data']?['xdt_shortcode_media'] ??
+              data['data']?['shortcode_media'];
+          if (media != null) {
+            final parsed = _parseGraphQLMedia(media);
+            if (parsed != null && parsed.mediaItems.isNotEmpty) {
+              return parsed;
             }
           }
+        }
+      } catch (e) {
+        debugPrint('Strategy 1 (doc_id: $docId) error: $e');
+      }
+    }
 
-          // If not a sidecar or sidecar had no items, check single video or single photo
-          if (items.isEmpty) {
-            if (media['is_video'] == true && media['video_url'] != null) {
-              items.add(InstagramMediaItem(
-                url: media['video_url'] as String,
-                isVideo: true,
-              ));
-            } else if (media['display_url'] != null) {
-              items.add(InstagramMediaItem(
-                url: media['display_url'] as String,
-                isVideo: false,
-              ));
-            } else if (media['video_url'] != null) {
-              items.add(InstagramMediaItem(
-                url: media['video_url'] as String,
-                isVideo: true,
-              ));
+    // Strategy 2: Instagram Web API JSON endpoints (__d=dis / __a=1)
+    try {
+      final webApiUrls = [
+        'https://www.instagram.com/p/$shortcode/?__a=1&__d=dis',
+        'https://www.instagram.com/reel/$shortcode/?__a=1&__d=1',
+      ];
+
+      for (final urlStr in webApiUrls) {
+        final response = await http.get(
+          Uri.parse(urlStr),
+          headers: {
+            'User-Agent':
+                'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+            'X-IG-App-ID': '936619743392459',
+            'Accept': '*/*',
+          },
+        ).timeout(const Duration(seconds: 6));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body) as Map<String, dynamic>;
+          final media = data['graphql']?['shortcode_media'] ??
+              (data['items'] != null && (data['items'] as List).isNotEmpty
+                  ? (data['items'] as List).first
+                  : null);
+          if (media != null) {
+            final parsed = _parseWebJsonMedia(media);
+            if (parsed != null && parsed.mediaItems.isNotEmpty) {
+              return parsed;
             }
-          }
-
-          // Extract caption
-          String? caption;
-          if (media['edge_media_to_caption'] != null) {
-            final captionEdges = media['edge_media_to_caption']['edges']
-                as List<dynamic>?;
-            if (captionEdges != null && captionEdges.isNotEmpty) {
-              caption = captionEdges.first['node']?['text'] as String?;
-            }
-          }
-
-          // Extract author info
-          String? authorUsername;
-          String? authorFullName;
-          if (media['owner'] != null) {
-            authorUsername = media['owner']['username'] as String?;
-            authorFullName = media['owner']['full_name'] as String?;
-          }
-
-          if (items.isNotEmpty) {
-            return InstagramResolvedData(
-              mediaItems: items,
-              caption: caption,
-              authorUsername: authorUsername,
-              authorFullName: authorFullName,
-            );
           }
         }
       }
     } catch (e) {
-      debugPrint('Strategy 1 (GraphQL doc_id) error: $e');
+      debugPrint('Strategy 2 (Web JSON) error: $e');
     }
 
-    // Strategy 2: Instagram Embed Page HTML Extraction
+    // Strategy 3: Embed page scraper with HTML and JS data parsing
     try {
-      final embedUrl =
-          'https://www.instagram.com/p/$shortcode/embed/captioned/';
+      final embedUrl = 'https://www.instagram.com/p/$shortcode/embed/captioned/';
       final response = await http.get(
         Uri.parse(embedUrl),
         headers: {
           'User-Agent':
-              'Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1',
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept':
+              'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         },
       ).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
         final html = response.body;
         final List<InstagramMediaItem> embedItems = [];
+        String? caption;
+        String? authorUsername;
 
-        final videoSrcMatch =
-            RegExp(r'<video[^>]+src="([^">]+)"').firstMatch(html);
+        // Video src extraction
+        final videoSrcMatch = RegExp(r'<video[^>]+src="([^">]+)"').firstMatch(html) ??
+            RegExp(r'class="EmbeddedMediaVideo"[^>]+src="([^">]+)"').firstMatch(html);
         if (videoSrcMatch != null && videoSrcMatch.group(1) != null) {
-          final extractedUrl =
-              videoSrcMatch.group(1)!.replaceAll('&amp;', '&');
+          final extractedUrl = videoSrcMatch.group(1)!.replaceAll('&amp;', '&');
           embedItems.add(InstagramMediaItem(url: extractedUrl, isVideo: true));
         }
 
+        // Image extraction
         final imgSrcMatches = RegExp(
-                r'<img[^>]+class="EmbeddedMediaImage"[^>]+src="([^">]+)"')
-            .allMatches(html);
+          r'<img[^>]+(?:class="EmbeddedMediaImage"|class="EmbeddedVideoPosterImage")[^>]+src="([^">]+)"',
+        ).allMatches(html);
         for (final m in imgSrcMatches) {
           if (m.group(1) != null) {
             embedItems.add(InstagramMediaItem(
@@ -241,66 +264,260 @@ class InstagramDownloaderService {
           }
         }
 
+        // Caption extraction from embed
+        final captionMatch = RegExp(
+          r'<div class="Caption"[^>]*>([\s\S]*?)<\/div>',
+          caseSensitive: false,
+        ).firstMatch(html);
+        if (captionMatch != null && captionMatch.group(1) != null) {
+          caption = _cleanHtmlTags(captionMatch.group(1)!);
+        }
+
+        // Author username extraction
+        final usernameMatch = RegExp(
+          r'<a class="UsernameText"[^>]*>([\s\S]*?)<\/a>',
+          caseSensitive: false,
+        ).firstMatch(html);
+        if (usernameMatch != null && usernameMatch.group(1) != null) {
+          authorUsername = _cleanHtmlTags(usernameMatch.group(1)!);
+        }
+
         if (embedItems.isNotEmpty) {
-          return InstagramResolvedData(mediaItems: embedItems);
+          return InstagramResolvedData(
+            mediaItems: embedItems,
+            caption: caption,
+            authorUsername: authorUsername,
+          );
         }
       }
     } catch (e) {
-      debugPrint('Strategy 2 (Embed page) error: $e');
+      debugPrint('Strategy 3 (Embed page) error: $e');
     }
 
-    // Strategy 3: OpenGraph HTML Meta Tag Scraper
+    // Strategy 4: Instagram oEmbed API fallback
     try {
-      final normalizedUrl = 'https://www.instagram.com/p/$shortcode/';
+      final oembedUrl =
+          'https://www.instagram.com/api/v1/oembed/?url=https://www.instagram.com/p/$shortcode/';
       final response = await http.get(
-        Uri.parse(normalizedUrl),
+        Uri.parse(oembedUrl),
         headers: {
           'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept':
-              'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         },
-      ).timeout(const Duration(seconds: 8));
+      ).timeout(const Duration(seconds: 6));
 
       if (response.statusCode == 200) {
-        final html = response.body;
-        final ogVideoMatch = RegExp(
-          r'<meta\s+property="og:video(:secure_url)?"\s+content="([^"]+)"',
-          caseSensitive: false,
-        ).firstMatch(html);
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final thumbnailUrl = data['thumbnail_url'] as String?;
+        final title = data['title'] as String?;
+        final authorName = data['author_name'] as String?;
 
-        if (ogVideoMatch != null && ogVideoMatch.group(2) != null) {
-          final directUrl = ogVideoMatch.group(2)!.replaceAll('&amp;', '&');
+        if (thumbnailUrl != null && thumbnailUrl.isNotEmpty) {
           return InstagramResolvedData(
-            mediaItems: [InstagramMediaItem(url: directUrl, isVideo: true)],
-          );
-        }
-
-        final ogImageMatch = RegExp(
-          r'<meta\s+property="og:image(:secure_url)?"\s+content="([^"]+)"',
-          caseSensitive: false,
-        ).firstMatch(html);
-
-        if (ogImageMatch != null && ogImageMatch.group(2) != null) {
-          final directUrl = ogImageMatch.group(2)!.replaceAll('&amp;', '&');
-          return InstagramResolvedData(
-            mediaItems: [InstagramMediaItem(url: directUrl, isVideo: false)],
+            mediaItems: [InstagramMediaItem(url: thumbnailUrl, isVideo: false)],
+            caption: title,
+            authorUsername: authorName,
           );
         }
       }
     } catch (e) {
-      debugPrint('Strategy 3 (OpenGraph) error: $e');
+      debugPrint('Strategy 4 (oEmbed) error: $e');
+    }
+
+    // Strategy 5: High-availability external proxy fallback (VKR / Cobalt / DDInstagram)
+    try {
+      final proxyUrl = Uri.parse(
+        'https://api.vkrdownloader.com/server?vkr=https://www.instagram.com/p/$shortcode/',
+      );
+      final response = await http.get(proxyUrl).timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final dataObj = data['data'] as Map<String, dynamic>?;
+        if (dataObj != null) {
+          final downloads = dataObj['downloads'] as List<dynamic>?;
+          final List<InstagramMediaItem> proxyItems = [];
+          if (downloads != null && downloads.isNotEmpty) {
+            for (final d in downloads) {
+              final url = d['url'] as String?;
+              final isVideo = d['format'] == 'mp4' || d['type'] == 'video';
+              if (url != null && url.isNotEmpty) {
+                proxyItems.add(InstagramMediaItem(url: url, isVideo: isVideo));
+              }
+            }
+          }
+
+          if (proxyItems.isNotEmpty) {
+            return InstagramResolvedData(
+              mediaItems: proxyItems,
+              caption: dataObj['title'] as String?,
+              authorUsername: dataObj['author'] as String?,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Strategy 5 (Proxy fallback) error: $e');
     }
 
     return null;
   }
 
-  /// Backward compatibility alias for resolveReelData
+  static String _cleanHtmlTags(String raw) {
+    return raw
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .trim();
+  }
+
+  InstagramResolvedData? _parseGraphQLMedia(Map<String, dynamic> media) {
+    final List<InstagramMediaItem> items = [];
+
+    // Check carousel
+    if (media['edge_sidecar_to_children'] != null) {
+      final edges =
+          media['edge_sidecar_to_children']['edges'] as List<dynamic>?;
+      if (edges != null && edges.isNotEmpty) {
+        for (final edge in edges) {
+          final node = edge['node'] as Map<String, dynamic>?;
+          if (node != null) {
+            if (node['is_video'] == true && node['video_url'] != null) {
+              items.add(InstagramMediaItem(
+                url: node['video_url'] as String,
+                isVideo: true,
+              ));
+            } else if (node['display_url'] != null) {
+              items.add(InstagramMediaItem(
+                url: node['display_url'] as String,
+                isVideo: false,
+              ));
+            }
+          }
+        }
+      }
+    }
+
+    // Single media
+    if (items.isEmpty) {
+      if (media['is_video'] == true && media['video_url'] != null) {
+        items.add(InstagramMediaItem(
+          url: media['video_url'] as String,
+          isVideo: true,
+        ));
+      } else if (media['display_url'] != null) {
+        items.add(InstagramMediaItem(
+          url: media['display_url'] as String,
+          isVideo: false,
+        ));
+      } else if (media['video_url'] != null) {
+        items.add(InstagramMediaItem(
+          url: media['video_url'] as String,
+          isVideo: true,
+        ));
+      }
+    }
+
+    // Caption
+    String? caption;
+    if (media['edge_media_to_caption'] != null) {
+      final captionEdges =
+          media['edge_media_to_caption']['edges'] as List<dynamic>?;
+      if (captionEdges != null && captionEdges.isNotEmpty) {
+        caption = captionEdges.first['node']?['text'] as String?;
+      }
+    }
+
+    // Author
+    String? authorUsername;
+    String? authorFullName;
+    if (media['owner'] != null) {
+      authorUsername = media['owner']['username'] as String?;
+      authorFullName = media['owner']['full_name'] as String?;
+    }
+
+    if (items.isNotEmpty) {
+      return InstagramResolvedData(
+        mediaItems: items,
+        caption: caption,
+        authorUsername: authorUsername,
+        authorFullName: authorFullName,
+      );
+    }
+    return null;
+  }
+
+  InstagramResolvedData? _parseWebJsonMedia(Map<String, dynamic> media) {
+    final List<InstagramMediaItem> items = [];
+
+    // Carousel
+    if (media['carousel_media'] != null) {
+      final list = media['carousel_media'] as List<dynamic>;
+      for (final c in list) {
+        if (c['video_versions'] != null &&
+            (c['video_versions'] as List).isNotEmpty) {
+          items.add(InstagramMediaItem(
+            url: c['video_versions'][0]['url'] as String,
+            isVideo: true,
+          ));
+        } else if (c['image_versions2']?['candidates'] != null) {
+          items.add(InstagramMediaItem(
+            url: c['image_versions2']['candidates'][0]['url'] as String,
+            isVideo: false,
+          ));
+        }
+      }
+    }
+
+    if (items.isEmpty) {
+      if (media['video_versions'] != null &&
+          (media['video_versions'] as List).isNotEmpty) {
+        items.add(InstagramMediaItem(
+          url: media['video_versions'][0]['url'] as String,
+          isVideo: true,
+        ));
+      } else if (media['image_versions2']?['candidates'] != null) {
+        items.add(InstagramMediaItem(
+          url: media['image_versions2']['candidates'][0]['url'] as String,
+          isVideo: false,
+        ));
+      } else if (media['display_url'] != null) {
+        items.add(InstagramMediaItem(
+          url: media['display_url'] as String,
+          isVideo: media['is_video'] == true,
+        ));
+      }
+    }
+
+    String? caption;
+    if (media['caption']?['text'] != null) {
+      caption = media['caption']['text'] as String?;
+    }
+
+    String? authorUsername;
+    if (media['user']?['username'] != null) {
+      authorUsername = media['user']['username'] as String?;
+    }
+
+    if (items.isNotEmpty) {
+      return InstagramResolvedData(
+        mediaItems: items,
+        caption: caption,
+        authorUsername: authorUsername,
+      );
+    }
+    return null;
+  }
+
+  /// Backward compatibility alias
   Future<InstagramResolvedData?> resolveReelData(String rawUrl) async {
     return resolveInstagramData(rawUrl);
   }
 
-  /// Downloads Instagram Post/Reel media files (up to 10 items) and saves them locally.
+  /// Downloads Instagram Post/Reel media files and saves them permanently.
   Future<InstagramDownloadResult> downloadPost({
     required String instagramUrl,
     void Function(double progress, String status)? onProgress,
@@ -309,16 +526,17 @@ class InstagramDownloaderService {
 
     if (!isValidInstagramUrl(instagramUrl)) {
       throw const FormatException(
-          'Lütfen geçerli bir Instagram linki giriniz.');
+          'Lütfen geçerli bir Instagram linki giriniz (örn: instagram.com/reel/... veya p/...).');
     }
 
-    final shortcode = extractShortcode(instagramUrl);
+    final shortcode = await resolveCanonicalShortcode(instagramUrl) ??
+        extractShortcode(instagramUrl);
     onProgress?.call(0.25, 'Gönderi bilgileri çekiliyor...');
 
     final resolved = await resolveInstagramData(instagramUrl);
     if (resolved == null || resolved.mediaItems.isEmpty) {
       throw const HttpException(
-        'Medya indirilemedi. Gönderi gizli bir hesaba ait olabilir veya Instagram erişimi kısıtlamış olabilir.',
+        'Medya indirilemedi. Gönderi gizli bir hesaba ait olabilir veya Instagram bu bağlantıyı kısıtlamış olabilir. Dilerseniz medyayı galeri seçeneğiyle doğrudan yükleyebilirsiniz.',
       );
     }
 
@@ -351,18 +569,19 @@ class InstagramDownloaderService {
         Uri.parse(item.url),
         headers: {
           'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept': '*/*',
         },
       ).timeout(const Duration(seconds: 25));
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
         await file.writeAsBytes(response.bodyBytes);
         downloadedFilePaths.add(file.path);
       }
     }
 
     if (downloadedFilePaths.isEmpty) {
-      throw const HttpException('Medya dosyaları kaydedilemedi.');
+      throw const HttpException('Medya dosyaları indirilemedi veya kaydedilemedi.');
     }
 
     onProgress?.call(1.0, 'İndirme tamamlandı! ✨');

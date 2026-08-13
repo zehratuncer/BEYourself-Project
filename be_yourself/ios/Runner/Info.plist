@@ -66,5 +66,18 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Alıntılarınıza görsel ve video eklemek, profil fotoğrafınızı güncellemek için fotoğraf galerinize erişim izni gereklidir.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>İndirilen ve oluşturulan medya içeriklerini galerinize kaydetmek için izin gereklidir.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Alıntılarınıza fotoğraf çekerek eklemek ve profil fotoğrafı oluşturmak için kamera erişimi gereklidir.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Video kaydetmek ve medya önizlemelerini oynatmak için mikrofon erişimi gereklidir.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

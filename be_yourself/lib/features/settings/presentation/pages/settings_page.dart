@@ -1,10 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:be_yourself/core/constants/app_constants.dart';
 import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/features/media/services/media_storage_service.dart';
 import 'package:be_yourself/features/notifications/presentation/pages/notification_settings_page.dart';
 import 'package:be_yourself/features/profile/presentation/pages/profile_settings_page.dart';
 import 'package:be_yourself/features/profile/presentation/providers/profile_providers.dart';
@@ -59,8 +58,11 @@ class SettingsPage extends ConsumerWidget {
         : AppColors.lightTextSecondary;
 
     final userProfile = ref.watch(profileProvider);
-    final hasCustomPhoto = userProfile.avatarPath != null &&
-        File(userProfile.avatarPath!).existsSync();
+    final resolvedAvatarFile = userProfile.avatarPath != null && userProfile.avatarPath!.isNotEmpty
+        ? MediaStorageService.instance.resolveLocalFileSync(userProfile.avatarPath!)
+        : null;
+    final hasCustomPhoto =
+        resolvedAvatarFile != null && resolvedAvatarFile.existsSync();
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -129,7 +131,7 @@ class SettingsPage extends ConsumerWidget {
                           child: ClipOval(
                             child: hasCustomPhoto
                                 ? Image.file(
-                                    File(userProfile.avatarPath!),
+                                    resolvedAvatarFile,
                                     fit: BoxFit.cover,
                                     width: 58,
                                     height: 58,

@@ -7,9 +7,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:be_yourself/core/theme/app_colors.dart';
 import 'package:be_yourself/features/category/presentation/providers/category_providers.dart';
 import 'package:be_yourself/features/media/services/instagram_downloader_service.dart';
+import 'package:be_yourself/features/media/services/media_storage_service.dart';
 import 'package:be_yourself/features/quote/domain/entities/quote.dart';
 import 'package:be_yourself/features/quote/presentation/providers/quote_providers.dart';
 import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
+import 'package:be_yourself/shared/widgets/app_media_image.dart';
 import 'package:be_yourself/shared/widgets/app_video_player.dart';
 
 class QuoteFormPage extends ConsumerStatefulWidget {
@@ -347,23 +349,34 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 85,
+        imageQuality: 90,
       );
       if (image != null) {
+        final permanentPath = await MediaStorageService.instance.saveMediaLocally(
+          File(image.path),
+          subDirectory: 'app_media',
+          customPrefix: 'photo',
+        );
         setState(() {
-          _selectedMediaUrl = image.path;
+          _selectedMediaUrl = permanentPath;
+          _selectedMediaUrls = [permanentPath];
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Fotoğraf galeriden başarıyla seçildi!')),
+              content: Text('Fotoğraf galeriden başarıyla eklendi! 📸'),
+              backgroundColor: AppColors.primaryBlue,
+            ),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fotoğraf seçilirken hata oluştu: $e')),
+          SnackBar(
+            content: Text('Fotoğraf seçilirken hata oluştu: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     }
@@ -376,19 +389,31 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
         source: ImageSource.gallery,
       );
       if (video != null) {
+        final permanentPath = await MediaStorageService.instance.saveMediaLocally(
+          File(video.path),
+          subDirectory: 'app_media',
+          customPrefix: 'video',
+        );
         setState(() {
-          _selectedMediaUrl = video.path;
+          _selectedMediaUrl = permanentPath;
+          _selectedMediaUrls = [permanentPath];
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Video galeriden başarıyla seçildi!')),
+            const SnackBar(
+              content: Text('Video galeriden başarıyla eklendi! 🎬'),
+              backgroundColor: AppColors.primaryBlue,
+            ),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Video seçilirken hata oluştu: $e')),
+          SnackBar(
+            content: Text('Video seçilirken hata oluştu: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     }
@@ -800,35 +825,19 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                                   scrollDirection: Axis.horizontal,
                                   physics: const BouncingScrollPhysics(),
                                   itemCount: _selectedMediaUrls.length,
-                                  separatorBuilder: (_, __) =>
+                                  separatorBuilder: (_, _) =>
                                       const SizedBox(width: 10),
                                   itemBuilder: (context, index) {
                                     final path = _selectedMediaUrls[index];
                                     return Stack(
                                       children: [
-                                        ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          child: path.startsWith('http')
-                                              ? Image.network(
-                                                  path,
-                                                  height: 130,
-                                                  width: 130,
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : (File(path).existsSync()
-                                                  ? Image.file(
-                                                      File(path),
-                                                      height: 130,
-                                                      width: 130,
-                                                      fit: BoxFit.cover,
-                                                    )
-                                                  : Image.asset(
-                                                      path,
-                                                      height: 130,
-                                                      width: 130,
-                                                      fit: BoxFit.cover,
-                                                    )),
+                                        AppMediaImage(
+                                          imagePath: path,
+                                          height: 130,
+                                          width: 130,
+                                          borderRadius: 12,
+                                          fit: BoxFit.cover,
+                                          isDarkMode: isDarkMode,
                                         ),
                                         Positioned(
                                           top: 6,
@@ -861,27 +870,6 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                                 videoPath: _selectedMediaUrl!,
                                 height: 180,
                               )
-                            else if (_selectedMediaUrl != null &&
-                                _selectedMediaUrl!.startsWith('http'))
-                              Container(
-                                constraints:
-                                    const BoxConstraints(maxHeight: 240),
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: isDarkMode
-                                      ? Colors.black.withAlpha(50)
-                                      : Colors.black.withAlpha(8),
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(14),
-                                  child: Image.network(
-                                    _selectedMediaUrl!,
-                                    width: double.infinity,
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                              )
                             else if (_selectedMediaUrl != null)
                               Container(
                                 constraints:
@@ -895,10 +883,11 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(14),
-                                  child: Image.file(
-                                    File(_selectedMediaUrl!),
+                                  child: AppMediaImage(
+                                    imagePath: _selectedMediaUrl!,
                                     width: double.infinity,
                                     fit: BoxFit.contain,
+                                    isDarkMode: isDarkMode,
                                   ),
                                 ),
                               ),

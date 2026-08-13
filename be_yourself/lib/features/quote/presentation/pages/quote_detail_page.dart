@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +7,7 @@ import 'package:be_yourself/features/quote/domain/entities/quote.dart';
 import 'package:be_yourself/features/quote/presentation/pages/quote_form_page.dart';
 import 'package:be_yourself/features/quote/presentation/providers/quote_providers.dart';
 import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
+import 'package:be_yourself/shared/widgets/app_media_image.dart';
 import 'package:be_yourself/shared/widgets/app_video_player.dart';
 
 class QuoteDetailPage extends ConsumerWidget {
@@ -621,11 +621,11 @@ class _FullScreenGalleryDialogState extends State<_FullScreenGalleryDialog> {
                   maxScale: 4.0,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    child: path.startsWith('http')
-                        ? Image.network(path, fit: BoxFit.contain)
-                        : (File(path).existsSync()
-                            ? Image.file(File(path), fit: BoxFit.contain)
-                            : Image.asset(path, fit: BoxFit.contain)),
+                    child: AppMediaImage(
+                      imagePath: path,
+                      fit: BoxFit.contain,
+                      isDarkMode: true,
+                    ),
                   ),
                 ),
               );
@@ -790,40 +790,12 @@ class _MediaCarouselViewerState extends State<_MediaCarouselViewer> {
                     final path = widget.mediaUrls[index];
                     return GestureDetector(
                       onTap: () => widget.onTapImage(index),
-                      child: path.startsWith('http')
-                          ? Image.network(
-                              path,
-                              width: double.infinity,
-                              fit: BoxFit.contain,
-                              loadingBuilder: (context, child, progress) {
-                                if (progress == null) return child;
-                                return const Center(
-                                  child: Padding(
-                                    padding: EdgeInsets.all(24.0),
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                                );
-                              },
-                            )
-                          : (File(path).existsSync()
-                              ? Image.file(
-                                  File(path),
-                                  width: double.infinity,
-                                  fit: BoxFit.contain,
-                                )
-                              : Image.asset(
-                                  path,
-                                  width: double.infinity,
-                                  fit: BoxFit.contain,
-                                  errorBuilder:
-                                      (context, error, stackTrace) =>
-                                          const Icon(
-                                    Icons.image_not_supported,
-                                    size: 50,
-                                  ),
-                                )),
+                      child: AppMediaImage(
+                        imagePath: path,
+                        width: double.infinity,
+                        fit: BoxFit.contain,
+                        isDarkMode: widget.isDarkMode,
+                      ),
                     );
                   },
                 ),

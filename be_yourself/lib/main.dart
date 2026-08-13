@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:be_yourself/core/constants/app_strings.dart';
 import 'package:be_yourself/core/theme/app_theme.dart';
 import 'package:be_yourself/features/home_widget/services/home_widget_service.dart';
+import 'package:be_yourself/features/media/services/media_storage_service.dart';
 import 'package:be_yourself/features/notifications/data/datasources/notification_service.dart';
 import 'package:be_yourself/features/onboarding/presentation/pages/welcome_page.dart';
 import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
@@ -30,6 +31,12 @@ Future<void> main() async {
     await HomeWidgetService.instance.initialize();
   } catch (e) {
     debugPrint('HomeWidget service init error: $e');
+  }
+
+  try {
+    await MediaStorageService.instance.init();
+  } catch (e) {
+    debugPrint('MediaStorageService init error: $e');
   }
 
   runApp(

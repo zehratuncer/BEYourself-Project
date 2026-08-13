@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +11,7 @@ import 'package:be_yourself/features/quote/presentation/pages/quote_form_page.da
 import 'package:be_yourself/features/quote/presentation/providers/quote_providers.dart';
 import 'package:be_yourself/features/quote/presentation/providers/random_quote_provider.dart';
 import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
+import 'package:be_yourself/shared/widgets/app_media_image.dart';
 
 class RandomQuoteModal extends ConsumerStatefulWidget {
   const RandomQuoteModal({super.key, this.initialCategory});
@@ -618,29 +618,12 @@ class _RandomQuoteModalState extends ConsumerState<RandomQuoteModal>
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
-                    child: quote.mediaUrl!.startsWith('http')
-                        ? Image.network(
-                            quote.mediaUrl!,
-                            width: double.infinity,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const SizedBox.shrink(),
-                          )
-                        : (File(quote.mediaUrl!).existsSync()
-                            ? Image.file(
-                                File(quote.mediaUrl!),
-                                width: double.infinity,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const SizedBox.shrink(),
-                              )
-                            : Image.asset(
-                                quote.mediaUrl!,
-                                width: double.infinity,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const SizedBox.shrink(),
-                              )),
+                    child: AppMediaImage(
+                      imagePath: quote.mediaUrl!,
+                      width: double.infinity,
+                      fit: BoxFit.contain,
+                      isDarkMode: isDarkMode,
+                    ),
                   ),
                 ),
               ],
