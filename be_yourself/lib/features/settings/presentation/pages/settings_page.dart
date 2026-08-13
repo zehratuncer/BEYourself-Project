@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:be_yourself/core/theme/app_colors.dart';
 import 'package:be_yourself/features/media/services/media_storage_service.dart';
+import 'package:be_yourself/features/notifications/data/datasources/notification_service.dart';
 import 'package:be_yourself/features/notifications/presentation/pages/notification_settings_page.dart';
 import 'package:be_yourself/features/profile/presentation/pages/profile_settings_page.dart';
 import 'package:be_yourself/features/profile/presentation/providers/profile_providers.dart';
@@ -235,25 +236,30 @@ class SettingsPage extends ConsumerWidget {
                           ? AppColors.primaryBlueLight
                           : AppColors.primaryBlue,
                       activeTrackColor: AppColors.primaryBlue.withAlpha(100),
-                      onChanged: (val) {
+                      onChanged: (val) async {
+                        if (val) {
+                          await NotificationService.instance.requestPermissions();
+                        }
                         ref
                             .read(dailyNotificationEnabledProvider.notifier)
                             .toggle(val);
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              val
-                                  ? 'Günlük bildirimler aktif edildi.'
-                                  : 'Günlük bildirimler kapatıldı.',
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                val
+                                    ? 'Günlük bildirimler aktif edildi.'
+                                    : 'Günlük bildirimler kapatıldı.',
+                              ),
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 2),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
-                            behavior: SnackBarBehavior.floating,
-                            duration: const Duration(seconds: 2),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        );
+                          );
+                        }
                       },
                     ),
                     Divider(
