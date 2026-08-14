@@ -5,18 +5,45 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:be_yourself/features/home_widget/services/home_widget_service.dart';
 import 'package:be_yourself/features/quote/data/datasources/quote_local_datasource.dart';
+import 'package:be_yourself/features/quote/data/datasources/quote_remote_data_source.dart';
 import 'package:be_yourself/features/quote/domain/entities/quote.dart';
 import 'package:be_yourself/main.dart';
 
 class QuoteNotifier extends StateNotifier<List<Quote>> {
   final QuoteLocalDataSource _dataSource;
+  final QuoteRemoteDataSource remoteDataSource;
+  final String deviceId;
 
-  QuoteNotifier(this._dataSource) : super([]) {
+  QuoteNotifier(
+    this._dataSource, {
+    this.remoteDataSource = const QuoteRemoteDataSource(),
+    this.deviceId = '',
+  }) : super([]) {
     _loadQuotes();
+    _syncWithRemote();
   }
 
   void _loadQuotes() {
     state = _dataSource.getQuotes();
+  }
+
+  Future<void> _syncWithRemote() async {
+    if (deviceId.isEmpty) return;
+    try {
+      final remoteQuotes = await remoteDataSource.getQuotes(deviceId);
+      if (remoteQuotes.isNotEmpty) {
+        final localMap = {for (final q in state) q.id: q};
+        for (final rq in remoteQuotes) {
+          localMap[rq.id] = rq;
+        }
+        state = localMap.values.toList();
+        _persist();
+      } else if (state.isNotEmpty) {
+        for (final localQuote in state) {
+          remoteDataSource.upsertQuote(localQuote, deviceId);
+        }
+      }
+    } catch (_) {}
   }
 
   void _persist() {
@@ -32,11 +59,18 @@ class QuoteNotifier extends StateNotifier<List<Quote>> {
           quote,
     ];
     _persist();
+    if (deviceId.isNotEmpty) {
+      final updated = state.firstWhere((q) => q.id == id);
+      remoteDataSource.upsertQuote(updated, deviceId);
+    }
   }
 
   void addQuote(Quote quote) {
     state = [quote, ...state];
     _persist();
+    if (deviceId.isNotEmpty) {
+      remoteDataSource.upsertQuote(quote, deviceId);
+    }
   }
 
   void updateQuote(Quote quote) {
@@ -45,6 +79,9 @@ class QuoteNotifier extends StateNotifier<List<Quote>> {
         if (item.id == quote.id) quote else item,
     ];
     _persist();
+    if (deviceId.isNotEmpty) {
+      remoteDataSource.upsertQuote(quote, deviceId);
+    }
     const quoteIdKey = 'quoteOfDay_id';
     final savedId = _dataSource.prefs.getString(quoteIdKey);
     if (savedId == quote.id) {
@@ -55,12 +92,18 @@ class QuoteNotifier extends StateNotifier<List<Quote>> {
   void deleteQuote(String id) {
     state = state.where((item) => item.id != id).toList();
     _persist();
+    if (deviceId.isNotEmpty) {
+      remoteDataSource.deleteQuote(id, deviceId);
+    }
     _syncWidgetAfterDelete(id);
   }
 
   void clearAllQuotes() {
     state = [];
     _persist();
+    if (deviceId.isNotEmpty) {
+      remoteDataSource.clearAllQuotes(deviceId);
+    }
     _dataSource.prefs.remove('quoteOfDay_id');
     _dataSource.prefs.remove('quoteOfDay_time');
     HomeWidgetService.instance.updateWidgetWithFallback();
@@ -116,10 +159,21 @@ final quoteLocalDataSourceProvider = Provider<QuoteLocalDataSource>((ref) {
   return QuoteLocalDataSource(prefs);
 });
 
+final quoteRemoteDataSourceProvider = Provider<QuoteRemoteDataSource>((ref) {
+  return const QuoteRemoteDataSource();
+});
+
 final quoteListProvider =
     StateNotifierProvider<QuoteNotifier, List<Quote>>((ref) {
   final dataSource = ref.watch(quoteLocalDataSourceProvider);
-  return QuoteNotifier(dataSource);
+  final remoteDataSource = ref.watch(quoteRemoteDataSourceProvider);
+  final prefs = ref.watch(sharedPreferencesProvider);
+  final deviceId = prefs.getString('user_device_private_uuid') ?? '';
+  return QuoteNotifier(
+    dataSource,
+    remoteDataSource: remoteDataSource,
+    deviceId: deviceId,
+  );
 });
 
 final selectedCategoryFilterProvider = StateProvider<String>((ref) => 'Hepsi');

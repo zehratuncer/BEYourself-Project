@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:be_yourself/core/config/supabase_config.dart';
 import 'package:be_yourself/core/constants/app_strings.dart';
 import 'package:be_yourself/core/theme/app_theme.dart';
 import 'package:be_yourself/features/home_widget/services/home_widget_service.dart';
@@ -45,6 +46,13 @@ Future<void> main() async {
       await MediaStorageService.instance.init();
     } catch (e) {
       debugPrint('MediaStorageService init error: $e');
+    }
+
+    try {
+      await DeviceIdManager.getOrCreateDeviceId(prefs);
+      await SupabaseConfig.init();
+    } catch (e) {
+      debugPrint('Supabase/DeviceId init error: $e');
     }
 
     runApp(
