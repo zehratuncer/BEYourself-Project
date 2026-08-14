@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/core/utils/media_type_helper.dart';
 import 'package:be_yourself/features/quote/domain/entities/quote.dart';
 import 'package:be_yourself/features/quote/presentation/pages/quote_form_page.dart';
 import 'package:be_yourself/features/quote/presentation/providers/quote_providers.dart';
@@ -14,17 +15,6 @@ class QuoteDetailPage extends ConsumerWidget {
   const QuoteDetailPage({super.key, required this.quoteId});
 
   final String quoteId;
-
-  bool _isVideoMedia(String? path) {
-    if (path == null) return false;
-    final lower = path.toLowerCase();
-    return lower.endsWith('.mp4') ||
-        lower.endsWith('.mov') ||
-        lower.endsWith('.avi') ||
-        lower.endsWith('.mkv') ||
-        lower.contains('/reels/') ||
-        lower.contains('video');
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -53,7 +43,7 @@ class QuoteDetailPage extends ConsumerWidget {
         ? AppColors.darkTextSecondary
         : AppColors.lightTextSecondary;
 
-    final isVideo = _isVideoMedia(quote.mediaUrl);
+    final isVideo = isVideoMedia(quote.mediaUrl);
     final screenSize = MediaQuery.of(context).size;
 
     if (isVideo) {
@@ -615,6 +605,18 @@ class _FullScreenGalleryDialogState extends State<_FullScreenGalleryDialog> {
             },
             itemBuilder: (context, index) {
               final path = widget.mediaUrls[index];
+              if (isVideoMedia(path)) {
+                return Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: AppVideoPlayer(
+                      videoPath: path,
+                      autoPlay: true,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                );
+              }
               return Center(
                 child: InteractiveViewer(
                   minScale: 0.5,
@@ -788,6 +790,14 @@ class _MediaCarouselViewerState extends State<_MediaCarouselViewer> {
                   },
                   itemBuilder: (context, index) {
                     final path = widget.mediaUrls[index];
+                    if (isVideoMedia(path)) {
+                      return AppVideoPlayer(
+                        videoPath: path,
+                        height: widget.maxHeight,
+                        autoPlay: false,
+                        fit: BoxFit.contain,
+                      );
+                    }
                     return GestureDetector(
                       onTap: () => widget.onTapImage(index),
                       child: AppMediaImage(

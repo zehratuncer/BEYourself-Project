@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/core/utils/media_type_helper.dart';
 import 'package:be_yourself/features/category/presentation/providers/category_providers.dart';
 import 'package:be_yourself/features/media/services/instagram_downloader_service.dart';
 import 'package:be_yourself/features/media/services/media_storage_service.dart';
@@ -333,16 +334,7 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
     Navigator.of(context).pop();
   }
 
-  bool _isVideoMedia(String? path) {
-    if (path == null) return false;
-    final lower = path.toLowerCase();
-    return lower.endsWith('.mp4') ||
-        lower.endsWith('.mov') ||
-        lower.endsWith('.avi') ||
-        lower.endsWith('.mkv') ||
-        lower.contains('/reels/') ||
-        lower.contains('video');
-  }
+  bool _isVideoMedia(String? path) => isVideoMedia(path);
 
   Future<void> _pickImage() async {
     try {

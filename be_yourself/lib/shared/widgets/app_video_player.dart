@@ -67,7 +67,15 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
       _controller!.setLooping(true);
 
       if (widget.autoPlay) {
-        await _controller!.play();
+        try {
+          await _controller!.play();
+        } catch (e) {
+          debugPrint('Autoplay with sound blocked: $e, falling back to muted autoplay');
+          try {
+            await _controller!.setVolume(0.0);
+            await _controller!.play();
+          } catch (_) {}
+        }
       }
 
       if (mounted) {

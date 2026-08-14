@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/core/utils/media_type_helper.dart';
 import 'package:be_yourself/features/media/services/media_storage_service.dart';
+import 'package:be_yourself/shared/widgets/app_video_player.dart';
 
 class AppMediaImage extends StatelessWidget {
   const AppMediaImage({
@@ -28,6 +30,14 @@ class AppMediaImage extends StatelessWidget {
     final cleanPath = imagePath.trim();
     if (cleanPath.isEmpty) {
       content = _buildPlaceholder(context);
+    } else if (isVideoMedia(cleanPath)) {
+      content = AppVideoPlayer(
+        videoPath: cleanPath,
+        height: height ?? 220,
+        borderRadius: borderRadius,
+        fit: fit,
+        autoPlay: false,
+      );
     } else if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
       content = Image.network(
         cleanPath,
