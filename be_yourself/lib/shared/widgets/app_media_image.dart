@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:be_yourself/core/theme/app_colors.dart';
@@ -38,7 +39,23 @@ class AppMediaImage extends StatelessWidget {
         fit: fit,
         autoPlay: false,
       );
-    } else if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
+    } else if (cleanPath.startsWith('data:image/')) {
+      try {
+        final base64Data = cleanPath.split(',').last;
+        final bytes = base64Decode(base64Data);
+        content = Image.memory(
+          bytes,
+          width: width,
+          height: height,
+          fit: fit,
+          errorBuilder: (context, error, stackTrace) => _buildPlaceholder(context),
+        );
+      } catch (_) {
+        content = _buildPlaceholder(context);
+      }
+    } else if (cleanPath.startsWith('http://') ||
+        cleanPath.startsWith('https://') ||
+        cleanPath.startsWith('blob:')) {
       content = Image.network(
         cleanPath,
         width: width,

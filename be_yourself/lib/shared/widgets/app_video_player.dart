@@ -55,7 +55,9 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
 
     try {
       final String path = widget.videoPath.trim();
-      if (path.startsWith('http://') || path.startsWith('https://')) {
+      if (path.startsWith('http://') ||
+          path.startsWith('https://') ||
+          path.startsWith('blob:')) {
         _controller = VideoPlayerController.networkUrl(Uri.parse(path));
       } else {
         final resolvedFile = await MediaStorageService.instance.resolveLocalFile(path) ??
