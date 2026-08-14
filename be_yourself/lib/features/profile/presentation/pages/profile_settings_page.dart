@@ -124,9 +124,9 @@ class _ProfileSettingsPageState extends ConsumerState<ProfileSettingsPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Profili Sıfırla'),
+        title: const Text('Profil Bilgilerini Sıfırla'),
         content: const Text(
-          'Profil bilgileriniz varsayılan ayarlara döndürülecektir. Devam etmek istiyor musunuz?',
+          'Profiliniz sıfırlanacak ve eklenen tüm alıntılarınız silinecektir. İsim ve soyisminiz korunacaktır.\n\nDevam etmek istiyor musunuz?',
         ),
         actions: [
           TextButton(
@@ -139,15 +139,30 @@ class _ProfileSettingsPageState extends ConsumerState<ProfileSettingsPage> {
               foregroundColor: Colors.white,
             ),
             onPressed: () {
+              // 1. Preserve current name
+              final currentName = ref.read(profileProvider).name;
+
+              // 2. Reset profile to defaults, but restore current name
               ref.read(profileProvider.notifier).resetToDefaults();
-              final defaultProfile = ref.read(profileProvider);
-              _nameController.text = defaultProfile.name;
-              _mottoController.text = defaultProfile.motto;
+              if (currentName.trim().isNotEmpty) {
+                ref.read(profileProvider.notifier).updateName(currentName);
+              }
+
+              // 3. Clear all quotes
+              ref.read(quoteListProvider.notifier).clearAllQuotes();
+
+              // 4. Update form controllers
+              final updatedProfile = ref.read(profileProvider);
+              _nameController.text = updatedProfile.name;
+              _mottoController.text = updatedProfile.motto;
+
               Navigator.of(ctx).pop();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Profil varsayılan değerlere sıfırlandı.'),
+                  content: Text(
+                      'Alıntılar temizlendi, isim korundu ve profil sıfırlandı. ✨'),
                   behavior: SnackBarBehavior.floating,
+                  backgroundColor: AppColors.primaryBlue,
                 ),
               );
             },

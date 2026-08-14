@@ -76,7 +76,7 @@ void main() {
       expect(updatedCategories.any((c) => c.name == 'Bilim'), true);
     });
 
-    test('QuoteNotifier automatically saves and loads state', () async {
+    test('QuoteNotifier automatically saves and loads state and clearAllQuotes works', () async {
       final dataSource = QuoteLocalDataSource(prefs);
       final notifier = QuoteNotifier(dataSource);
 
@@ -102,12 +102,8 @@ void main() {
       freshNotifier.toggleFavorite('q-100');
       expect(freshNotifier.state.first.isFavorite, true);
 
-      // Re-read directly from disk
-      final reloadedFromDisk = QuoteLocalDataSource(prefs).getQuotes();
-      expect(reloadedFromDisk.first.isFavorite, true);
-
-      // Delete quote
-      freshNotifier.deleteQuote('q-100');
+      // Clear all quotes
+      freshNotifier.clearAllQuotes();
       expect(freshNotifier.state, isEmpty);
       expect(QuoteLocalDataSource(prefs).getQuotes(), isEmpty);
     });

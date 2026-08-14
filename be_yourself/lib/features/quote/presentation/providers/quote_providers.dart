@@ -58,6 +58,14 @@ class QuoteNotifier extends StateNotifier<List<Quote>> {
     _syncWidgetAfterDelete(id);
   }
 
+  void clearAllQuotes() {
+    state = [];
+    _persist();
+    _dataSource.prefs.remove('quoteOfDay_id');
+    _dataSource.prefs.remove('quoteOfDay_time');
+    HomeWidgetService.instance.updateWidgetWithFallback();
+  }
+
   void _syncWidgetAfterDelete(String deletedId) {
     const quoteIdKey = 'quoteOfDay_id';
     const quoteTimeKey = 'quoteOfDay_time';
