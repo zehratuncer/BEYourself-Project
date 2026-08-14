@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:be_yourself/core/theme/app_colors.dart';
+import 'package:be_yourself/core/utils/media_type_helper.dart';
 import 'package:be_yourself/features/category/presentation/providers/category_providers.dart';
 import 'package:be_yourself/features/quote/domain/entities/quote.dart';
 import 'package:be_yourself/features/quote/presentation/pages/quote_detail_page.dart';
@@ -12,6 +13,7 @@ import 'package:be_yourself/features/quote/presentation/providers/quote_provider
 import 'package:be_yourself/features/quote/presentation/providers/random_quote_provider.dart';
 import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
 import 'package:be_yourself/shared/widgets/app_media_image.dart';
+import 'package:be_yourself/shared/widgets/app_video_player.dart';
 
 class RandomQuoteModal extends ConsumerStatefulWidget {
   const RandomQuoteModal({super.key, this.initialCategory});
@@ -529,132 +531,225 @@ class _RandomQuoteModalState extends ConsumerState<RandomQuoteModal>
     Color primaryTextColor,
     Color secondaryTextColor,
   ) {
+    final mediaList = quote.allMediaUrls;
+    final hasMedia = mediaList.isNotEmpty;
+    final firstMedia = hasMedia ? mediaList.first : null;
+
+    void openDetailPage() {
+      Navigator.of(context).pop();
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => QuoteDetailPage(quoteId: quote.id),
+        ),
+      );
+    }
+
     return Center(
       key: ValueKey(quote.id),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDarkMode
-                ? const [
-                    Color(0xFF1E293B),
-                    Color(0xFF0F172A),
-                  ]
-                : const [
-                    Color(0xFFF8FAFC),
-                    Color(0xFFEEF2F6),
-                  ],
-          ),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isDarkMode
-                ? AppColors.primaryBlueLight.withAlpha(45)
-                : AppColors.primaryBlue.withAlpha(30),
-            width: 1.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isDarkMode
-                  ? Colors.black.withAlpha(70)
-                  : const Color(0xFF60A5FA).withAlpha(25),
-              blurRadius: 20,
-              offset: const Offset(0, 6),
+      child: GestureDetector(
+        onTap: openDetailPage,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDarkMode
+                  ? const [
+                      Color(0xFF1E293B),
+                      Color(0xFF0F172A),
+                    ]
+                  : const [
+                      Color(0xFFF8FAFC),
+                      Color(0xFFEEF2F6),
+                    ],
             ),
-          ],
-        ),
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Category tag & quote icon
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: isDarkMode
-                          ? AppColors.primaryBlueLight.withAlpha(35)
-                          : AppColors.primaryBlue.withAlpha(20),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      quote.categoryName,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: isDarkMode
-                            ? AppColors.primaryBlueLight
-                            : AppColors.primaryBlue,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    Icons.format_quote_rounded,
-                    size: 32,
-                    color: isDarkMode
-                        ? AppColors.primaryBlueLight.withAlpha(90)
-                        : AppColors.primaryBlue.withAlpha(70),
-                  ),
-                ],
-              ),
-
-              // Media Preview (if available)
-              if (quote.mediaUrl != null && quote.mediaUrl!.isNotEmpty) ...[
-                const SizedBox(height: 14),
-                Container(
-                  constraints: const BoxConstraints(maxHeight: 160),
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? Colors.black.withAlpha(50)
-                        : Colors.black.withAlpha(8),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: AppMediaImage(
-                      imagePath: quote.mediaUrl!,
-                      width: double.infinity,
-                      fit: BoxFit.contain,
-                      isDarkMode: isDarkMode,
-                    ),
-                  ),
-                ),
-              ],
-
-              const SizedBox(height: 16),
-
-              // Quote text
-              Text(
-                '"${quote.displayText}"',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w600,
-                  color: primaryTextColor,
-                  height: 1.45,
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // Author
-              Text(
-                '— ${quote.author}',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: secondaryTextColor,
-                ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isDarkMode
+                  ? AppColors.primaryBlueLight.withAlpha(45)
+                  : AppColors.primaryBlue.withAlpha(30),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDarkMode
+                    ? Colors.black.withAlpha(70)
+                    : const Color(0xFF60A5FA).withAlpha(25),
+                blurRadius: 20,
+                offset: const Offset(0, 6),
               ),
             ],
+          ),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Category tag & quote icon
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: isDarkMode
+                            ? AppColors.primaryBlueLight.withAlpha(35)
+                            : AppColors.primaryBlue.withAlpha(20),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        quote.categoryName,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: isDarkMode
+                              ? AppColors.primaryBlueLight
+                              : AppColors.primaryBlue,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.format_quote_rounded,
+                      size: 32,
+                      color: isDarkMode
+                          ? AppColors.primaryBlueLight.withAlpha(90)
+                          : AppColors.primaryBlue.withAlpha(70),
+                    ),
+                  ],
+                ),
+
+                // Media Preview (Photo / Video / Multi-media preview)
+                if (hasMedia && firstMedia != null) ...[
+                  const SizedBox(height: 14),
+                  Stack(
+                    children: [
+                      Container(
+                        constraints: const BoxConstraints(maxHeight: 180),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? Colors.black.withAlpha(50)
+                              : Colors.black.withAlpha(8),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDarkMode
+                                ? Colors.white.withAlpha(15)
+                                : Colors.black.withAlpha(10),
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: isVideoMedia(firstMedia)
+                              ? AppVideoPlayer(
+                                  videoPath: firstMedia,
+                                  height: 180,
+                                  autoPlay: false,
+                                  fit: BoxFit.contain,
+                                )
+                              : AppMediaImage(
+                                  imagePath: firstMedia,
+                                  width: double.infinity,
+                                  fit: BoxFit.contain,
+                                  isDarkMode: isDarkMode,
+                                ),
+                        ),
+                      ),
+                      if (mediaList.length > 1)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withAlpha(160),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.collections_rounded,
+                                  color: Colors.white,
+                                  size: 13,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '+${mediaList.length - 1}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+
+                const SizedBox(height: 16),
+
+                // Quote text
+                Text(
+                  '"${quote.displayText}"',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w600,
+                    color: primaryTextColor,
+                    height: 1.45,
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                // Author
+                Text(
+                  '— ${quote.author}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: secondaryTextColor,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Interactive tap hint
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.touch_app_outlined,
+                      size: 14,
+                      color: isDarkMode
+                          ? AppColors.primaryBlueLight.withAlpha(160)
+                          : AppColors.primaryBlue.withAlpha(160),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Detayları görmek için dokunun',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w500,
+                        color: isDarkMode
+                            ? AppColors.primaryBlueLight.withAlpha(180)
+                            : AppColors.primaryBlue.withAlpha(180),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
