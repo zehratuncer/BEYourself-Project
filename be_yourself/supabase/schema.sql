@@ -45,12 +45,17 @@ CREATE TABLE IF NOT EXISTS public.categories (
 
 CREATE INDEX IF NOT EXISTS idx_categories_device_id ON public.categories(device_id);
 
--- 4. Enable Row Level Security (RLS) - Optional if direct anon API with device_id filter
+-- 4. Enable Row Level Security (RLS)
 ALTER TABLE public.quotes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 
--- Allow public access with device_id match
+-- Drop old policies if existing to avoid conflicts
+DROP POLICY IF EXISTS "Allow public device quotes access" ON public.quotes;
+DROP POLICY IF EXISTS "Allow public device profiles access" ON public.user_profiles;
+DROP POLICY IF EXISTS "Allow public device categories access" ON public.categories;
+
+-- Create policies
 CREATE POLICY "Allow public device quotes access" ON public.quotes
     FOR ALL USING (true) WITH CHECK (true);
 
@@ -65,6 +70,7 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('media', 'media', true)
 ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "Public Media Bucket Access" ON storage.objects;
 CREATE POLICY "Public Media Bucket Access" ON storage.objects
     FOR ALL USING (bucket_id = 'media')
     WITH CHECK (bucket_id = 'media');

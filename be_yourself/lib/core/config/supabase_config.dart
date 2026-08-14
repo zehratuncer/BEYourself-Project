@@ -6,15 +6,15 @@ import 'package:uuid/uuid.dart';
 class SupabaseConfig {
   SupabaseConfig._();
 
-  // Configurable credentials (can be set via environment or dashboard)
+  // Configurable credentials
   static const String supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://vkmjckpndjeybovzqwua.supabase.co',
+    defaultValue: 'https://itsrmpfmnnolwvvmrsye.supabase.co',
   );
 
   static const String supabaseAnonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
-    defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy_anon_key_for_offline_fallback',
+    defaultValue: 'sb_publishable__cvHjyLnRlb10H9eoZPdyg_ohx9BC2v',
   );
 
   static bool _isInitialized = false;
