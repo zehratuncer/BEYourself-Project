@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -339,24 +338,35 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
   Future<void> _pickImage() async {
     try {
       final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(
-        source: ImageSource.gallery,
+      final List<XFile> images = await picker.pickMultiImage(
         imageQuality: 90,
       );
-      if (image != null) {
-        final permanentPath = await MediaStorageService.instance.saveMediaLocally(
-          File(image.path),
-          subDirectory: 'app_media',
-          customPrefix: 'photo',
-        );
+
+      if (images.isNotEmpty) {
+        final List<String> paths = [];
+        for (final img in images) {
+          final p = await MediaStorageService.instance.saveXFileLocally(
+            img,
+            subDirectory: 'app_media',
+            customPrefix: 'photo',
+          );
+          paths.add(p);
+        }
+
         setState(() {
-          _selectedMediaUrl = permanentPath;
-          _selectedMediaUrls = [permanentPath];
+          _selectedMediaUrls = paths;
+          _selectedMediaUrl = paths.first;
         });
+
         if (mounted) {
+          final count = paths.length;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Fotoğraf galeriden başarıyla eklendi! 📸'),
+            SnackBar(
+              content: Text(
+                count > 1
+                    ? '$count adet fotoğraf galeriden eklendi! 📸'
+                    : 'Fotoğraf galeriden başarıyla eklendi! 📸',
+              ),
               backgroundColor: AppColors.primaryBlue,
             ),
           );
@@ -381,8 +391,9 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
         source: ImageSource.gallery,
       );
       if (video != null) {
-        final permanentPath = await MediaStorageService.instance.saveMediaLocally(
-          File(video.path),
+        final permanentPath =
+            await MediaStorageService.instance.saveXFileLocally(
+          video,
           subDirectory: 'app_media',
           customPrefix: 'video',
         );

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,8 +65,8 @@ class _ProfileSettingsPageState extends ConsumerState<ProfileSettingsPage> {
         imageQuality: 85,
       );
       if (image != null) {
-        final permanentPath = await MediaStorageService.instance.saveAvatarLocally(
-          File(image.path),
+        final permanentPath = await MediaStorageService.instance.saveAvatarXFileLocally(
+          image,
         );
         ref.read(profileProvider.notifier).setAvatarPath(permanentPath);
         if (mounted) {

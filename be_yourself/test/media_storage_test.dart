@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:be_yourself/features/media/services/media_storage_service.dart';
 import 'package:be_yourself/shared/widgets/app_media_image.dart';
 
@@ -26,6 +28,20 @@ void main() {
 
       final emptyRes = await MediaStorageService.instance.resolveLocalFile('   ');
       expect(emptyRes, isNull);
+    });
+
+    test('saveXFileLocally handles XFile smoothly', () async {
+      final xFile = XFile.fromData(
+        Uint8List.fromList([1, 2, 3, 4]),
+        name: 'sample_photo.jpg',
+        mimeType: 'image/jpeg',
+      );
+      final resultPath = await MediaStorageService.instance.saveXFileLocally(
+        xFile,
+        subDirectory: 'test_media',
+        customPrefix: 'test_pic',
+      );
+      expect(resultPath, isNotEmpty);
     });
   });
 
