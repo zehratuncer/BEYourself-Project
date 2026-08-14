@@ -68,8 +68,23 @@ class MediaStorageService {
     XFile sourceFile, {
     String subDirectory = 'app_media',
     String? customPrefix,
+    bool? isVideo,
   }) async {
+    final bool isVideoType = isVideo ??
+        (customPrefix == 'video' ||
+            sourceFile.name.toLowerCase().endsWith('.mp4') ||
+            sourceFile.name.toLowerCase().endsWith('.mov') ||
+            sourceFile.mimeType?.startsWith('video/') == true);
+
     if (kIsWeb) {
+      if (isVideoType) {
+        final rawPath = sourceFile.path;
+        if (!rawPath.contains('.mp4') && !rawPath.contains('#video')) {
+          return '$rawPath#video.mp4';
+        }
+        return rawPath;
+      }
+
       try {
         final bytes = await sourceFile.readAsBytes();
         final mime = sourceFile.mimeType ??
@@ -77,9 +92,8 @@ class MediaStorageService {
                 ? 'image/png'
                 : 'image/jpeg');
 
-        // For images or medium assets on web, return persistent Data URI
-        if (bytes.lengthInBytes < 5 * 1024 * 1024 &&
-            !sourceFile.name.toLowerCase().endsWith('.mp4')) {
+        // For images on web, return persistent Data URI
+        if (bytes.lengthInBytes < 8 * 1024 * 1024) {
           final base64Str = base64Encode(bytes);
           return 'data:$mime;base64,$base64Str';
         }
@@ -96,12 +110,13 @@ class MediaStorageService {
       if (!await targetDir.exists()) {
         await targetDir.create(recursive: true);
       }
+      final defaultExt = isVideoType ? 'mp4' : 'jpg';
       final ext = sourceFile.name.contains('.')
           ? sourceFile.name.split('.').last.toLowerCase()
-          : 'jpg';
+          : defaultExt;
       final randomSuffix = Random().nextInt(999999);
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final prefix = customPrefix ?? 'media';
+      final prefix = customPrefix ?? (isVideoType ? 'video' : 'media');
       final fileName = '${prefix}_${timestamp}_$randomSuffix.$ext';
       final targetFilePath = '${targetDir.path}/$fileName';
       final targetFile = File(targetFilePath);
@@ -113,7 +128,7 @@ class MediaStorageService {
     return saveMediaLocally(
       file,
       subDirectory: subDirectory,
-      customPrefix: customPrefix,
+      customPrefix: customPrefix ?? (isVideoType ? 'video' : 'media'),
     );
   }
 

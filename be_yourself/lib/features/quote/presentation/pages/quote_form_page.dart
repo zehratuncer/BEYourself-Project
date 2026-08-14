@@ -396,6 +396,7 @@ class _QuoteFormPageState extends ConsumerState<QuoteFormPage> {
           video,
           subDirectory: 'app_media',
           customPrefix: 'video',
+          isVideo: true,
         );
         setState(() {
           _selectedMediaUrl = permanentPath;

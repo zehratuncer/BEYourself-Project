@@ -19,18 +19,24 @@ bool isVideoMedia(String? path) {
     return true;
   }
 
-  // 2. Query/CDN embedded video indicators
-  if (clean.contains('.mp4?') ||
-      clean.contains('.mp4&') ||
-      clean.contains('.mov?') ||
-      clean.contains('.webm?') ||
-      clean.contains('.m4v?') ||
+  // 2. Query/CDN/Tag embedded video indicators
+  if (clean.contains('.mp4') ||
+      clean.contains('.mov') ||
+      clean.contains('.webm') ||
+      clean.contains('.m4v') ||
       clean.contains('/video/') ||
       clean.contains('/reels/') ||
+      clean.contains('#video') ||
+      clean.contains('type=video') ||
+      clean.contains('is_video=true') ||
+      clean.contains('video=true') ||
+      clean.contains('data:video/') ||
       clean.contains('video_url') ||
       clean.contains('videoplayback') ||
       clean.contains('fna.fbcdn.net/o1/v/') ||
-      clean.contains('bytestart')) {
+      clean.contains('bytestart') ||
+      clean.contains('app_media/video_') ||
+      clean.contains('customprefix=video')) {
     return true;
   }
 
