@@ -126,13 +126,28 @@ class _WelcomePageState extends State<WelcomePage>
                         const SizedBox(height: 36),
                         Text(
                           AppStrings.appName,
-                          style: theme.textTheme.headlineMedium,
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            color: AppColors.primaryBlue,
+                            fontWeight: FontWeight.w700,
+                          ) ?? const TextStyle(
+                            fontSize: 34,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryBlue,
+                            letterSpacing: -0.5,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 14),
                         Text(
                           AppStrings.welcomeSubtitle,
-                          style: theme.textTheme.bodyLarge,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: AppColors.lightTextSecondary,
+                          ) ?? const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.lightTextSecondary,
+                            height: 1.4,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const Spacer(flex: 3),

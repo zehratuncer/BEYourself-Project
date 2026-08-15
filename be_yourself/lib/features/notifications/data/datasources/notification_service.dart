@@ -3,8 +3,10 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:be_yourself/features/home_widget/services/home_widget_service.dart';
 import 'package:be_yourself/features/onboarding/presentation/pages/welcome_page.dart';
 import 'package:be_yourself/features/quote/domain/entities/quote.dart';
 import 'package:be_yourself/features/quote/presentation/pages/quote_detail_page.dart';
@@ -106,10 +108,64 @@ class NotificationService {
     _isInitialized = true;
   }
 
-  void handleNotificationClick(String? payload) {
+  static String getDailySentKey(DateTime date) {
+    final y = date.year;
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    return 'daily_sent_notification_quote_ids_${y}_${m}_$d';
+  }
+
+  Future<List<String>> getSentQuoteIdsForDate(
+    DateTime date, {
+    SharedPreferences? prefs,
+  }) async {
+    final sp = prefs ?? await SharedPreferences.getInstance();
+    return sp.getStringList(getDailySentKey(date)) ?? [];
+  }
+
+  Future<void> recordSentQuoteIds(
+    List<String> quoteIds, {
+    DateTime? date,
+    SharedPreferences? prefs,
+  }) async {
+    if (quoteIds.isEmpty) return;
+    final targetDate = date ?? DateTime.now();
+    final sp = prefs ?? await SharedPreferences.getInstance();
+    final key = getDailySentKey(targetDate);
+    final currentList = sp.getStringList(key) ?? [];
+    final currentSet = currentList.toSet();
+    bool changed = false;
+    for (final id in quoteIds) {
+      if (id.trim().isNotEmpty && currentSet.add(id.trim())) {
+        currentList.add(id.trim());
+        changed = true;
+      }
+    }
+    if (changed) {
+      await sp.setStringList(key, currentList);
+    }
+  }
+
+  Future<void> handleNotificationClick(String? payload) async {
     if (payload == null || payload.trim().isEmpty) return;
 
     debugPrint('Navigating to quote detail for quoteId: $payload');
+
+    // 1. Rotate widget to a different quote since this notification's quote is opened
+    try {
+      await HomeWidgetService.instance
+          .rotateWidgetToDifferentQuote(excludeQuoteId: payload);
+    } catch (e) {
+      debugPrint('HomeWidget rotation on notification click error: $e');
+    }
+
+    // 2. Mark this quote as sent/viewed today
+    try {
+      await recordSentQuoteIds([payload]);
+    } catch (e) {
+      debugPrint('recordSentQuoteIds on notification click error: $e');
+    }
+
     final navState = appNavigatorKey.currentState;
     if (navState == null) return;
 
@@ -218,11 +274,70 @@ class NotificationService {
     );
   }
 
+  List<Map<String, String>> pickDistinctQuotesForSlots({
+    required int count,
+    required List<Quote> quotes,
+    required Set<String> sentTodayIds,
+  }) {
+    if (count <= 0) return [];
+
+    final List<Map<String, String>> selectedQuotes = [];
+    final Set<String> usedIdsToday = Set<String>.from(sentTodayIds);
+
+    // 1. First, pick quotes from user's quotes that have NOT yet been sent/shown today
+    final availableUserQuotes = quotes
+        .where((q) => !usedIdsToday.contains(q.id))
+        .toList();
+
+    for (final userQuote in availableUserQuotes) {
+      if (selectedQuotes.length >= count) break;
+      selectedQuotes.add({
+        'id': userQuote.id,
+        'text': userQuote.displayText,
+        'author': userQuote.author.isNotEmpty ? userQuote.author : 'Anonim',
+      });
+      usedIdsToday.add(userQuote.id);
+    }
+
+    // 2. If we still need more quotes and not enough unsent user quotes,
+    // use unique fallback quotes so that no quote is repeated twice in the same day
+    if (selectedQuotes.length < count) {
+      for (int i = 0; i < _fallbackQuotes.length; i++) {
+        if (selectedQuotes.length >= count) break;
+        final fallbackId = 'fallback_$i';
+        if (!usedIdsToday.contains(fallbackId)) {
+          selectedQuotes.add({
+            'id': fallbackId,
+            'text': _fallbackQuotes[i]['text']!,
+            'author': _fallbackQuotes[i]['author']!,
+          });
+          usedIdsToday.add(fallbackId);
+        }
+      }
+    }
+
+    // 3. Ultra-fallback if count exceeds fallback list too
+    int fallbackIndex = 0;
+    while (selectedQuotes.length < count) {
+      final index = fallbackIndex % _fallbackQuotes.length;
+      final fallbackId = 'fallback_extra_${selectedQuotes.length}';
+      selectedQuotes.add({
+        'id': fallbackId,
+        'text': _fallbackQuotes[index]['text']!,
+        'author': _fallbackQuotes[index]['author']!,
+      });
+      fallbackIndex++;
+    }
+
+    return selectedQuotes;
+  }
+
   Future<void> scheduleDailyQuoteNotifications({
     required int count,
     required TimeOfDay startTime,
     required TimeOfDay endTime,
     required List<Quote> quotes,
+    SharedPreferences? prefs,
   }) async {
     await initialize();
     await cancelAll();
@@ -235,9 +350,24 @@ class NotificationService {
       endTime: endTime,
     );
 
+    final now = DateTime.now();
+    final sentTodayList = await getSentQuoteIdsForDate(now, prefs: prefs);
+    final sentTodaySet = sentTodayList.toSet();
+
+    final slotQuotes = pickDistinctQuotesForSlots(
+      count: slots.length,
+      quotes: quotes,
+      sentTodayIds: sentTodaySet,
+    );
+
+    final List<String> newlyScheduledIds = [];
+
     for (int i = 0; i < slots.length; i++) {
       final slot = slots[i];
-      final quote = _pickQuoteForSlot(i, quotes);
+      final quote = slotQuotes[i];
+      if (quote['id'] != null) {
+        newlyScheduledIds.add(quote['id']!);
+      }
 
       final scheduledTime = _nextInstanceOfTime(slot.hour, slot.minute);
 
@@ -289,7 +419,8 @@ class NotificationService {
           payload: quote['id'],
         );
       } catch (e) {
-        debugPrint('Exact alarm zonedSchedule error: $e, falling back to inexact mode');
+        debugPrint(
+            'Exact alarm zonedSchedule error: $e, falling back to inexact mode');
         try {
           await _notificationsPlugin.zonedSchedule(
             i + 1,
@@ -307,6 +438,10 @@ class NotificationService {
           debugPrint('Inexact zonedSchedule error: $innerError');
         }
       }
+    }
+
+    if (newlyScheduledIds.isNotEmpty) {
+      await recordSentQuoteIds(newlyScheduledIds, date: now, prefs: prefs);
     }
   }
 
@@ -344,24 +479,6 @@ class NotificationService {
     }
 
     return slots;
-  }
-
-  Map<String, String> _pickQuoteForSlot(int index, List<Quote> quotes) {
-    if (quotes.isNotEmpty) {
-      final selected = quotes[index % quotes.length];
-      return {
-        'id': selected.id,
-        'text': selected.displayText,
-        'author': selected.author.isNotEmpty ? selected.author : 'Anonim',
-      };
-    }
-
-    final fallback = _fallbackQuotes[index % _fallbackQuotes.length];
-    return {
-      'id': 'fallback_$index',
-      'text': fallback['text']!,
-      'author': fallback['author']!,
-    };
   }
 
   tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {

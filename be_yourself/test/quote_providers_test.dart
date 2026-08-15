@@ -214,5 +214,32 @@ void main() {
       final cachedQuote = notifier.getOrUpdateQuoteOfDay([sample]);
       expect(cachedQuote.id, 'daily-1');
     });
+
+    test('rotateToDifferentQuote picks a quote excluding the specified quoteId', () {
+      final sample1 = Quote(
+        id: 'q-exclude',
+        text: 'Açılan alıntı',
+        author: 'Yazar 1',
+        categoryName: 'Genel',
+        createdAt: DateTime.now(),
+      );
+      final sample2 = Quote(
+        id: 'q-target',
+        text: 'Yeni alıntı',
+        author: 'Yazar 2',
+        categoryName: 'Genel',
+        createdAt: DateTime.now(),
+      );
+
+      final notifier = QuoteOfDayNotifier(prefs);
+      final nextQuote = notifier.rotateToDifferentQuote(
+        excludeQuoteId: 'q-exclude',
+        quotes: [sample1, sample2],
+      );
+
+      expect(nextQuote.id, 'q-target');
+      expect(notifier.state?.quote.id, 'q-target');
+      expect(prefs.getString('quoteOfDay_id'), 'q-target');
+    });
   });
 }

@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:be_yourself/features/onboarding/presentation/pages/welcome_page.dart';
+import 'package:be_yourself/features/quote/data/datasources/quote_local_datasource.dart';
 import 'package:be_yourself/features/quote/domain/entities/quote.dart';
 import 'package:be_yourself/features/quote/presentation/pages/quote_detail_page.dart';
 import 'package:be_yourself/main.dart';
@@ -57,6 +60,43 @@ class HomeWidgetService {
   /// Clears or updates widget with fallback quote when no quotes exist
   Future<void> updateWidgetWithFallback() async {
     await updateQuoteWidget(defaultFallbackQuote);
+  }
+
+  /// Rotates the widget to a different quote, excluding [excludeQuoteId].
+  /// This is called when a notification's quote is opened, so that the widget
+  /// removes that quote and starts showing a new, different quote.
+  Future<Quote> rotateWidgetToDifferentQuote({
+    required String excludeQuoteId,
+    List<Quote>? quotes,
+    SharedPreferences? prefs,
+  }) async {
+    final SharedPreferences sp = prefs ?? await SharedPreferences.getInstance();
+    final List<Quote> allQuotes;
+    if (quotes != null) {
+      allQuotes = quotes;
+    } else {
+      final dataSource = QuoteLocalDataSource(sp);
+      allQuotes = dataSource.getQuotes();
+    }
+
+    final candidateQuotes =
+        allQuotes.where((q) => q.id != excludeQuoteId).toList();
+
+    Quote nextQuote;
+    if (candidateQuotes.isNotEmpty) {
+      final random = Random();
+      nextQuote = candidateQuotes[random.nextInt(candidateQuotes.length)];
+    } else if (allQuotes.isNotEmpty) {
+      nextQuote = allQuotes.first;
+    } else {
+      nextQuote = defaultFallbackQuote;
+    }
+
+    await sp.setString('quoteOfDay_id', nextQuote.id);
+    await sp.setString('quoteOfDay_time', DateTime.now().toIso8601String());
+
+    await updateQuoteWidget(nextQuote);
+    return nextQuote;
   }
 
   /// Updates the native home screen widget with the latest quote data.

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:be_yourself/features/home_widget/services/home_widget_service.dart';
 import 'package:be_yourself/features/quote/domain/entities/quote.dart';
 
@@ -54,6 +55,38 @@ void main() {
 
       // Should not throw even if navigator is not mounted in unit test environment
       expect(() => HomeWidgetService.instance.handleWidgetUri(uri), returnsNormally);
+    });
+
+    test('rotateWidgetToDifferentQuote selects a different quote and persists to prefs', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      final quotes = [
+        Quote(
+          id: 'quote_opened_1',
+          text: 'Açılan Alıntı',
+          author: 'Yazar 1',
+          categoryName: 'Genel',
+          createdAt: DateTime.now(),
+        ),
+        Quote(
+          id: 'quote_new_2',
+          text: 'Yeni Alıntı',
+          author: 'Yazar 2',
+          categoryName: 'Genel',
+          createdAt: DateTime.now(),
+        ),
+      ];
+
+      final nextQuote = await HomeWidgetService.instance.rotateWidgetToDifferentQuote(
+        excludeQuoteId: 'quote_opened_1',
+        quotes: quotes,
+        prefs: prefs,
+      );
+
+      expect(nextQuote.id, 'quote_new_2');
+      expect(prefs.getString('quoteOfDay_id'), 'quote_new_2');
+      expect(prefs.getString('quoteOfDay_time'), isNotNull);
     });
   });
 }

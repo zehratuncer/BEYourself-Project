@@ -302,6 +302,32 @@ class QuoteOfDayNotifier extends StateNotifier<QuoteOfDayState?> {
 
     return existingQuote;
   }
+
+  Quote rotateToDifferentQuote({
+    required String excludeQuoteId,
+    required List<Quote> quotes,
+  }) {
+    final candidateQuotes =
+        quotes.where((q) => q.id != excludeQuoteId).toList();
+    final now = DateTime.now();
+
+    final Quote nextQuote;
+    if (candidateQuotes.isNotEmpty) {
+      final random = Random();
+      nextQuote = candidateQuotes[random.nextInt(candidateQuotes.length)];
+    } else if (quotes.isNotEmpty) {
+      nextQuote = quotes.first;
+    } else {
+      nextQuote = HomeWidgetService.defaultFallbackQuote;
+    }
+
+    prefs.setString(_quoteIdKey, nextQuote.id);
+    prefs.setString(_quoteTimeKey, now.toIso8601String());
+
+    state = QuoteOfDayState(quote: nextQuote, selectedAt: now);
+    HomeWidgetService.instance.updateQuoteWidget(nextQuote);
+    return nextQuote;
+  }
 }
 
 final quoteOfDayNotifierProvider =

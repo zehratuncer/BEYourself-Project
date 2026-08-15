@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:be_yourself/features/notifications/data/datasources/notification_service.dart';
 import 'package:be_yourself/features/quote/domain/entities/quote.dart';
 
@@ -8,6 +9,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() {
+    SharedPreferences.setMockInitialValues({});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
       const MethodChannel('dexterous.com/flutter/local_notifications'),
@@ -30,6 +32,10 @@ void main() {
         return null;
       },
     );
+  });
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
   });
 
   group('NotificationService Tests', () {
@@ -125,6 +131,90 @@ void main() {
 
       expect(updatedQuotes.length, 1);
       expect(updatedQuotes.first.id, 'q2');
+    });
+
+    test('pickDistinctQuotesForSlots picks unique quotes across slots and excludes already sent today', () {
+      final service = NotificationService.instance;
+
+      final testQuotes = [
+        Quote(
+          id: 'quote_1',
+          text: 'Alıntı 1',
+          author: 'Yazar 1',
+          categoryName: 'Genel',
+          createdAt: DateTime.now(),
+        ),
+        Quote(
+          id: 'quote_2',
+          text: 'Alıntı 2',
+          author: 'Yazar 2',
+          categoryName: 'Genel',
+          createdAt: DateTime.now(),
+        ),
+        Quote(
+          id: 'quote_3',
+          text: 'Alıntı 3',
+          author: 'Yazar 3',
+          categoryName: 'Genel',
+          createdAt: DateTime.now(),
+        ),
+      ];
+
+      // Case 1: Slot count = 3, no prior sent quotes -> all 3 should be unique
+      final slots1 = service.pickDistinctQuotesForSlots(
+        count: 3,
+        quotes: testQuotes,
+        sentTodayIds: {},
+      );
+      expect(slots1.length, 3);
+      final ids1 = slots1.map((s) => s['id']).toSet();
+      expect(ids1.length, 3);
+      expect(ids1.contains('quote_1'), true);
+      expect(ids1.contains('quote_2'), true);
+      expect(ids1.contains('quote_3'), true);
+
+      // Case 2: quote_1 was already sent today -> it MUST NOT be picked again today
+      final slots2 = service.pickDistinctQuotesForSlots(
+        count: 2,
+        quotes: testQuotes,
+        sentTodayIds: {'quote_1'},
+      );
+      expect(slots2.length, 2);
+      final ids2 = slots2.map((s) => s['id']).toSet();
+      expect(ids2.contains('quote_1'), false, reason: 'quote_1 must not be sent again today');
+      expect(ids2.contains('quote_2'), true);
+      expect(ids2.contains('quote_3'), true);
+
+      // Case 3: All 3 user quotes were already sent today, count is 2 -> should use fallback quotes without repeating
+      final slots3 = service.pickDistinctQuotesForSlots(
+        count: 2,
+        quotes: testQuotes,
+        sentTodayIds: {'quote_1', 'quote_2', 'quote_3'},
+      );
+      expect(slots3.length, 2);
+      final ids3 = slots3.map((s) => s['id']).toSet();
+      expect(ids3.contains('quote_1'), false);
+      expect(ids3.contains('quote_2'), false);
+      expect(ids3.contains('quote_3'), false);
+      expect(ids3.length, 2, reason: 'Fallback slots must also be distinct');
+    });
+
+    test('recordSentQuoteIds and getSentQuoteIdsForDate persist unique quote IDs per day', () async {
+      final service = NotificationService.instance;
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      final today = DateTime.now();
+      expect(await service.getSentQuoteIdsForDate(today, prefs: prefs), isEmpty);
+
+      await service.recordSentQuoteIds(['quote_a', 'quote_b'], date: today, prefs: prefs);
+      final recorded = await service.getSentQuoteIdsForDate(today, prefs: prefs);
+      expect(recorded, ['quote_a', 'quote_b']);
+
+      // Adding duplicate should not duplicate entries
+      await service.recordSentQuoteIds(['quote_b', 'quote_c'], date: today, prefs: prefs);
+      final updated = await service.getSentQuoteIdsForDate(today, prefs: prefs);
+      expect(updated, ['quote_a', 'quote_b', 'quote_c']);
     });
   });
 }
