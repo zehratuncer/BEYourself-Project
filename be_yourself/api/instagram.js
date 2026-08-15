@@ -66,6 +66,16 @@ function extractShortcode(rawUrl) {
   return match && match[1] ? match[1] : null;
 }
 
+function cleanMediaUrl(raw) {
+  if (!raw) return '';
+  return raw
+    .trim()
+    .replace(/&amp;/g, '&')
+    .replace(/\\u0026/g, '&')
+    .replace(/\\\//g, '/')
+    .replace(/^["']+|["']+$/g, '');
+}
+
 function cleanHtmlTags(raw) {
   if (!raw) return '';
   return raw
@@ -82,16 +92,32 @@ function cleanHtmlTags(raw) {
 function parseGraphQLMedia(media) {
   const items = [];
 
-  // Carousel
+  // Carousel (GraphQL sidecar)
   if (media.edge_sidecar_to_children && media.edge_sidecar_to_children.edges) {
     for (const edge of media.edge_sidecar_to_children.edges) {
       const node = edge.node;
       if (node) {
         if (node.is_video && node.video_url) {
-          items.push({ url: node.video_url, isVideo: true });
+          items.push({ url: cleanMediaUrl(node.video_url), isVideo: true });
         } else if (node.display_url) {
-          items.push({ url: node.display_url, isVideo: false });
+          items.push({ url: cleanMediaUrl(node.display_url), isVideo: false });
         }
+      }
+    }
+  }
+
+  // Carousel (Web JSON carousel_media)
+  if (items.length === 0 && media.carousel_media && Array.isArray(media.carousel_media)) {
+    for (const c of media.carousel_media) {
+      const isVideo = c.media_type === 2;
+      let url = null;
+      if (isVideo && c.video_versions && c.video_versions.length > 0) {
+        url = c.video_versions[0].url;
+      } else if (c.image_versions2 && c.image_versions2.candidates && c.image_versions2.candidates.length > 0) {
+        url = c.image_versions2.candidates[0].url;
+      }
+      if (url) {
+        items.push({ url: cleanMediaUrl(url), isVideo });
       }
     }
   }
@@ -99,11 +125,15 @@ function parseGraphQLMedia(media) {
   // Single media
   if (items.length === 0) {
     if (media.is_video && media.video_url) {
-      items.push({ url: media.video_url, isVideo: true });
+      items.push({ url: cleanMediaUrl(media.video_url), isVideo: true });
+    } else if (media.video_versions && media.video_versions.length > 0) {
+      items.push({ url: cleanMediaUrl(media.video_versions[0].url), isVideo: true });
     } else if (media.display_url) {
-      items.push({ url: media.display_url, isVideo: false });
+      items.push({ url: cleanMediaUrl(media.display_url), isVideo: false });
+    } else if (media.image_versions2 && media.image_versions2.candidates && media.image_versions2.candidates.length > 0) {
+      items.push({ url: cleanMediaUrl(media.image_versions2.candidates[0].url), isVideo: false });
     } else if (media.video_url) {
-      items.push({ url: media.video_url, isVideo: true });
+      items.push({ url: cleanMediaUrl(media.video_url), isVideo: true });
     }
   }
 
@@ -115,11 +145,13 @@ function parseGraphQLMedia(media) {
     media.edge_media_to_caption.edges.length > 0
   ) {
     caption = media.edge_media_to_caption.edges[0]?.node?.text || null;
+  } else if (media.caption && typeof media.caption === 'object') {
+    caption = media.caption.text || null;
   }
 
   // Owner
-  const authorUsername = media.owner?.username || null;
-  const authorFullName = media.owner?.full_name || null;
+  const authorUsername = media.owner?.username || media.user?.username || null;
+  const authorFullName = media.owner?.full_name || media.user?.full_name || null;
 
   if (items.length > 0) {
     return { mediaItems: items, caption, authorUsername, authorFullName };

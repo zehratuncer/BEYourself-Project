@@ -30,6 +30,21 @@ void main() {
       expect(emptyRes, isNull);
     });
 
+    test('normalizeFilePath strips file:// scheme and trims', () {
+      expect(
+        MediaStorageService.normalizeFilePath('file:///var/mobile/Containers/Data/Application/123/Documents/image.jpg'),
+        '/var/mobile/Containers/Data/Application/123/Documents/image.jpg',
+      );
+      expect(
+        MediaStorageService.normalizeFilePath('   file:///private/var/mobile/app_media/pic.jpg  '),
+        '/private/var/mobile/app_media/pic.jpg',
+      );
+      expect(
+        MediaStorageService.normalizeFilePath('   /regular/path/image.jpg  '),
+        '/regular/path/image.jpg',
+      );
+    });
+
     test('saveXFileLocally handles XFile smoothly', () async {
       final xFile = XFile.fromData(
         Uint8List.fromList([1, 2, 3, 4]),

@@ -87,5 +87,25 @@ void main() {
       expect(result.caption, contains('Harika bir gün'));
       expect(result.authorUsername, 'zehratuncer');
     });
+
+    test('InstagramResolvedData and InstagramMediaItem handle multi-photo carousel', () {
+      final items = List.generate(
+        11,
+        (index) => InstagramMediaItem(
+          url: 'https://scontent.cdninstagram.com/v/photo_$index.jpg?_nc_cat=1&amp;oh=abc',
+          isVideo: false,
+        ),
+      );
+
+      final resolved = InstagramResolvedData(
+        mediaItems: items,
+        caption: '11 Fotoğraflı Carousel Post',
+        authorUsername: 'zehratuncer',
+      );
+
+      expect(resolved.mediaItems.length, 11);
+      expect(resolved.videoUrl, contains('photo_0.jpg'));
+      expect(resolved.caption, '11 Fotoğraflı Carousel Post');
+    });
   });
 }

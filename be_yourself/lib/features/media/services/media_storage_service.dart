@@ -150,15 +150,36 @@ class MediaStorageService {
     );
   }
 
+  /// Normalizes any file path by stripping `file://` URI scheme and trimming.
+  static String normalizeFilePath(String path) {
+    var p = path.trim();
+    if (p.startsWith('file://')) {
+      p = p.replaceFirst(RegExp(r'^file:\/{2,3}'), '/');
+      if (!p.startsWith('/')) {
+        p = '/$p';
+      }
+    }
+    return p;
+  }
+
   /// Resolves any local media path (handling iOS Sandbox UUID changes across app launches).
   Future<File?> resolveLocalFile(String? rawPath) async {
     if (rawPath == null || rawPath.trim().isEmpty) return null;
-    final cleanPath = rawPath.trim();
+    final cleanPath = normalizeFilePath(rawPath);
 
     // 1. Direct check
     final directFile = File(cleanPath);
     if (await directFile.exists()) {
       return directFile;
+    }
+
+    // 1.1 iOS /private/var vs /var check
+    if (cleanPath.startsWith('/var/')) {
+      final privFile = File('/private$cleanPath');
+      if (await privFile.exists()) return privFile;
+    } else if (cleanPath.startsWith('/private/var/')) {
+      final varFile = File(cleanPath.substring(8));
+      if (await varFile.exists()) return varFile;
     }
 
     // 2. Dynamic resolution using current documents directory
@@ -170,6 +191,12 @@ class MediaStorageService {
       '$docsPath/instagram_media/$fileName',
       '$docsPath/user_avatars/$fileName',
       '$docsPath/$fileName',
+      if (docsPath.startsWith('/var/')) ...[
+        '/private$docsPath/app_media/$fileName',
+        '/private$docsPath/instagram_media/$fileName',
+        '/private$docsPath/user_avatars/$fileName',
+        '/private$docsPath/$fileName',
+      ],
     ];
 
     for (final candidate in candidatePaths) {
@@ -185,10 +212,19 @@ class MediaStorageService {
 
   /// Synchronously attempts to resolve the local file if `_cachedDocsPath` is available.
   File resolveLocalFileSync(String rawPath) {
-    final cleanPath = rawPath.trim();
+    final cleanPath = normalizeFilePath(rawPath);
     final directFile = File(cleanPath);
     if (directFile.existsSync()) {
       return directFile;
+    }
+
+    // iOS /private/var vs /var check
+    if (cleanPath.startsWith('/var/')) {
+      final privFile = File('/private$cleanPath');
+      if (privFile.existsSync()) return privFile;
+    } else if (cleanPath.startsWith('/private/var/')) {
+      final varFile = File(cleanPath.substring(8));
+      if (varFile.existsSync()) return varFile;
     }
 
     if (_cachedDocsPath != null) {
@@ -198,6 +234,12 @@ class MediaStorageService {
         '$_cachedDocsPath/instagram_media/$fileName',
         '$_cachedDocsPath/user_avatars/$fileName',
         '$_cachedDocsPath/$fileName',
+        if (_cachedDocsPath!.startsWith('/var/')) ...[
+          '/private$_cachedDocsPath/app_media/$fileName',
+          '/private$_cachedDocsPath/instagram_media/$fileName',
+          '/private$_cachedDocsPath/user_avatars/$fileName',
+          '/private$_cachedDocsPath/$fileName',
+        ],
       ];
 
       for (final candidate in candidatePaths) {

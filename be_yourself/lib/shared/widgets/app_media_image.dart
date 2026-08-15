@@ -61,6 +61,11 @@ class AppMediaImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
+        headers: const {
+          'User-Agent':
+              'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+          'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        },
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
           final totalBytes = loadingProgress.expectedTotalBytes;
@@ -89,8 +94,9 @@ class AppMediaImage extends StatelessWidget {
       );
     } else {
       // Local File (with dynamic iOS Sandbox UUID recovery)
-      final resolvedFile = MediaStorageService.instance.resolveLocalFileSync(cleanPath);
-      if (resolvedFile.existsSync()) {
+      final normalized = MediaStorageService.normalizeFilePath(cleanPath);
+      final resolvedFile = MediaStorageService.instance.resolveLocalFileSync(normalized);
+      if (resolvedFile.existsSync() && resolvedFile.lengthSync() > 0) {
         content = Image.file(
           resolvedFile,
           width: width,
@@ -109,11 +115,12 @@ class AppMediaImage extends StatelessWidget {
       } else {
         // Asynchronous fallback check if sync missed it
         content = FutureBuilder<File?>(
-          future: MediaStorageService.instance.resolveLocalFile(cleanPath),
+          future: MediaStorageService.instance.resolveLocalFile(normalized),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done &&
                 snapshot.data != null &&
-                snapshot.data!.existsSync()) {
+                snapshot.data!.existsSync() &&
+                snapshot.data!.lengthSync() > 0) {
               return Image.file(
                 snapshot.data!,
                 width: width,

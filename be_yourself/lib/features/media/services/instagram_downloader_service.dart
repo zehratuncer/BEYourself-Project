@@ -436,6 +436,15 @@ class InstagramDownloaderService {
     return null;
   }
 
+  static String _sanitizeMediaUrl(String raw) {
+    var clean = raw.trim();
+    clean = clean.replaceAll('&amp;', '&');
+    clean = clean.replaceAll(r'\u0026', '&');
+    clean = clean.replaceAll(r'\/', '/');
+    clean = clean.replaceAll(RegExp(r'^["' "'" r']+|["' "'" r']+$'), '');
+    return clean;
+  }
+
   static String _cleanHtmlTags(String raw) {
     return raw
         .replaceAll(RegExp(r'<[^>]*>'), '')
@@ -461,12 +470,12 @@ class InstagramDownloaderService {
           if (node != null) {
             if (node['is_video'] == true && node['video_url'] != null) {
               items.add(InstagramMediaItem(
-                url: node['video_url'] as String,
+                url: _sanitizeMediaUrl(node['video_url'] as String),
                 isVideo: true,
               ));
             } else if (node['display_url'] != null) {
               items.add(InstagramMediaItem(
-                url: node['display_url'] as String,
+                url: _sanitizeMediaUrl(node['display_url'] as String),
                 isVideo: false,
               ));
             }
@@ -479,17 +488,17 @@ class InstagramDownloaderService {
     if (items.isEmpty) {
       if (media['is_video'] == true && media['video_url'] != null) {
         items.add(InstagramMediaItem(
-          url: media['video_url'] as String,
+          url: _sanitizeMediaUrl(media['video_url'] as String),
           isVideo: true,
         ));
       } else if (media['display_url'] != null) {
         items.add(InstagramMediaItem(
-          url: media['display_url'] as String,
+          url: _sanitizeMediaUrl(media['display_url'] as String),
           isVideo: false,
         ));
       } else if (media['video_url'] != null) {
         items.add(InstagramMediaItem(
-          url: media['video_url'] as String,
+          url: _sanitizeMediaUrl(media['video_url'] as String),
           isVideo: true,
         ));
       }
@@ -548,7 +557,10 @@ class InstagramDownloaderService {
               }
             }
             if (url != null) {
-              items.add(InstagramMediaItem(url: url, isVideo: isVideo));
+              items.add(InstagramMediaItem(
+                url: _sanitizeMediaUrl(url),
+                isVideo: isVideo,
+              ));
             }
           }
         }
@@ -562,7 +574,10 @@ class InstagramDownloaderService {
         if (vids != null && vids.isNotEmpty) {
           final url = vids.first['url'] as String?;
           if (url != null) {
-            items.add(InstagramMediaItem(url: url, isVideo: true));
+            items.add(InstagramMediaItem(
+              url: _sanitizeMediaUrl(url),
+              isVideo: true,
+            ));
           }
         }
       } else if (media['image_versions2']?['candidates'] != null) {
@@ -570,7 +585,10 @@ class InstagramDownloaderService {
         if (imgs != null && imgs.isNotEmpty) {
           final url = imgs.first['url'] as String?;
           if (url != null) {
-            items.add(InstagramMediaItem(url: url, isVideo: false));
+            items.add(InstagramMediaItem(
+              url: _sanitizeMediaUrl(url),
+              isVideo: false,
+            ));
           }
         }
       }
@@ -628,7 +646,9 @@ class InstagramDownloaderService {
     if (kIsWeb) {
       onProgress?.call(1.0, 'İndirme tamamlandı! ✨');
       return InstagramDownloadResult(
-        filePaths: resolved.mediaItems.map((item) => item.url).toList(),
+        filePaths: resolved.mediaItems
+            .map((item) => _sanitizeMediaUrl(item.url))
+            .toList(),
         caption: resolved.caption,
         authorUsername: resolved.authorUsername,
         authorFullName: resolved.authorFullName,
@@ -647,6 +667,7 @@ class InstagramDownloaderService {
 
     for (int i = 0; i < totalItems; i++) {
       final item = resolved.mediaItems[i];
+      final sanitizedUrl = _sanitizeMediaUrl(item.url);
       final ext = item.isVideo ? 'mp4' : 'jpg';
       final filePath =
           '${mediaDir.path}/ig_${shortcode ?? "media"}_${timestamp}_$i.$ext';
@@ -660,18 +681,53 @@ class InstagramDownloaderService {
             : 'İndiriliyor...',
       );
 
-      final response = await http.get(
-        Uri.parse(item.url),
-        headers: {
-          'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-          'Accept': '*/*',
-        },
-      ).timeout(const Duration(seconds: 25));
+      http.Response? response;
+      try {
+        response = await http.get(
+          Uri.parse(sanitizedUrl),
+          headers: {
+            'User-Agent':
+                'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+            'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+            'Referer': 'https://www.instagram.com/',
+          },
+        ).timeout(const Duration(seconds: 25));
+      } catch (e) {
+        debugPrint('Direct image download attempt 1 failed: $e');
+      }
 
-      if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
-        await file.writeAsBytes(response.bodyBytes);
-        downloadedFilePaths.add(file.path);
+      // Retry without Referer if first attempt failed or returned error
+      if (response == null ||
+          response.statusCode != 200 ||
+          response.bodyBytes.length < 64 ||
+          (response.bodyBytes.length < 1000 &&
+              (response.bodyBytes.first == 60 || response.bodyBytes.first == 123))) {
+        try {
+          response = await http.get(
+            Uri.parse(sanitizedUrl),
+            headers: {
+              'User-Agent':
+                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+              'Accept': '*/*',
+            },
+          ).timeout(const Duration(seconds: 25));
+        } catch (e) {
+          debugPrint('Direct image download attempt 2 failed: $e');
+        }
+      }
+
+      if (response != null &&
+          response.statusCode == 200 &&
+          response.bodyBytes.length > 64) {
+        // Ensure not XML/HTML error text
+        final isErrorText = response.bodyBytes.length < 1000 &&
+            (response.bodyBytes.first == 60 || response.bodyBytes.first == 123);
+        if (!isErrorText) {
+          await file.writeAsBytes(response.bodyBytes);
+          if (await file.exists() && (await file.length()) > 0) {
+            downloadedFilePaths.add(file.path);
+          }
+        }
       }
     }
 
