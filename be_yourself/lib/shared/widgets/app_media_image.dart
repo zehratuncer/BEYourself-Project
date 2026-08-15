@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:be_yourself/core/theme/app_colors.dart';
 import 'package:be_yourself/core/utils/media_type_helper.dart';
@@ -56,8 +57,18 @@ class AppMediaImage extends StatelessWidget {
     } else if (cleanPath.startsWith('http://') ||
         cleanPath.startsWith('https://') ||
         cleanPath.startsWith('blob:')) {
+      String targetUrl = cleanPath;
+      if (kIsWeb &&
+          (cleanPath.contains('cdninstagram.com') ||
+              cleanPath.contains('fbcdn.net') ||
+              cleanPath.contains('instagram.com')) &&
+          !cleanPath.contains('/api/proxy-image')) {
+        targetUrl =
+            'https://be-yourself-project-orpin.vercel.app/api/proxy-image?url=${Uri.encodeComponent(cleanPath)}';
+      }
+
       content = Image.network(
-        cleanPath,
+        targetUrl,
         width: width,
         height: height,
         fit: fit,

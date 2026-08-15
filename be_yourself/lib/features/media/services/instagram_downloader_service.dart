@@ -642,13 +642,50 @@ class InstagramDownloaderService {
       );
     }
 
-    // Web platform: Return resolved media stream URLs directly (browsers cannot write local files)
+    // Web platform: Convert media images to data URIs or proxied URLs to avoid CORS blocking and link expiration
     if (kIsWeb) {
+      final List<String> webMediaUrls = [];
+      for (int i = 0; i < resolved.mediaItems.length; i++) {
+        final item = resolved.mediaItems[i];
+        final sanitizedUrl = _sanitizeMediaUrl(item.url);
+        if (item.isVideo) {
+          final proxyUrl =
+              'https://be-yourself-project-orpin.vercel.app/api/proxy-image?url=${Uri.encodeComponent(sanitizedUrl)}';
+          webMediaUrls.add(proxyUrl);
+        } else {
+          String? dataUri;
+          final proxyCandidates = [
+            '/api/proxy-image?url=${Uri.encodeComponent(sanitizedUrl)}',
+            'https://be-yourself-project-orpin.vercel.app/api/proxy-image?url=${Uri.encodeComponent(sanitizedUrl)}',
+            'https://corsproxy.io/?url=${Uri.encodeComponent(sanitizedUrl)}',
+            'https://api.allorigins.win/raw?url=${Uri.encodeComponent(sanitizedUrl)}',
+          ];
+
+          for (final proxy in proxyCandidates) {
+            try {
+              final res = await http
+                  .get(Uri.parse(proxy))
+                  .timeout(const Duration(seconds: 6));
+              if (res.statusCode == 200 && res.bodyBytes.length > 64) {
+                final isError = res.bodyBytes.length < 1000 &&
+                    (res.bodyBytes.first == 60 || res.bodyBytes.first == 123);
+                if (!isError) {
+                  final base64Str = base64Encode(res.bodyBytes);
+                  dataUri = 'data:image/jpeg;base64,$base64Str';
+                  break;
+                }
+              }
+            } catch (_) {}
+          }
+
+          webMediaUrls.add(dataUri ??
+              'https://be-yourself-project-orpin.vercel.app/api/proxy-image?url=${Uri.encodeComponent(sanitizedUrl)}');
+        }
+      }
+
       onProgress?.call(1.0, 'İndirme tamamlandı! ✨');
       return InstagramDownloadResult(
-        filePaths: resolved.mediaItems
-            .map((item) => _sanitizeMediaUrl(item.url))
-            .toList(),
+        filePaths: webMediaUrls,
         caption: resolved.caption,
         authorUsername: resolved.authorUsername,
         authorFullName: resolved.authorFullName,
