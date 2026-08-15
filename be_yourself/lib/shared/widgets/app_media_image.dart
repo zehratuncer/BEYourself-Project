@@ -1,6 +1,5 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:be_yourself/core/theme/app_colors.dart';
 import 'package:be_yourself/core/utils/media_type_helper.dart';
@@ -24,6 +23,26 @@ class AppMediaImage extends StatelessWidget {
   final double? height;
   final double borderRadius;
   final bool isDarkMode;
+
+  static String proxyMediaUrl(String url) {
+    final clean = url.trim();
+    if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
+      return clean;
+    }
+    // If it's already going through proxy, keep as is
+    if (clean.contains('/api/proxy-image') ||
+        clean.contains('corsproxy.io') ||
+        clean.contains('allorigins.win')) {
+      return clean;
+    }
+    // Proxy Instagram CDN URLs to bypass CORS and Referer restrictions
+    if (clean.contains('cdninstagram.com') ||
+        clean.contains('fbcdn.net') ||
+        clean.contains('instagram.com')) {
+      return 'https://be-yourself-project-orpin.vercel.app/api/proxy-image?url=${Uri.encodeComponent(clean)}';
+    }
+    return clean;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,15 +76,7 @@ class AppMediaImage extends StatelessWidget {
     } else if (cleanPath.startsWith('http://') ||
         cleanPath.startsWith('https://') ||
         cleanPath.startsWith('blob:')) {
-      String targetUrl = cleanPath;
-      if (kIsWeb &&
-          (cleanPath.contains('cdninstagram.com') ||
-              cleanPath.contains('fbcdn.net') ||
-              cleanPath.contains('instagram.com')) &&
-          !cleanPath.contains('/api/proxy-image')) {
-        targetUrl =
-            'https://be-yourself-project-orpin.vercel.app/api/proxy-image?url=${Uri.encodeComponent(cleanPath)}';
-      }
+      final targetUrl = proxyMediaUrl(cleanPath);
 
       content = Image.network(
         targetUrl,
@@ -86,13 +97,13 @@ class AppMediaImage extends StatelessWidget {
               : null;
           return Center(
             child: Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(12.0),
               child: SizedBox(
-                width: 24,
-                height: 24,
+                width: 22,
+                height: 22,
                 child: CircularProgressIndicator(
                   value: value,
-                  strokeWidth: 2.2,
+                  strokeWidth: 2.0,
                   color: isDarkMode
                       ? AppColors.primaryBlueLight
                       : AppColors.primaryBlue,
@@ -101,7 +112,19 @@ class AppMediaImage extends StatelessWidget {
             ),
           );
         },
-        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(context),
+        errorBuilder: (context, error, stackTrace) {
+          // If proxied request failed and it wasn't the raw URL, retry raw URL as fallback
+          if (targetUrl != cleanPath) {
+            return Image.network(
+              cleanPath,
+              width: width,
+              height: height,
+              fit: fit,
+              errorBuilder: (ctx, err, st) => _buildPlaceholder(context),
+            );
+          }
+          return _buildPlaceholder(context);
+        },
       );
     } else {
       // Local File (with dynamic iOS Sandbox UUID recovery)
@@ -179,7 +202,7 @@ class AppMediaImage extends StatelessWidget {
           children: [
             Icon(
               Icons.image_outlined,
-              size: 36,
+              size: 32,
               color: isDarkMode
                   ? AppColors.darkTextSecondary
                   : const Color(0xFF94A3B8),

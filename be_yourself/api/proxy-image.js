@@ -1,4 +1,4 @@
-// Vercel Serverless Function: /api/proxy-image
+﻿// Vercel Serverless Function: /api/proxy-image
 // High-performance CORS proxy for Instagram CDN images and media streams.
 
 const https = require('https');
@@ -54,7 +54,7 @@ function fetchMediaStream(urlStr, reqHeaders = {}, maxRedirects = 5) {
       });
 
       req.on('error', (err) => reject(err));
-      req.setTimeout(12000, () => {
+      req.setTimeout(15000, () => {
         req.destroy();
         reject(new Error('Media fetch timeout'));
       });
@@ -82,13 +82,18 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'url parameter is required' });
   }
 
-  const cleanUrl = decodeURIComponent(rawUrl)
+  let cleanUrl = rawUrl;
+  try {
+    cleanUrl = decodeURIComponent(rawUrl);
+  } catch (_) {}
+
+  cleanUrl = cleanUrl
     .replace(/&amp;/g, '&')
     .replace(/\\u0026/g, '&')
     .trim();
 
   try {
-    const result = await fetchMediaStream(cleanUrl);
+    let result = await fetchMediaStream(cleanUrl);
 
     if (result.statusCode === 200 && result.data && result.data.length > 0) {
       const contentType =
@@ -101,10 +106,11 @@ module.exports = async function handler(req, res) {
       res.setHeader('Content-Length', result.data.length);
       return res.status(200).end(result.data);
     } else {
-      // Retry without referer
+      // Retry without Referer and Chrome desktop UA
       const retryResult = await fetchMediaStream(cleanUrl, {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Referer': '',
       });
       if (retryResult.statusCode === 200 && retryResult.data && retryResult.data.length > 0) {
         const contentType =
