@@ -21,9 +21,9 @@
 
 ## 📱 Proje Hakkında
 
-**BeYourself**, sosyal medyada (özellikle Instagram) gördüğünüz ilham verici sözleri, Reels videolarını ve galeri gönderilerini kolayca kaydedebileceğiniz, kategorilere ayırabileceğiniz, gün içerisinde motive edici yerel bildirimler alabileceğiniz ve telefonunuzun ana ekranında canlı widget ile takip edebileceğiniz **Local-First (Gizlilik Odaklı & Çevrimdışı)** modern bir Flutter uygulamasıdır.
+**BeYourself**, sosyal medyada (özellikle Instagram) gördüğünüz ilham verici sözleri, Reels videolarını ve galeri gönderilerini kolayca kaydedebileceğiniz, kategorilere ayırabileceğiniz, gün içerisinde motive edici yerel bildirimler alabileceğiniz ve telefonunuzun ana ekranında canlı widget ile takip edebileceğiniz modern bir Flutter uygulamasıdır.
 
-Kullanıcı verileri, alıntılar ve indirilen medyalar hiçbir harici sunucuya gönderilmeden tamamen **cihaz üzerinde güvenle** saklanır.
+Kullanıcı verileri ağırlıklı olarak cihazınızda (Local-First) tutulurken, gelişmiş kullanıcı profiliniz Supabase bulut veritabanı sayesinde cihazlar arası güvenle senkronize edilir. Web ve iOS platformlarındaki kısıtlamalar ise özel Vercel altyapısıyla aşılmıştır.
 
 ---
 
@@ -31,6 +31,7 @@ Kullanıcı verileri, alıntılar ve indirilen medyalar hiçbir harici sunucuya 
 
 ### 1. 🎬 Instagram Entegrasyonu (Reels & Çoklu Fotoğraf / Carousel)
 - **Instagram URL ile Medya İndirme:** Reels videoları ve 10 fotoğrafa kadar olan carousel/post gönderileri tek tıkla cihaza indirilir.
+- **Vercel Serverless & CORS Çözümü:** Web ve iOS ortamlarındaki medya engellemelerini (CORS) aşmak için Vercel üzerinde koşan özel sunucusuz (serverless) proxy API'ler entegre edilmiştir.
 - **Otomatik Açıklama (Caption) & Akıllı Başlık:** Gönderi açıklaması alıntı metnine otomatik aktarılır, ilk cümleden vurucu bir kısa başlık (`shortText`) üretilir ve yazar adı Instagram profilinden çekilir.
 - **Dahili Video Oynatıcı & Kaydırılabilir Galeri:** Alıntı detayında tam ekran Reels video oynatıcı ve çoklu fotoğraflar için sağa-sola kaydırılabilir galeri (`PageView`) bulunur.
 - **Gelişmiş Tam Ekran Zoom (Pinch-to-Zoom):** Büyütülen fotoğraflarda parmakla kaydırarak sonraki görsellere geçiş yapılabilir.
@@ -48,6 +49,7 @@ Kullanıcı verileri, alıntılar ve indirilen medyalar hiçbir harici sunucuya 
 
 ### 4. 👤 Gelişmiş Profil Yönetimi & Kişiselleştirme
 - **İsim & Soyisim Düzenleme:** Dinamik kullanıcı profili yönetimi.
+- **Bulut Senkronizasyonu (Supabase):** Kullanıcı profilleri Supabase veritabanı ile eşzamanlı çalışarak verilerinizin bulutta da güvenle yedeklenmesini sağlar.
 - **Avatar & Fotoğraf Seçici:** Galeriden profil resmi yükleme veya 16 farklı hazır ilham avatarı (🌟, 🦋, 🌸, 🚀, vb.) seçme.
 - **Kişisel İlham Mottosu:** Kullanıcının kendine hatırlatmak istediği yaşam felsefesi.
 - **Bildirim Hitap Tercihi:** *Samimi* ("Günaydın Zehra ✨"), *Motive Edici* ("Bugün senin günün Zehra 🚀") veya *Sade* bildirim stilleri.
@@ -75,6 +77,8 @@ Kullanıcı verileri, alıntılar ve indirilen medyalar hiçbir harici sunucuya 
 | :--- | :--- | :--- |
 | **Framework** | Flutter 3.x & Dart 3.x | Çoklu platform (Android, iOS, Web) |
 | **State Management** | Flutter Riverpod 2.5.x | Reaktif ve test edilebilir durum yönetimi |
+| **Bulut Veritabanı** | Supabase | Kullanıcı profili bulut senkronizasyonu |
+| **Sunucu / API** | Vercel Serverless | Instagram Medya Çözümleme ve CORS Proxy (`api/`) |
 | **Yerel Depolama** | SharedPreferences | Local-First hızlı veri kalıcılığı (JSON serileştirme) |
 | **Bildirimler** | `flutter_local_notifications` + `timezone` | Zamanlanmış çevrimdışı bildirimler |
 | **Ana Ekran Widget** | `home_widget` | Android & iOS WidgetKit / AppWidgetProvider |
