@@ -133,7 +133,7 @@ void main() {
       expect(updatedQuotes.first.id, 'q2');
     });
 
-    test('pickDistinctQuotesForSlots picks unique quotes across slots and excludes already sent today', () {
+    test('pickDistinctQuotesForSlots picks unique quotes across slots and excludes already sent today or yesterday', () {
       final service = NotificationService.instance;
 
       final testQuotes = [
@@ -173,30 +173,24 @@ void main() {
       expect(ids1.contains('quote_2'), true);
       expect(ids1.contains('quote_3'), true);
 
-      // Case 2: quote_1 was already sent today -> it MUST NOT be picked again today
+      // Case 2: quote_1 was sent today, quote_2 was sent yesterday -> only quote_3 is available
       final slots2 = service.pickDistinctQuotesForSlots(
         count: 2,
         quotes: testQuotes,
         sentTodayIds: {'quote_1'},
+        sentYesterdayIds: {'quote_2'},
       );
-      expect(slots2.length, 2);
-      final ids2 = slots2.map((s) => s['id']).toSet();
-      expect(ids2.contains('quote_1'), false, reason: 'quote_1 must not be sent again today');
-      expect(ids2.contains('quote_2'), true);
-      expect(ids2.contains('quote_3'), true);
+      expect(slots2.length, 1);
+      expect(slots2.first['id'], 'quote_3');
 
-      // Case 3: All 3 user quotes were already sent today, count is 2 -> should use fallback quotes without repeating
+      // Case 3: All 3 user quotes were already sent today/yesterday, count is 2 -> NO mock notifications should be returned
       final slots3 = service.pickDistinctQuotesForSlots(
         count: 2,
         quotes: testQuotes,
-        sentTodayIds: {'quote_1', 'quote_2', 'quote_3'},
+        sentTodayIds: {'quote_1', 'quote_2'},
+        sentYesterdayIds: {'quote_3'},
       );
-      expect(slots3.length, 2);
-      final ids3 = slots3.map((s) => s['id']).toSet();
-      expect(ids3.contains('quote_1'), false);
-      expect(ids3.contains('quote_2'), false);
-      expect(ids3.contains('quote_3'), false);
-      expect(ids3.length, 2, reason: 'Fallback slots must also be distinct');
+      expect(slots3, isEmpty, reason: 'Must not send mock notifications when no eligible quotes remain');
     });
 
     test('recordSentQuoteIds and getSentQuoteIdsForDate persist unique quote IDs per day', () async {

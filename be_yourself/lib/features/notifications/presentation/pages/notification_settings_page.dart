@@ -13,7 +13,7 @@ import 'package:be_yourself/main.dart';
 class NotificationCountNotifier extends StateNotifier<int> {
   final SharedPreferences prefs;
   NotificationCountNotifier(this.prefs)
-      : super(prefs.getInt('notificationCount') ?? 3);
+      : super(prefs.getInt('notificationCount') ?? 16);
 
   void setCount(int val) {
     state = val;
@@ -32,7 +32,7 @@ class NotificationStartTimeNotifier extends StateNotifier<TimeOfDay> {
   NotificationStartTimeNotifier(this.prefs)
       : super(
           TimeOfDay(
-            hour: prefs.getInt('notificationStartTimeHour') ?? 9,
+            hour: prefs.getInt('notificationStartTimeHour') ?? 8,
             minute: prefs.getInt('notificationStartTimeMinute') ?? 0,
           ),
         );
@@ -55,7 +55,7 @@ class NotificationEndTimeNotifier extends StateNotifier<TimeOfDay> {
   NotificationEndTimeNotifier(this.prefs)
       : super(
           TimeOfDay(
-            hour: prefs.getInt('notificationEndTimeHour') ?? 21,
+            hour: prefs.getInt('notificationEndTimeHour') ?? 23,
             minute: prefs.getInt('notificationEndTimeMinute') ?? 0,
           ),
         );
@@ -198,10 +198,10 @@ class NotificationSettingsPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   Slider(
-                    value: count.toDouble(),
+                    value: count.toDouble().clamp(1, 24),
                     min: 1,
-                    max: 10,
-                    divisions: 9,
+                    max: 24,
+                    divisions: 23,
                     activeColor: isDarkMode
                         ? AppColors.primaryBlueLight
                         : AppColors.primaryBlue,
@@ -369,17 +369,30 @@ class NotificationSettingsPage extends ConsumerWidget {
                     // Request permissions if needed
                     await NotificationService.instance.requestPermissions();
 
-                    // Pick sample text
-                    final sampleQuote = quotes.isNotEmpty
-                        ? quotes.first.displayText
-                        : 'Kendine inan, yapabileceklerinin sınırı yoktur.';
-                    final sampleAuthor = (quotes.isNotEmpty &&
-                            quotes.first.author.trim().isNotEmpty &&
+                    if (quotes.isEmpty) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text(
+                              'Henüz eklenmiş bir alıntınız yok. Bildirim gönderilebilmesi için lütfen önce bir alıntı ekleyin.',
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: const Color(0xFFF59E0B),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        );
+                      }
+                      return;
+                    }
+
+                    final sampleQuote = quotes.first.displayText;
+                    final sampleAuthor = (quotes.first.author.trim().isNotEmpty &&
                             quotes.first.author.trim() != 'Anonim')
                         ? quotes.first.author.trim()
                         : 'Günün Alıntısı 💫';
-                    final sampleId =
-                        quotes.isNotEmpty ? quotes.first.id : 'fallback_0';
+                    final sampleId = quotes.first.id;
 
                     await NotificationService.instance.showInstantNotification(
                       title: sampleAuthor,

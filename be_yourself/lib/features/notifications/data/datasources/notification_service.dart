@@ -28,28 +28,7 @@ class NotificationService {
   bool _isInitialized = false;
   bool get isInitialized => _isInitialized;
 
-  static const List<Map<String, String>> _fallbackQuotes = [
-    {
-      'text': 'Kendine inan, yapabileceklerinin sınırı yoktur.',
-      'author': 'Günün Alıntısı 💫',
-    },
-    {
-      'text': 'Her yeni gün, yepyeni bir başlangıç ve fırsattır.',
-      'author': 'Günün Alıntısı 💫',
-    },
-    {
-      'text': 'Zorluklar, seni daha güçlü kılmak için vardır.',
-      'author': 'Günün Alıntısı 💫',
-    },
-    {
-      'text': 'Bugün kendin için güzel bir adım at.',
-      'author': 'Günün Alıntısı 💫',
-    },
-    {
-      'text': 'Küçük adımlar, büyük zaferlerin anahtarıdır.',
-      'author': 'Günün Alıntısı 💫',
-    },
-  ];
+
 
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -278,57 +257,39 @@ class NotificationService {
     required int count,
     required List<Quote> quotes,
     required Set<String> sentTodayIds,
+    Set<String>? sentYesterdayIds,
+    Random? random,
   }) {
-    if (count <= 0) return [];
+    if (count <= 0 || quotes.isEmpty) return [];
 
     final List<Map<String, String>> selectedQuotes = [];
-    final Set<String> usedIdsToday = Set<String>.from(sentTodayIds);
+    final Set<String> excludedIds = {
+      ...sentTodayIds,
+      if (sentYesterdayIds != null) ...sentYesterdayIds,
+    };
 
-    // 1. First, pick quotes from user's quotes that have NOT yet been sent/shown today
+    // Filter candidate quotes that have not been sent today or yesterday
     final availableUserQuotes = quotes
-        .where((q) => !usedIdsToday.contains(q.id))
+        .where((q) => !excludedIds.contains(q.id))
         .toList();
 
-    for (final userQuote in availableUserQuotes) {
+    if (availableUserQuotes.isEmpty) {
+      return [];
+    }
+
+    final rng = random ?? Random();
+    final shuffled = List<Quote>.from(availableUserQuotes)..shuffle(rng);
+
+    for (final userQuote in shuffled) {
       if (selectedQuotes.length >= count) break;
       selectedQuotes.add({
         'id': userQuote.id,
         'text': userQuote.displayText,
         'author': userQuote.author.isNotEmpty ? userQuote.author : 'Anonim',
       });
-      usedIdsToday.add(userQuote.id);
     }
 
-    // 2. If we still need more quotes and not enough unsent user quotes,
-    // use unique fallback quotes so that no quote is repeated twice in the same day
-    if (selectedQuotes.length < count) {
-      for (int i = 0; i < _fallbackQuotes.length; i++) {
-        if (selectedQuotes.length >= count) break;
-        final fallbackId = 'fallback_$i';
-        if (!usedIdsToday.contains(fallbackId)) {
-          selectedQuotes.add({
-            'id': fallbackId,
-            'text': _fallbackQuotes[i]['text']!,
-            'author': _fallbackQuotes[i]['author']!,
-          });
-          usedIdsToday.add(fallbackId);
-        }
-      }
-    }
-
-    // 3. Ultra-fallback if count exceeds fallback list too
-    int fallbackIndex = 0;
-    while (selectedQuotes.length < count) {
-      final index = fallbackIndex % _fallbackQuotes.length;
-      final fallbackId = 'fallback_extra_${selectedQuotes.length}';
-      selectedQuotes.add({
-        'id': fallbackId,
-        'text': _fallbackQuotes[index]['text']!,
-        'author': _fallbackQuotes[index]['author']!,
-      });
-      fallbackIndex++;
-    }
-
+    // Strict rule: If user quotes run out, do NOT append mock/fallback quotes.
     return selectedQuotes;
   }
 
@@ -342,7 +303,7 @@ class NotificationService {
     await initialize();
     await cancelAll();
 
-    if (count <= 0) return;
+    if (count <= 0 || quotes.isEmpty) return;
 
     final List<TimeOfDay> slots = _calculateTimeSlots(
       count: count,
@@ -351,18 +312,25 @@ class NotificationService {
     );
 
     final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(days: 1));
     final sentTodayList = await getSentQuoteIdsForDate(now, prefs: prefs);
+    final sentYesterdayList = await getSentQuoteIdsForDate(yesterday, prefs: prefs);
     final sentTodaySet = sentTodayList.toSet();
+    final sentYesterdaySet = sentYesterdayList.toSet();
 
     final slotQuotes = pickDistinctQuotesForSlots(
       count: slots.length,
       quotes: quotes,
       sentTodayIds: sentTodaySet,
+      sentYesterdayIds: sentYesterdaySet,
     );
 
-    final List<String> newlyScheduledIds = [];
+    if (slotQuotes.isEmpty) return;
 
-    for (int i = 0; i < slots.length; i++) {
+    final List<String> newlyScheduledIds = [];
+    final int scheduleCount = min(slots.length, slotQuotes.length);
+
+    for (int i = 0; i < scheduleCount; i++) {
       final slot = slots[i];
       final quote = slotQuotes[i];
       if (quote['id'] != null) {
