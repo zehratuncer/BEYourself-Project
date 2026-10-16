@@ -133,7 +133,7 @@ void main() {
       expect(updatedQuotes.first.id, 'q2');
     });
 
-    test('pickDistinctQuotesForSlots picks unique quotes across slots and excludes already sent today or yesterday', () {
+    test('pickQuotesForSlots distributes quotes across slots without deduplication blocking', () {
       final service = NotificationService.instance;
 
       final testQuotes = [
@@ -151,64 +151,21 @@ void main() {
           categoryName: 'Genel',
           createdAt: DateTime.now(),
         ),
-        Quote(
-          id: 'quote_3',
-          text: 'Alıntı 3',
-          author: 'Yazar 3',
-          categoryName: 'Genel',
-          createdAt: DateTime.now(),
-        ),
       ];
 
-      // Case 1: Slot count = 3, no prior sent quotes -> all 3 should be unique
-      final slots1 = service.pickDistinctQuotesForSlots(
-        count: 3,
+      // When requesting 4 slots from 2 quotes, quotes should cycle/repeat cleanly
+      final slots = service.pickQuotesForSlots(
+        count: 4,
         quotes: testQuotes,
-        sentTodayIds: {},
       );
-      expect(slots1.length, 3);
-      final ids1 = slots1.map((s) => s['id']).toSet();
-      expect(ids1.length, 3);
-      expect(ids1.contains('quote_1'), true);
-      expect(ids1.contains('quote_2'), true);
-      expect(ids1.contains('quote_3'), true);
+      expect(slots.length, 4);
+      final ids = slots.map((s) => s['id']).toList();
+      expect(ids.contains('quote_1'), true);
+      expect(ids.contains('quote_2'), true);
 
-      // Case 2: quote_1 was sent today, quote_2 was sent yesterday -> only quote_3 is available
-      final slots2 = service.pickDistinctQuotesForSlots(
-        count: 2,
-        quotes: testQuotes,
-        sentTodayIds: {'quote_1'},
-        sentYesterdayIds: {'quote_2'},
-      );
-      expect(slots2.length, 1);
-      expect(slots2.first['id'], 'quote_3');
-
-      // Case 3: All 3 user quotes were already sent today/yesterday, count is 2 -> NO mock notifications should be returned
-      final slots3 = service.pickDistinctQuotesForSlots(
-        count: 2,
-        quotes: testQuotes,
-        sentTodayIds: {'quote_1', 'quote_2'},
-        sentYesterdayIds: {'quote_3'},
-      );
-      expect(slots3, isEmpty, reason: 'Must not send mock notifications when no eligible quotes remain');
-    });
-
-    test('recordSentQuoteIds and getSentQuoteIdsForDate persist unique quote IDs per day', () async {
-      final service = NotificationService.instance;
-      SharedPreferences.setMockInitialValues({});
-      final prefs = await SharedPreferences.getInstance();
-
-      final today = DateTime.now();
-      expect(await service.getSentQuoteIdsForDate(today, prefs: prefs), isEmpty);
-
-      await service.recordSentQuoteIds(['quote_a', 'quote_b'], date: today, prefs: prefs);
-      final recorded = await service.getSentQuoteIdsForDate(today, prefs: prefs);
-      expect(recorded, ['quote_a', 'quote_b']);
-
-      // Adding duplicate should not duplicate entries
-      await service.recordSentQuoteIds(['quote_b', 'quote_c'], date: today, prefs: prefs);
-      final updated = await service.getSentQuoteIdsForDate(today, prefs: prefs);
-      expect(updated, ['quote_a', 'quote_b', 'quote_c']);
+      // Empty list returns empty slots
+      expect(service.pickQuotesForSlots(count: 3, quotes: []), isEmpty);
+      expect(service.pickQuotesForSlots(count: 0, quotes: testQuotes), isEmpty);
     });
   });
 }

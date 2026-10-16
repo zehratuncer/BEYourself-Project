@@ -16,7 +16,6 @@ final notificationSyncProvider = Provider<void>((ref) {
   final endTime = ref.watch(notificationEndTimeProvider);
   final quotes = ref.watch(quoteListProvider);
   final service = ref.watch(notificationServiceProvider);
-  final prefs = ref.watch(sharedPreferencesProvider);
 
   if (!isEnabled) {
     service.cancelAll();
@@ -29,7 +28,6 @@ final notificationSyncProvider = Provider<void>((ref) {
     startTime: startTime,
     endTime: endTime,
     quotes: quotes,
-    prefs: prefs,
   );
 });
 

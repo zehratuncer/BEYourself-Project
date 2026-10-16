@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:be_yourself/features/home_widget/services/home_widget_service.dart';
@@ -87,44 +86,6 @@ class NotificationService {
     _isInitialized = true;
   }
 
-  static String getDailySentKey(DateTime date) {
-    final y = date.year;
-    final m = date.month.toString().padLeft(2, '0');
-    final d = date.day.toString().padLeft(2, '0');
-    return 'daily_sent_notification_quote_ids_${y}_${m}_$d';
-  }
-
-  Future<List<String>> getSentQuoteIdsForDate(
-    DateTime date, {
-    SharedPreferences? prefs,
-  }) async {
-    final sp = prefs ?? await SharedPreferences.getInstance();
-    return sp.getStringList(getDailySentKey(date)) ?? [];
-  }
-
-  Future<void> recordSentQuoteIds(
-    List<String> quoteIds, {
-    DateTime? date,
-    SharedPreferences? prefs,
-  }) async {
-    if (quoteIds.isEmpty) return;
-    final targetDate = date ?? DateTime.now();
-    final sp = prefs ?? await SharedPreferences.getInstance();
-    final key = getDailySentKey(targetDate);
-    final currentList = sp.getStringList(key) ?? [];
-    final currentSet = currentList.toSet();
-    bool changed = false;
-    for (final id in quoteIds) {
-      if (id.trim().isNotEmpty && currentSet.add(id.trim())) {
-        currentList.add(id.trim());
-        changed = true;
-      }
-    }
-    if (changed) {
-      await sp.setStringList(key, currentList);
-    }
-  }
-
   Future<void> handleNotificationClick(String? payload) async {
     if (payload == null || payload.trim().isEmpty) return;
 
@@ -136,13 +97,6 @@ class NotificationService {
           .rotateWidgetToDifferentQuote(excludeQuoteId: payload);
     } catch (e) {
       debugPrint('HomeWidget rotation on notification click error: $e');
-    }
-
-    // 2. Mark this quote as sent/viewed today
-    try {
-      await recordSentQuoteIds([payload]);
-    } catch (e) {
-      debugPrint('recordSentQuoteIds on notification click error: $e');
     }
 
     final navState = appNavigatorKey.currentState;
@@ -253,43 +207,26 @@ class NotificationService {
     );
   }
 
-  List<Map<String, String>> pickDistinctQuotesForSlots({
+  List<Map<String, String>> pickQuotesForSlots({
     required int count,
     required List<Quote> quotes,
-    required Set<String> sentTodayIds,
-    Set<String>? sentYesterdayIds,
     Random? random,
   }) {
     if (count <= 0 || quotes.isEmpty) return [];
 
-    final List<Map<String, String>> selectedQuotes = [];
-    final Set<String> excludedIds = {
-      ...sentTodayIds,
-      if (sentYesterdayIds != null) ...sentYesterdayIds,
-    };
-
-    // Filter candidate quotes that have not been sent today or yesterday
-    final availableUserQuotes = quotes
-        .where((q) => !excludedIds.contains(q.id))
-        .toList();
-
-    if (availableUserQuotes.isEmpty) {
-      return [];
-    }
-
     final rng = random ?? Random();
-    final shuffled = List<Quote>.from(availableUserQuotes)..shuffle(rng);
+    final shuffled = List<Quote>.from(quotes)..shuffle(rng);
+    final List<Map<String, String>> selectedQuotes = [];
 
-    for (final userQuote in shuffled) {
-      if (selectedQuotes.length >= count) break;
+    for (int i = 0; i < count; i++) {
+      final quote = shuffled[i % shuffled.length];
       selectedQuotes.add({
-        'id': userQuote.id,
-        'text': userQuote.displayText,
-        'author': userQuote.author.isNotEmpty ? userQuote.author : 'Anonim',
+        'id': quote.id,
+        'text': quote.displayText,
+        'author': quote.author.isNotEmpty ? quote.author : 'Anonim',
       });
     }
 
-    // Strict rule: If user quotes run out, do NOT append mock/fallback quotes.
     return selectedQuotes;
   }
 
@@ -298,7 +235,6 @@ class NotificationService {
     required TimeOfDay startTime,
     required TimeOfDay endTime,
     required List<Quote> quotes,
-    SharedPreferences? prefs,
   }) async {
     await initialize();
     await cancelAll();
@@ -311,31 +247,18 @@ class NotificationService {
       endTime: endTime,
     );
 
-    final now = DateTime.now();
-    final yesterday = now.subtract(const Duration(days: 1));
-    final sentTodayList = await getSentQuoteIdsForDate(now, prefs: prefs);
-    final sentYesterdayList = await getSentQuoteIdsForDate(yesterday, prefs: prefs);
-    final sentTodaySet = sentTodayList.toSet();
-    final sentYesterdaySet = sentYesterdayList.toSet();
-
-    final slotQuotes = pickDistinctQuotesForSlots(
+    final slotQuotes = pickQuotesForSlots(
       count: slots.length,
       quotes: quotes,
-      sentTodayIds: sentTodaySet,
-      sentYesterdayIds: sentYesterdaySet,
     );
 
     if (slotQuotes.isEmpty) return;
 
-    final List<String> newlyScheduledIds = [];
     final int scheduleCount = min(slots.length, slotQuotes.length);
 
     for (int i = 0; i < scheduleCount; i++) {
       final slot = slots[i];
       final quote = slotQuotes[i];
-      if (quote['id'] != null) {
-        newlyScheduledIds.add(quote['id']!);
-      }
 
       final scheduledTime = _nextInstanceOfTime(slot.hour, slot.minute);
 
@@ -406,10 +329,6 @@ class NotificationService {
           debugPrint('Inexact zonedSchedule error: $innerError');
         }
       }
-    }
-
-    if (newlyScheduledIds.isNotEmpty) {
-      await recordSentQuoteIds(newlyScheduledIds, date: now, prefs: prefs);
     }
   }
 
