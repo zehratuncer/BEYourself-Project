@@ -174,6 +174,56 @@ class InstagramDownloaderService {
     return http.get(uri, headers: defaultHeaders).timeout(timeout);
   }
 
+  /// Issues the POST request Instagram's current (2025+) GraphQL endpoint
+  /// requires. Returns null if every attempt (direct call, or CORS proxies
+  /// on Web) fails.
+  Future<http.Response?> _postGraphQL(String docId, String shortcode) async {
+    final variables = jsonEncode({'shortcode': shortcode});
+    final body = {
+      'doc_id': docId,
+      'variables': variables,
+      'lsd': 'AVqbxe3J_YA',
+    };
+    final headers = {
+      'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'X-IG-App-ID': '936619743392459',
+      'X-FB-LSD': 'AVqbxe3J_YA',
+      'X-ASBD-ID': '129477',
+      'Sec-Fetch-Site': 'same-origin',
+    };
+    const target = 'https://www.instagram.com/api/graphql';
+
+    if (!kIsWeb) {
+      try {
+        return await http
+            .post(Uri.parse(target), headers: headers, body: body)
+            .timeout(const Duration(seconds: 8));
+      } catch (e) {
+        debugPrint('GraphQL POST (direct) error: $e');
+        return null;
+      }
+    }
+
+    // Web: direct calls are blocked by CORS, so relay through proxies that
+    // forward method/body to the target instead of only supporting GET.
+    final proxies = [
+      'https://corsproxy.io/?url=${Uri.encodeComponent(target)}',
+      'https://api.codetabs.com/v1/proxy?quest=${Uri.encodeComponent(target)}',
+    ];
+    for (final proxy in proxies) {
+      try {
+        final res = await http
+            .post(Uri.parse(proxy), headers: headers, body: body)
+            .timeout(const Duration(seconds: 8));
+        if (res.statusCode == 200 && res.body.isNotEmpty) {
+          return res;
+        }
+      } catch (_) {}
+    }
+    return null;
+  }
+
   /// Resolves media stream URLs, caption, and author info across multiple strategies.
   Future<InstagramResolvedData?> resolveInstagramData(String rawUrl) async {
     final shortcode = await resolveCanonicalShortcode(rawUrl) ??
@@ -221,7 +271,13 @@ class InstagramDownloaderService {
       debugPrint('Strategy 0 (Serverless API) error: $e');
     }
 
-    // Strategy 1: Multi-DocID GraphQL queries
+    // Strategy 1: Multi-DocID GraphQL queries via POST /api/graphql.
+    // NOTE: the legacy GET /graphql/query/ endpoint used previously has been
+    // retired by Instagram (now returns 404/redirect), which made this
+    // strategy always fail and silently fall through to the embed/oEmbed
+    // fallbacks below — those only ever return a single poster image, never
+    // a playable video or the full carousel. This is the root cause of both
+    // the "video becomes a screenshot" and "only first carousel photo" bugs.
     final docIds = [
       '10015901848480474',
       '8845758582119845',
@@ -231,22 +287,8 @@ class InstagramDownloaderService {
 
     for (final docId in docIds) {
       try {
-        final uri = Uri.parse(
-          'https://www.instagram.com/graphql/query/?doc_id=$docId&variables=%7B%22shortcode%22:%22$shortcode%22%7D',
-        );
-
-        final response = await _fetch(
-          uri,
-          headers: {
-            'User-Agent':
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            'X-IG-App-ID': '936619743392459',
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': '*/*',
-          },
-        );
-
-        if (response.statusCode == 200) {
+        final response = await _postGraphQL(docId, shortcode);
+        if (response != null && response.statusCode == 200) {
           final data = jsonDecode(response.body) as Map<String, dynamic>;
           final media = data['data']?['xdt_shortcode_media'] ??
               data['data']?['shortcode_media'];
@@ -317,24 +359,73 @@ class InstagramDownloaderService {
         String? caption;
         String? authorUsername;
 
-        // Video src extraction
-        final videoSrcMatch = RegExp(r'<video[^>]+src="([^">]+)"').firstMatch(html) ??
-            RegExp(r'class="EmbeddedMediaVideo"[^>]+src="([^">]+)"').firstMatch(html);
-        if (videoSrcMatch != null && videoSrcMatch.group(1) != null) {
-          final extractedUrl = videoSrcMatch.group(1)!.replaceAll('&amp;', '&');
-          embedItems.add(InstagramMediaItem(url: extractedUrl, isVideo: true));
+        // Prefer the real media graph embedded as JSON inside the page's
+        // <script> blobs over the static <img>/<video> markup: the visible
+        // markup only ever exposes a single poster frame for videos and only
+        // the first slide for carousels, while the inline JSON (sidecar
+        // edges / video_url) carries every item.
+        try {
+          final sidecarJson = _extractBalancedJson(html, 'edge_sidecar_to_children');
+          if (sidecarJson != null) {
+            final sidecar = jsonDecode(sidecarJson) as Map<String, dynamic>;
+            final edges = sidecar['edges'] as List<dynamic>?;
+            if (edges != null && edges.isNotEmpty) {
+              for (final edge in edges) {
+                final node = edge['node'] as Map<String, dynamic>?;
+                if (node == null) continue;
+                if (node['is_video'] == true && node['video_url'] != null) {
+                  embedItems.add(InstagramMediaItem(
+                    url: _sanitizeMediaUrl(node['video_url'] as String),
+                    isVideo: true,
+                  ));
+                } else if (node['display_url'] != null) {
+                  embedItems.add(InstagramMediaItem(
+                    url: _sanitizeMediaUrl(node['display_url'] as String),
+                    isVideo: false,
+                  ));
+                }
+              }
+            }
+          }
+
+          if (embedItems.isEmpty) {
+            final videoUrlJsonMatch =
+                RegExp(r'"video_url"\s*:\s*"((?:[^"\\]|\\.)*)"').firstMatch(html);
+            if (videoUrlJsonMatch != null) {
+              final decoded =
+                  jsonDecode('"${videoUrlJsonMatch.group(1)}"') as String;
+              embedItems.add(
+                  InstagramMediaItem(url: _sanitizeMediaUrl(decoded), isVideo: true));
+            }
+          }
+        } catch (e) {
+          debugPrint('Strategy 3 deep JSON parse error: $e');
         }
 
-        // Image extraction
-        final imgSrcMatches = RegExp(
-          r'<img[^>]+(?:class="EmbeddedMediaImage"|class="EmbeddedVideoPosterImage")[^>]+src="([^">]+)"',
-        ).allMatches(html);
-        for (final m in imgSrcMatches) {
-          if (m.group(1) != null) {
-            embedItems.add(InstagramMediaItem(
-              url: m.group(1)!.replaceAll('&amp;', '&'),
-              isVideo: false,
-            ));
+        // Legacy fallback: static <video>/<img> markup (poster frame / first
+        // slide only) — only used if the JSON-based extraction above found
+        // nothing.
+        if (embedItems.isEmpty) {
+          final videoSrcMatch = RegExp(r'<video[^>]+src="([^">]+)"').firstMatch(html) ??
+              RegExp(r'class="EmbeddedMediaVideo"[^>]+src="([^">]+)"').firstMatch(html);
+          if (videoSrcMatch != null && videoSrcMatch.group(1) != null) {
+            final extractedUrl = videoSrcMatch.group(1)!.replaceAll('&amp;', '&');
+            embedItems.add(InstagramMediaItem(url: extractedUrl, isVideo: true));
+          }
+        }
+
+        if (embedItems.isEmpty) {
+          // Image extraction
+          final imgSrcMatches = RegExp(
+            r'<img[^>]+(?:class="EmbeddedMediaImage"|class="EmbeddedVideoPosterImage")[^>]+src="([^">]+)"',
+          ).allMatches(html);
+          for (final m in imgSrcMatches) {
+            if (m.group(1) != null) {
+              embedItems.add(InstagramMediaItem(
+                url: m.group(1)!.replaceAll('&amp;', '&'),
+                isVideo: false,
+              ));
+            }
           }
         }
 
@@ -443,6 +534,56 @@ class InstagramDownloaderService {
     clean = clean.replaceAll(r'\/', '/');
     clean = clean.replaceAll(RegExp(r'^["' "'" r']+|["' "'" r']+$'), '');
     return clean;
+  }
+
+  /// Scans raw HTML for a JSON value (object or array) that starts right
+  /// after the given key, using brace/bracket balancing so it survives
+  /// nested objects (e.g. carousel "edges" arrays) that a non-greedy regex
+  /// would truncate.
+  static String? _extractBalancedJson(String html, String key) {
+    final keyIdx = html.indexOf('"$key"');
+    if (keyIdx == -1) return null;
+    final colonIdx = html.indexOf(':', keyIdx);
+    if (colonIdx == -1) return null;
+
+    var i = colonIdx + 1;
+    while (i < html.length && html[i] != '{' && html[i] != '[') {
+      i++;
+    }
+    if (i >= html.length) return null;
+
+    final openChar = html[i];
+    final closeChar = openChar == '{' ? '}' : ']';
+    final start = i;
+    var depth = 0;
+    var inString = false;
+    var escape = false;
+
+    for (; i < html.length; i++) {
+      final c = html[i];
+      if (inString) {
+        if (escape) {
+          escape = false;
+        } else if (c == '\\') {
+          escape = true;
+        } else if (c == '"') {
+          inString = false;
+        }
+        continue;
+      }
+      if (c == '"') {
+        inString = true;
+        continue;
+      }
+      if (c == openChar) depth++;
+      if (c == closeChar) {
+        depth--;
+        if (depth == 0) {
+          return html.substring(start, i + 1);
+        }
+      }
+    }
+    return null;
   }
 
   static String _cleanHtmlTags(String raw) {

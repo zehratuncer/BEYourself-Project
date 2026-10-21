@@ -3,7 +3,6 @@ import 'package:be_yourself/features/notifications/data/datasources/notification
 import 'package:be_yourself/features/notifications/presentation/pages/notification_settings_page.dart';
 import 'package:be_yourself/features/quote/presentation/providers/quote_providers.dart';
 import 'package:be_yourself/features/settings/presentation/pages/settings_page.dart';
-import 'package:be_yourself/main.dart';
 
 final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService.instance;
