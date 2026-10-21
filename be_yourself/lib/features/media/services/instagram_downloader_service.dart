@@ -178,7 +178,12 @@ class InstagramDownloaderService {
   /// requires. Returns null if every attempt (direct call, or CORS proxies
   /// on Web) fails.
   Future<http.Response?> _postGraphQL(String docId, String shortcode) async {
-    final variables = jsonEncode({'shortcode': shortcode});
+    final variables = jsonEncode({
+      'shortcode': shortcode,
+      '__relay_internal__pv__PolarisAIGMMediaWebLabelEnabledrelayprovider':
+          false,
+      '__relay_internal__pv__PolarisIsLoggedInrelayprovider': false,
+    });
     final body = {
       'doc_id': docId,
       'variables': variables,
@@ -271,14 +276,13 @@ class InstagramDownloaderService {
       debugPrint('Strategy 0 (Serverless API) error: $e');
     }
 
+    final isReelUrl = rawUrl.toLowerCase().contains('/reel') ||
+        rawUrl.toLowerCase().contains('share/reel');
+
     // Strategy 1: Multi-DocID GraphQL queries via POST /api/graphql.
-    // NOTE: the legacy GET /graphql/query/ endpoint used previously has been
-    // retired by Instagram (now returns 404/redirect), which made this
-    // strategy always fail and silently fall through to the embed/oEmbed
-    // fallbacks below — those only ever return a single poster image, never
-    // a playable video or the full carousel. This is the root cause of both
-    // the "video becomes a screenshot" and "only first carousel photo" bugs.
     final docIds = [
+      '27128499623469141',
+      '27234427476213202',
       '10015901848480474',
       '8845758582119845',
       '7479768652077977',
@@ -290,8 +294,10 @@ class InstagramDownloaderService {
         final response = await _postGraphQL(docId, shortcode);
         if (response != null && response.statusCode == 200) {
           final data = jsonDecode(response.body) as Map<String, dynamic>;
-          final media = data['data']?['xdt_shortcode_media'] ??
-              data['data']?['shortcode_media'];
+          final media = data['data']?['xdt_api__v1__media__shortcode__web_info'] ??
+              data['data']?['xdt_shortcode_media'] ??
+              data['data']?['shortcode_media'] ??
+              data['data']?['xdt_api__v1__clips__user__connection_v2'];
           if (media != null) {
             final parsed = _parseGraphQLMedia(media);
             if (parsed != null && parsed.mediaItems.isNotEmpty) {
@@ -398,6 +404,21 @@ class InstagramDownloaderService {
                   InstagramMediaItem(url: _sanitizeMediaUrl(decoded), isVideo: true));
             }
           }
+
+          if (embedItems.isEmpty) {
+            final unescapedHtml =
+                html.replaceAll(r'\/', '/').replaceAll(r'\u0026', '&');
+            final mp4Match = RegExp(
+              r'(https?://[a-zA-Z0-9_.-]+fbcdn\.net/[^\s"<>]+\.mp4[^\s"<>]*)',
+              caseSensitive: false,
+            ).firstMatch(unescapedHtml);
+            if (mp4Match != null && mp4Match.group(1) != null) {
+              embedItems.add(InstagramMediaItem(
+                url: _sanitizeMediaUrl(mp4Match.group(1)!),
+                isVideo: true,
+              ));
+            }
+          }
         } catch (e) {
           debugPrint('Strategy 3 deep JSON parse error: $e');
         }
@@ -410,19 +431,20 @@ class InstagramDownloaderService {
               RegExp(r'class="EmbeddedMediaVideo"[^>]+src="([^">]+)"').firstMatch(html);
           if (videoSrcMatch != null && videoSrcMatch.group(1) != null) {
             final extractedUrl = videoSrcMatch.group(1)!.replaceAll('&amp;', '&');
-            embedItems.add(InstagramMediaItem(url: extractedUrl, isVideo: true));
+            embedItems.add(InstagramMediaItem(url: _sanitizeMediaUrl(extractedUrl), isVideo: true));
           }
         }
 
-        if (embedItems.isEmpty) {
+        // Only extract images if not a dedicated Reel URL or if we are handling a photo/carousel post
+        if (embedItems.isEmpty && !isReelUrl) {
           // Image extraction
           final imgSrcMatches = RegExp(
-            r'<img[^>]+(?:class="EmbeddedMediaImage"|class="EmbeddedVideoPosterImage")[^>]+src="([^">]+)"',
+            r'<img[^>]+(?:class="EmbeddedMediaImage")[^>]+src="([^">]+)"',
           ).allMatches(html);
           for (final m in imgSrcMatches) {
             if (m.group(1) != null) {
               embedItems.add(InstagramMediaItem(
-                url: m.group(1)!.replaceAll('&amp;', '&'),
+                url: _sanitizeMediaUrl(m.group(1)!),
                 isVideo: false,
               ));
             }
@@ -459,34 +481,36 @@ class InstagramDownloaderService {
       debugPrint('Strategy 3 (Embed page) error: $e');
     }
 
-    // Strategy 4: Instagram oEmbed API fallback
-    try {
-      final oembedUrl =
-          'https://www.instagram.com/api/v1/oembed/?url=https://www.instagram.com/p/$shortcode/';
-      final response = await _fetch(
-        Uri.parse(oembedUrl),
-        headers: {
-          'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        },
-      );
+    // Strategy 4: Instagram oEmbed API fallback (for photo posts only)
+    if (!isReelUrl) {
+      try {
+        final oembedUrl =
+            'https://www.instagram.com/api/v1/oembed/?url=https://www.instagram.com/p/$shortcode/';
+        final response = await _fetch(
+          Uri.parse(oembedUrl),
+          headers: {
+            'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          },
+        );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final thumbnailUrl = data['thumbnail_url'] as String?;
-        final title = data['title'] as String?;
-        final authorName = data['author_name'] as String?;
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body) as Map<String, dynamic>;
+          final thumbnailUrl = data['thumbnail_url'] as String?;
+          final title = data['title'] as String?;
+          final authorName = data['author_name'] as String?;
 
-        if (thumbnailUrl != null && thumbnailUrl.isNotEmpty) {
-          return InstagramResolvedData(
-            mediaItems: [InstagramMediaItem(url: thumbnailUrl, isVideo: false)],
-            caption: title,
-            authorUsername: authorName,
-          );
+          if (thumbnailUrl != null && thumbnailUrl.isNotEmpty) {
+            return InstagramResolvedData(
+              mediaItems: [InstagramMediaItem(url: thumbnailUrl, isVideo: false)],
+              caption: title,
+              authorUsername: authorName,
+            );
+          }
         }
+      } catch (e) {
+        debugPrint('Strategy 4 (oEmbed) error: $e');
       }
-    } catch (e) {
-      debugPrint('Strategy 4 (oEmbed) error: $e');
     }
 
     // Strategy 5: High-availability external proxy fallback (VKR / Cobalt / DDInstagram)
@@ -601,10 +625,47 @@ class InstagramDownloaderService {
   InstagramResolvedData? _parseGraphQLMedia(Map<String, dynamic> media) {
     final List<InstagramMediaItem> items = [];
 
-    // Check carousel
-    if (media['edge_sidecar_to_children'] != null) {
+    final Map<String, dynamic> root =
+        (media['items'] is List && (media['items'] as List).isNotEmpty)
+            ? (media['items'] as List).first as Map<String, dynamic>
+            : media;
+
+    // Check carousel (Polaris / v1 carousel_media or sidecar)
+    if (root['carousel_media'] != null) {
+      final carouselList = root['carousel_media'] as List<dynamic>?;
+      if (carouselList != null && carouselList.isNotEmpty) {
+        for (final item in carouselList) {
+          if (item is Map<String, dynamic>) {
+            final isVideo = item['media_type'] == 2 ||
+                (item['video_versions'] != null &&
+                    (item['video_versions'] as List).isNotEmpty);
+            String? url;
+            if (isVideo && item['video_versions'] != null) {
+              final vids = item['video_versions'] as List<dynamic>?;
+              if (vids != null && vids.isNotEmpty) {
+                url = vids.first['url'] as String?;
+              }
+            } else if (item['image_versions2']?['candidates'] != null) {
+              final imgs =
+                  item['image_versions2']['candidates'] as List<dynamic>?;
+              if (imgs != null && imgs.isNotEmpty) {
+                url = imgs.first['url'] as String?;
+              }
+            }
+            if (url != null) {
+              items.add(InstagramMediaItem(
+                url: _sanitizeMediaUrl(url),
+                isVideo: isVideo,
+              ));
+            }
+          }
+        }
+      }
+    }
+
+    if (items.isEmpty && root['edge_sidecar_to_children'] != null) {
       final edges =
-          media['edge_sidecar_to_children']['edges'] as List<dynamic>?;
+          root['edge_sidecar_to_children']['edges'] as List<dynamic>?;
       if (edges != null && edges.isNotEmpty) {
         for (final edge in edges) {
           final node = edge['node'] as Map<String, dynamic>?;
@@ -627,40 +688,69 @@ class InstagramDownloaderService {
 
     // Single media
     if (items.isEmpty) {
-      if (media['is_video'] == true && media['video_url'] != null) {
+      if (root['video_versions'] != null) {
+        final vids = root['video_versions'] as List<dynamic>?;
+        if (vids != null && vids.isNotEmpty) {
+          final url = vids.first['url'] as String?;
+          if (url != null) {
+            items.add(InstagramMediaItem(
+              url: _sanitizeMediaUrl(url),
+              isVideo: true,
+            ));
+          }
+        }
+      } else if (root['is_video'] == true && root['video_url'] != null) {
         items.add(InstagramMediaItem(
-          url: _sanitizeMediaUrl(media['video_url'] as String),
+          url: _sanitizeMediaUrl(root['video_url'] as String),
           isVideo: true,
         ));
-      } else if (media['display_url'] != null) {
+      } else if (root['video_url'] != null) {
         items.add(InstagramMediaItem(
-          url: _sanitizeMediaUrl(media['display_url'] as String),
+          url: _sanitizeMediaUrl(root['video_url'] as String),
+          isVideo: true,
+        ));
+      } else if (root['image_versions2']?['candidates'] != null) {
+        final imgs = root['image_versions2']['candidates'] as List<dynamic>?;
+        if (imgs != null && imgs.isNotEmpty) {
+          final url = imgs.first['url'] as String?;
+          if (url != null) {
+            items.add(InstagramMediaItem(
+              url: _sanitizeMediaUrl(url),
+              isVideo: false,
+            ));
+          }
+        }
+      } else if (root['display_url'] != null) {
+        items.add(InstagramMediaItem(
+          url: _sanitizeMediaUrl(root['display_url'] as String),
           isVideo: false,
-        ));
-      } else if (media['video_url'] != null) {
-        items.add(InstagramMediaItem(
-          url: _sanitizeMediaUrl(media['video_url'] as String),
-          isVideo: true,
         ));
       }
     }
 
     // Caption
     String? caption;
-    if (media['edge_media_to_caption'] != null) {
+    if (root['edge_media_to_caption'] != null) {
       final captionEdges =
-          media['edge_media_to_caption']['edges'] as List<dynamic>?;
+          root['edge_media_to_caption']['edges'] as List<dynamic>?;
       if (captionEdges != null && captionEdges.isNotEmpty) {
         caption = captionEdges.first['node']?['text'] as String?;
+      }
+    } else if (root['caption'] != null) {
+      if (root['caption'] is Map) {
+        caption = root['caption']['text'] as String?;
+      } else if (root['caption'] is String) {
+        caption = root['caption'] as String?;
       }
     }
 
     // Owner info
     String? authorUsername;
     String? authorFullName;
-    if (media['owner'] != null) {
-      authorUsername = media['owner']['username'] as String?;
-      authorFullName = media['owner']['full_name'] as String?;
+    final ownerObj = root['owner'] ?? root['user'];
+    if (ownerObj is Map<String, dynamic>) {
+      authorUsername = ownerObj['username'] as String?;
+      authorFullName = ownerObj['full_name'] as String?;
     }
 
     if (items.isNotEmpty) {
@@ -864,14 +954,17 @@ class InstagramDownloaderService {
         response = await http.get(
           Uri.parse(sanitizedUrl),
           headers: {
-            'User-Agent':
-                'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
-            'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+            'User-Agent': item.isVideo
+                ? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+                : 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+            'Accept': item.isVideo
+                ? 'video/mp4,video/*;q=0.9,*/*;q=0.8'
+                : 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
             'Referer': 'https://www.instagram.com/',
           },
-        ).timeout(const Duration(seconds: 25));
+        ).timeout(const Duration(seconds: 35));
       } catch (e) {
-        debugPrint('Direct image download attempt 1 failed: $e');
+        debugPrint('Direct media download attempt 1 failed: $e');
       }
 
       // Retry without Referer if first attempt failed or returned error
@@ -886,11 +979,11 @@ class InstagramDownloaderService {
             headers: {
               'User-Agent':
                   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-              'Accept': '*/*',
+              'Accept': item.isVideo ? 'video/mp4,video/*,*/*' : '*/*',
             },
-          ).timeout(const Duration(seconds: 25));
+          ).timeout(const Duration(seconds: 35));
         } catch (e) {
-          debugPrint('Direct image download attempt 2 failed: $e');
+          debugPrint('Direct media download attempt 2 failed: $e');
         }
       }
 

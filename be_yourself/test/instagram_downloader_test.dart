@@ -107,5 +107,23 @@ void main() {
       expect(resolved.videoUrl, contains('photo_0.jpg'));
       expect(resolved.caption, '11 Fotoğraflı Carousel Post');
     });
+
+    test('InstagramResolvedData distinguishes between Reel video and photo', () {
+      final reelItems = [
+        const InstagramMediaItem(
+          url: 'https://scontent.cdninstagram.com/o1/v/t16/f1/m86/reel.mp4?_nc_cat=1',
+          isVideo: true,
+        ),
+      ];
+
+      final reelResolved = InstagramResolvedData(
+        mediaItems: reelItems,
+        caption: 'İlham verici bir reels videosu #motivasyon',
+        authorUsername: 'motivasyon_sozleri',
+      );
+
+      expect(reelResolved.mediaItems.first.isVideo, isTrue);
+      expect(reelResolved.videoUrl, contains('.mp4'));
+    });
   });
 }

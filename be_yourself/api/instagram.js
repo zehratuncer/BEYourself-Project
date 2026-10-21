@@ -139,24 +139,15 @@ function cleanHtmlTags(raw) {
 function parseGraphQLMedia(media) {
   const items = [];
 
-  // Carousel (GraphQL sidecar)
-  if (media.edge_sidecar_to_children && media.edge_sidecar_to_children.edges) {
-    for (const edge of media.edge_sidecar_to_children.edges) {
-      const node = edge.node;
-      if (node) {
-        if (node.is_video && node.video_url) {
-          items.push({ url: cleanMediaUrl(node.video_url), isVideo: true });
-        } else if (node.display_url) {
-          items.push({ url: cleanMediaUrl(node.display_url), isVideo: false });
-        }
-      }
-    }
-  }
+  // If media has items array (e.g. from PolarisPostRootQuery xdt_api__v1__media__shortcode__web_info)
+  const root = (media.items && Array.isArray(media.items) && media.items.length > 0)
+    ? media.items[0]
+    : media;
 
-  // Carousel (Web JSON carousel_media)
-  if (items.length === 0 && media.carousel_media && Array.isArray(media.carousel_media)) {
-    for (const c of media.carousel_media) {
-      const isVideo = c.media_type === 2;
+  // Carousel (Web JSON / Polaris carousel_media)
+  if (root.carousel_media && Array.isArray(root.carousel_media)) {
+    for (const c of root.carousel_media) {
+      const isVideo = c.media_type === 2 || (c.video_versions && c.video_versions.length > 0);
       let url = null;
       if (isVideo && c.video_versions && c.video_versions.length > 0) {
         url = c.video_versions[0].url;
@@ -169,36 +160,52 @@ function parseGraphQLMedia(media) {
     }
   }
 
+  // Carousel (GraphQL sidecar)
+  if (items.length === 0 && root.edge_sidecar_to_children && root.edge_sidecar_to_children.edges) {
+    for (const edge of root.edge_sidecar_to_children.edges) {
+      const node = edge.node;
+      if (node) {
+        if (node.is_video && node.video_url) {
+          items.push({ url: cleanMediaUrl(node.video_url), isVideo: true });
+        } else if (node.display_url) {
+          items.push({ url: cleanMediaUrl(node.display_url), isVideo: false });
+        }
+      }
+    }
+  }
+
   // Single media
   if (items.length === 0) {
-    if (media.is_video && media.video_url) {
-      items.push({ url: cleanMediaUrl(media.video_url), isVideo: true });
-    } else if (media.video_versions && media.video_versions.length > 0) {
-      items.push({ url: cleanMediaUrl(media.video_versions[0].url), isVideo: true });
-    } else if (media.display_url) {
-      items.push({ url: cleanMediaUrl(media.display_url), isVideo: false });
-    } else if (media.image_versions2 && media.image_versions2.candidates && media.image_versions2.candidates.length > 0) {
-      items.push({ url: cleanMediaUrl(media.image_versions2.candidates[0].url), isVideo: false });
-    } else if (media.video_url) {
-      items.push({ url: cleanMediaUrl(media.video_url), isVideo: true });
+    if (root.video_versions && Array.isArray(root.video_versions) && root.video_versions.length > 0) {
+      items.push({ url: cleanMediaUrl(root.video_versions[0].url), isVideo: true });
+    } else if (root.is_video && root.video_url) {
+      items.push({ url: cleanMediaUrl(root.video_url), isVideo: true });
+    } else if (root.video_url) {
+      items.push({ url: cleanMediaUrl(root.video_url), isVideo: true });
+    } else if (root.image_versions2 && root.image_versions2.candidates && root.image_versions2.candidates.length > 0) {
+      items.push({ url: cleanMediaUrl(root.image_versions2.candidates[0].url), isVideo: false });
+    } else if (root.display_url) {
+      items.push({ url: cleanMediaUrl(root.display_url), isVideo: false });
     }
   }
 
   // Caption
   let caption = null;
   if (
-    media.edge_media_to_caption &&
-    media.edge_media_to_caption.edges &&
-    media.edge_media_to_caption.edges.length > 0
+    root.edge_media_to_caption &&
+    root.edge_media_to_caption.edges &&
+    root.edge_media_to_caption.edges.length > 0
   ) {
-    caption = media.edge_media_to_caption.edges[0]?.node?.text || null;
-  } else if (media.caption && typeof media.caption === 'object') {
-    caption = media.caption.text || null;
+    caption = root.edge_media_to_caption.edges[0]?.node?.text || null;
+  } else if (root.caption && typeof root.caption === 'object') {
+    caption = root.caption.text || null;
+  } else if (typeof root.caption === 'string') {
+    caption = root.caption;
   }
 
   // Owner
-  const authorUsername = media.owner?.username || media.user?.username || null;
-  const authorFullName = media.owner?.full_name || media.user?.full_name || null;
+  const authorUsername = root.owner?.username || root.user?.username || null;
+  const authorFullName = root.owner?.full_name || root.user?.full_name || null;
 
   if (items.length > 0) {
     return { mediaItems: items, caption, authorUsername, authorFullName };
@@ -237,11 +244,12 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  // Strategy 1: GraphQL Multi-DocID Queries (POST /api/graphql — the legacy
-  // GET /graphql/query/ endpoint has been retired by Instagram and now 404s,
-  // which previously made this strategy always fail and fall through to the
-  // weak embed/oEmbed fallbacks that only ever return a single poster image).
+  const isReelUrl = url.toLowerCase().includes('/reel') || url.toLowerCase().includes('/reels') || url.toLowerCase().includes('share/reel');
+
+  // Strategy 1: GraphQL Multi-DocID Queries (POST /api/graphql)
   const docIds = [
+    '27128499623469141',
+    '27234427476213202',
     '10015901848480474',
     '8845758582119845',
     '7479768652077977',
@@ -249,7 +257,11 @@ module.exports = async function handler(req, res) {
   ];
   for (const docId of docIds) {
     try {
-      const variables = JSON.stringify({ shortcode });
+      const variables = JSON.stringify({
+        shortcode,
+        __relay_internal__pv__PolarisAIGMMediaWebLabelEnabledrelayprovider: false,
+        __relay_internal__pv__PolarisIsLoggedInrelayprovider: false,
+      });
       const body = `doc_id=${docId}&variables=${encodeURIComponent(variables)}&lsd=AVqbxe3J_YA`;
       const response = await httpRequest(
         'https://www.instagram.com/api/graphql',
@@ -268,7 +280,10 @@ module.exports = async function handler(req, res) {
       if (response.statusCode === 200) {
         const json = JSON.parse(response.body);
         const media =
-          json?.data?.xdt_shortcode_media || json?.data?.shortcode_media;
+          json?.data?.xdt_api__v1__media__shortcode__web_info ||
+          json?.data?.xdt_shortcode_media ||
+          json?.data?.shortcode_media ||
+          json?.data?.xdt_api__v1__clips__user__connection_v2;
         if (media) {
           const parsed = parseGraphQLMedia(media);
           if (parsed && parsed.mediaItems.length > 0) {
@@ -354,25 +369,36 @@ module.exports = async function handler(req, res) {
         // Fall through to the legacy static-markup scrape below.
       }
 
+      // Deep script scanning for mp4 video stream URLs if not found yet
+      if (embedItems.length === 0) {
+        const mp4Matches = html.match(/(https?:\\\/\\\/[a-zA-Z0-9_.-]+fbcdn\.net\\\/[^\s"']+\.mp4[^\s"']*)/gi) ||
+          html.match(/(https?:\/\/[a-zA-Z0-9_.-]+fbcdn\.net\/[^\s"']+\.mp4[^\s"']*)/gi);
+        if (mp4Matches && mp4Matches.length > 0) {
+          const videoUrl = cleanMediaUrl(mp4Matches[0]);
+          embedItems.push({ url: videoUrl, isVideo: true });
+        }
+      }
+
       const videoMatch =
         embedItems.length === 0 &&
         (html.match(/<video[^>]+src="([^">]+)"/) ||
           html.match(/class="EmbeddedMediaVideo"[^>]+src="([^">]+)"/));
       if (videoMatch && videoMatch[1]) {
         embedItems.push({
-          url: videoMatch[1].replace(/&amp;/g, '&'),
+          url: cleanMediaUrl(videoMatch[1]),
           isVideo: true,
         });
       }
 
-      if (embedItems.length === 0) {
+      // Only extract images if not a dedicated Reel URL or if we are handling a photo/carousel post
+      if (embedItems.length === 0 && !isReelUrl) {
         const imgMatches = html.matchAll(
-          /<img[^>]+(?:class="EmbeddedMediaImage"|class="EmbeddedVideoPosterImage")[^>]+src="([^">]+)"/g
+          /<img[^>]+(?:class="EmbeddedMediaImage")[^>]+src="([^">]+)"/g
         );
         for (const m of imgMatches) {
           if (m[1]) {
             embedItems.push({
-              url: m[1].replace(/&amp;/g, '&'),
+              url: cleanMediaUrl(m[1]),
               isVideo: false,
             });
           }
@@ -398,24 +424,26 @@ module.exports = async function handler(req, res) {
     }
   } catch (e) {}
 
-  // Strategy 4: oEmbed API
-  try {
-    const oembedUrl = `https://www.instagram.com/api/v1/oembed/?url=https://www.instagram.com/p/${shortcode}/`;
-    const response = await httpRequest(oembedUrl, {}, 4000);
-    if (response.statusCode === 200) {
-      const json = JSON.parse(response.body);
-      if (json.thumbnail_url) {
-        return res.status(200).json({
-          success: true,
-          shortcode,
-          mediaItems: [{ url: json.thumbnail_url, isVideo: false }],
-          caption: json.title || null,
-          authorUsername: json.author_name || null,
-          authorFullName: json.author_name || null,
-        });
+  // Strategy 4: oEmbed API (for photo posts only, never substitute reels video with poster thumbnail)
+  if (!isReelUrl) {
+    try {
+      const oembedUrl = `https://www.instagram.com/api/v1/oembed/?url=https://www.instagram.com/p/${shortcode}/`;
+      const response = await httpRequest(oembedUrl, {}, 4000);
+      if (response.statusCode === 200) {
+        const json = JSON.parse(response.body);
+        if (json.thumbnail_url) {
+          return res.status(200).json({
+            success: true,
+            shortcode,
+            mediaItems: [{ url: json.thumbnail_url, isVideo: false }],
+            caption: json.title || null,
+            authorUsername: json.author_name || null,
+            authorFullName: json.author_name || null,
+          });
+        }
       }
-    }
-  } catch (e) {}
+    } catch (e) {}
+  }
 
   // Failed all strategies
   return res.status(404).json({
