@@ -4,7 +4,7 @@
 const https = require('https');
 const http = require('http');
 
-function httpRequest(urlStr, headers = {}, timeoutMs = 8000) {
+function httpRequest(urlStr, headers = {}, timeoutMs = 8000, method = 'GET', body = null) {
   return new Promise((resolve, reject) => {
     try {
       const url = new URL(urlStr);
@@ -15,7 +15,7 @@ function httpRequest(urlStr, headers = {}, timeoutMs = 8000) {
         hostname: url.hostname,
         port: url.port || (isHttps ? 443 : 80),
         path: url.pathname + url.search,
-        method: 'GET',
+        method,
         headers: {
           'User-Agent':
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -34,14 +34,17 @@ function httpRequest(urlStr, headers = {}, timeoutMs = 8000) {
           const redirectUrl = res.headers.location.startsWith('http')
             ? res.headers.location
             : `${url.protocol}//${url.hostname}${res.headers.location}`;
-          return resolve(httpRequest(redirectUrl, headers, timeoutMs));
+          return resolve(httpRequest(redirectUrl, headers, timeoutMs, method, body));
         }
 
-        let body = '';
-        res.setEncoding('utf8');
-        res.on('data', (chunk) => (body += chunk));
+        let chunks = [];
+        res.on('data', (chunk) => chunks.push(chunk));
         res.on('end', () => {
-          resolve({ statusCode: res.statusCode, body, headers: res.headers });
+          resolve({
+            statusCode: res.statusCode,
+            body: Buffer.concat(chunks).toString('utf8'),
+            headers: res.headers,
+          });
         });
       });
 
@@ -50,11 +53,55 @@ function httpRequest(urlStr, headers = {}, timeoutMs = 8000) {
         req.destroy();
         reject(new Error(`Timeout after ${timeoutMs}ms`));
       });
+      if (body) {
+        req.write(body);
+      }
       req.end();
     } catch (e) {
       reject(e);
     }
   });
+}
+
+/// Scans raw HTML for a JSON value (object or array) that starts right after
+/// the given key, using brace/bracket balancing so it survives nested objects
+/// (e.g. carousel "edges" arrays) that a non-greedy regex would truncate.
+function extractBalancedJson(html, key) {
+  const keyIdx = html.indexOf(`"${key}"`);
+  if (keyIdx === -1) return null;
+  const colonIdx = html.indexOf(':', keyIdx);
+  if (colonIdx === -1) return null;
+
+  let i = colonIdx + 1;
+  while (i < html.length && html[i] !== '{' && html[i] !== '[') i++;
+  if (i >= html.length) return null;
+
+  const openChar = html[i];
+  const closeChar = openChar === '{' ? '}' : ']';
+  const start = i;
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+
+  for (; i < html.length; i++) {
+    const c = html[i];
+    if (inString) {
+      if (escape) escape = false;
+      else if (c === '\\') escape = true;
+      else if (c === '"') inString = false;
+      continue;
+    }
+    if (c === '"') {
+      inString = true;
+      continue;
+    }
+    if (c === openChar) depth++;
+    if (c === closeChar) {
+      depth--;
+      if (depth === 0) return html.slice(start, i + 1);
+    }
+  }
+  return null;
 }
 
 function extractShortcode(rawUrl) {
@@ -190,17 +237,33 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  // Strategy 1: GraphQL Multi-DocID Queries
-  const docIds = ['10015901848480474', '8845758582119845', '7479768652077977'];
+  // Strategy 1: GraphQL Multi-DocID Queries (POST /api/graphql — the legacy
+  // GET /graphql/query/ endpoint has been retired by Instagram and now 404s,
+  // which previously made this strategy always fail and fall through to the
+  // weak embed/oEmbed fallbacks that only ever return a single poster image).
+  const docIds = [
+    '10015901848480474',
+    '8845758582119845',
+    '7479768652077977',
+    '25531498899829322',
+  ];
   for (const docId of docIds) {
     try {
-      const gqlUrl = `https://www.instagram.com/graphql/query/?doc_id=${docId}&variables=${encodeURIComponent(
-        JSON.stringify({ shortcode })
-      )}`;
-      const response = await httpRequest(gqlUrl, {
-        'X-IG-App-ID': '936619743392459',
-        'X-Requested-With': 'XMLHttpRequest',
-      }, 5000);
+      const variables = JSON.stringify({ shortcode });
+      const body = `doc_id=${docId}&variables=${encodeURIComponent(variables)}&lsd=AVqbxe3J_YA`;
+      const response = await httpRequest(
+        'https://www.instagram.com/api/graphql',
+        {
+          'X-IG-App-ID': '936619743392459',
+          'X-FB-LSD': 'AVqbxe3J_YA',
+          'X-ASBD-ID': '129477',
+          'Sec-Fetch-Site': 'same-origin',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        5000,
+        'POST',
+        body
+      );
 
       if (response.statusCode === 200) {
         const json = JSON.parse(response.body);
@@ -255,11 +318,46 @@ module.exports = async function handler(req, res) {
     const response = await httpRequest(embedUrl, {}, 5000);
     if (response.statusCode === 200) {
       const html = response.body;
-      const embedItems = [];
+      let embedItems = [];
+
+      // Prefer the real media graph embedded as JSON inside the page's
+      // <script> blobs over the static <img>/<video> markup: the visible
+      // markup only ever exposes a single poster frame for videos and only
+      // the first slide for carousels, while the inline JSON (sidecar edges /
+      // video_url) carries every item.
+      try {
+        const sidecarJson = extractBalancedJson(html, 'edge_sidecar_to_children');
+        if (sidecarJson) {
+          const sidecar = JSON.parse(sidecarJson);
+          const edges = sidecar.edges;
+          if (Array.isArray(edges) && edges.length > 0) {
+            for (const edge of edges) {
+              const node = edge && edge.node;
+              if (!node) continue;
+              if (node.is_video && node.video_url) {
+                embedItems.push({ url: cleanMediaUrl(node.video_url), isVideo: true });
+              } else if (node.display_url) {
+                embedItems.push({ url: cleanMediaUrl(node.display_url), isVideo: false });
+              }
+            }
+          }
+        }
+
+        if (embedItems.length === 0) {
+          const videoUrlMatch = html.match(/"video_url"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+          if (videoUrlMatch && videoUrlMatch[1]) {
+            const decoded = JSON.parse(`"${videoUrlMatch[1]}"`);
+            embedItems.push({ url: cleanMediaUrl(decoded), isVideo: true });
+          }
+        }
+      } catch (e) {
+        // Fall through to the legacy static-markup scrape below.
+      }
 
       const videoMatch =
-        html.match(/<video[^>]+src="([^">]+)"/) ||
-        html.match(/class="EmbeddedMediaVideo"[^>]+src="([^">]+)"/);
+        embedItems.length === 0 &&
+        (html.match(/<video[^>]+src="([^">]+)"/) ||
+          html.match(/class="EmbeddedMediaVideo"[^>]+src="([^">]+)"/));
       if (videoMatch && videoMatch[1]) {
         embedItems.push({
           url: videoMatch[1].replace(/&amp;/g, '&'),
